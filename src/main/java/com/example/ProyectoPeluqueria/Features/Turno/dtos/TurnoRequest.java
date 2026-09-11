@@ -1,4 +1,4 @@
-package com.example.ProyectoPeluqueria.Features.Usuario.Turno.dtos;
+package com.example.ProyectoPeluqueria.Features.Turno.dtos;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;

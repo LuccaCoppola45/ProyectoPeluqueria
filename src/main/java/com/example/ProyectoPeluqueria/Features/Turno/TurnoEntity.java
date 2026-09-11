@@ -1,6 +1,6 @@
-package com.example.ProyectoPeluqueria.Features.Usuario.Turno;
+package com.example.ProyectoPeluqueria.Features.Turno;
 
-import com.example.ProyectoPeluqueria.Features.Usuario.Enums.EstadoTurno;
+import com.example.ProyectoPeluqueria.Features.Enums.EstadoTurno;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;

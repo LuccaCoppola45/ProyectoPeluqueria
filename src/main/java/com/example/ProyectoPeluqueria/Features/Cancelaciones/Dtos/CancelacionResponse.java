@@ -1,4 +1,4 @@
-package com.example.ProyectoPeluqueria.Features.Usuario.Cancelaciones.Dtos;
+package com.example.ProyectoPeluqueria.Features.Cancelaciones.Dtos;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;

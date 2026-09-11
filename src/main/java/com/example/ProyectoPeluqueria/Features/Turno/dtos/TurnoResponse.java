@@ -1,6 +1,6 @@
-package com.example.ProyectoPeluqueria.Features.Usuario.Turno.dtos;
+package com.example.ProyectoPeluqueria.Features.Turno.dtos;
 
-import com.example.ProyectoPeluqueria.Features.Usuario.Enums.EstadoTurno;
+import com.example.ProyectoPeluqueria.Features.Enums.EstadoTurno;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;

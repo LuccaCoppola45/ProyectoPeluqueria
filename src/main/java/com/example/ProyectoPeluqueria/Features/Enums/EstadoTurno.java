@@ -1,4 +1,4 @@
-package com.example.ProyectoPeluqueria.Features.Usuario.Enums;
+package com.example.ProyectoPeluqueria.Features.Enums;
 
 public enum EstadoTurno
 {

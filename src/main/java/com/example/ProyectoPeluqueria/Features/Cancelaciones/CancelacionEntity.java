@@ -1,4 +1,4 @@
-package com.example.ProyectoPeluqueria.Features.Usuario.Cancelaciones;
+package com.example.ProyectoPeluqueria.Features.Cancelaciones;
 
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
