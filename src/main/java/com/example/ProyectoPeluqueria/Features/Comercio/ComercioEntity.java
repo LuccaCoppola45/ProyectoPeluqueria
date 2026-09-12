@@ -1,5 +1,9 @@
 package com.example.ProyectoPeluqueria.Features.Comercio;
 
+import com.example.ProyectoPeluqueria.Features.HorarioDeAtencion.HorarioDeAtencionEntity;
+import com.example.ProyectoPeluqueria.Features.Servicio.ServicioEntity;
+import com.example.ProyectoPeluqueria.Features.Turno.TurnoEntity;
+import com.example.ProyectoPeluqueria.Features.Usuario.UsuarioEntity;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.Getter;
@@ -44,7 +48,7 @@ public class ComercioEntity {
             cascade = CascadeType.ALL,
             orphanRemoval = true)
     @JsonIgnore
-    private List<HorarioAtencionEntity> horarios;
+    private List<HorarioDeAtencionEntity> horarios;
 
 
     @ManyToOne
