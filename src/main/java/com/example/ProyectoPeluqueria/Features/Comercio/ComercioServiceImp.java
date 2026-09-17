@@ -1,13 +1,10 @@
 package com.example.ProyectoPeluqueria.Features.Comercio;
 
-import com.example.ProyectoPeluqueria.Exceptions.TurnoExceptions.catalog.ComercioAlreadyExistsException;
-import com.example.ProyectoPeluqueria.Exceptions.TurnoExceptions.catalog.ComercioNotFoundException;
+import com.example.ProyectoPeluqueria.Exceptions.catalog.ComercioAlreadyExistsException;
+import com.example.ProyectoPeluqueria.Exceptions.catalog.ComercioNotFoundException;
 import com.example.ProyectoPeluqueria.Features.Comercio.Dtos.ComercioRequest;
 import com.example.ProyectoPeluqueria.Features.Comercio.Dtos.ComercioResponse;
 import com.example.ProyectoPeluqueria.Features.Comercio.Mapper.ComercioMapper;
-
-import java.util.List;
-import java.util.stream.Collectors;
 
 public class ComercioServiceImp implements  ComercioService {
 
