@@ -53,4 +53,6 @@ public class ComercioEntity {
     @OneToMany(mappedBy = "comercio")
     @JsonIgnore
     private List<TurnoEntity> turnos;
+
+
 }
