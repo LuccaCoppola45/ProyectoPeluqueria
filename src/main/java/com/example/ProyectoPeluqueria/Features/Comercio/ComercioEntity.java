@@ -50,12 +50,6 @@ public class ComercioEntity {
     @JsonIgnore
     private List<HorarioDeAtencionEntity> horarios;
 
-
-    @ManyToOne
-    @JoinColumn(name = "usuario_id_propietario", foreignKey = @ForeignKey(name = "fk_comercio_usuario"))
-    @JsonIgnore
-    private UsuarioEntity usuarioPropietario;
-
     @OneToMany(mappedBy = "comercio")
     @JsonIgnore
     private List<TurnoEntity> turnos;

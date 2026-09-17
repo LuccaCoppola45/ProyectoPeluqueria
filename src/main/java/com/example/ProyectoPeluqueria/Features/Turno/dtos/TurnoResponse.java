@@ -20,6 +20,10 @@ public class TurnoResponse
     private LocalTime horaInicio;
     private LocalTime horaFin;
     private EstadoTurno estado;
+    private Long usuarioId;
+    private Long servicioId;
+    private Long cancelacionId;
+    private Long idComercio;
 
 
 }
