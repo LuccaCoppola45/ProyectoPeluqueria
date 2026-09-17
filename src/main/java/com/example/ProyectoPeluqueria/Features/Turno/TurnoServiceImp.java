@@ -1,5 +1,6 @@
 package com.example.ProyectoPeluqueria.Features.Turno;
 
+import com.example.ProyectoPeluqueria.Exceptions.TurnoExceptions.*;
 import com.example.ProyectoPeluqueria.Features.Comercio.ComercioEntity;
 import com.example.ProyectoPeluqueria.Features.Enums.DiaSemana;
 import com.example.ProyectoPeluqueria.Features.Enums.EstadoTurno;
@@ -186,7 +187,7 @@ public class TurnoServiceImp implements TurnoService {
                 .anyMatch(t -> haySuperposicion(t, horaInicio, horaFin));
 
         if (existeSuperposicion) {
-            throw new DuplicateTurnException("El horario seleccionado ya está ocupado");
+            throw new TurnoDuplicadoException("El horario seleccionado ya está ocupado");
         }
     }
 
@@ -197,7 +198,7 @@ public class TurnoServiceImp implements TurnoService {
                 .anyMatch(t -> haySuperposicion(t, horaInicio, horaFin));
 
         if (existeSuperposicion) {
-            throw new DuplicateTurnException("El usuario ya posee un turno en ese horario");
+            throw new TurnoDuplicadoException("El usuario ya posee un turno en ese horario");
         }
     }
 
@@ -209,7 +210,7 @@ public class TurnoServiceImp implements TurnoService {
                 .anyMatch(t -> haySuperposicion(t, horaInicio, horaFin));
 
         if (existeSuperposicion) {
-            throw new DuplicateTurnException("El horario seleccionado ya está ocupado");
+            throw new TurnoDuplicadoException("El horario seleccionado ya está ocupado");
         }
     }
 
@@ -221,7 +222,7 @@ public class TurnoServiceImp implements TurnoService {
                 .anyMatch(t -> haySuperposicion(t, horaInicio, horaFin));
 
         if (existeSuperposicion) {
-            throw new DuplicateTurnException("El usuario ya posee un turno en ese horario");
+            throw new TurnoDuplicadoException("El usuario ya posee un turno en ese horario");
         }
     }
 
