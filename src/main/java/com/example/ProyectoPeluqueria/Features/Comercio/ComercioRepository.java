@@ -10,5 +10,4 @@ import java.util.Optional;
 public interface ComercioRepository extends JpaRepository<ComercioEntity, Long> {
     List<ComercioEntity> findByNombreIgnoreCase(String nombre);
     Optional<ComercioEntity> findByNombreIgnoreCaseAndDireccionIgnoreCase(String nombre, String direccion);
-    List<ComercioEntity> findByCategorias_UniqueId(Long categoriaId);
 }
