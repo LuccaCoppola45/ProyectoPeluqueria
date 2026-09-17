@@ -3,6 +3,7 @@ package com.example.ProyectoPeluqueria.Features.Turno;
 import com.example.ProyectoPeluqueria.Features.Comercio.ComercioEntity;
 import com.example.ProyectoPeluqueria.Features.Enums.DiaSemana;
 import com.example.ProyectoPeluqueria.Features.Enums.EstadoTurno;
+import com.example.ProyectoPeluqueria.Features.HorarioDeAtencion.HorarioDeAtencionEntity;
 import com.example.ProyectoPeluqueria.Features.Servicio.ServicioEntity;
 import com.example.ProyectoPeluqueria.Features.Servicio.ServicioRepository;
 import com.example.ProyectoPeluqueria.Features.Turno.Mapper.TurnoMapper;
@@ -85,7 +86,7 @@ public class TurnoServiceImp implements TurnoService {
     }
 
     @Override
-    public List<TurnoResponceDto> obtenerTodos() {
+    public List<TurnoResponse> obtenerTodos() {{
         return turnoRepository.findAll()
                 .stream()
                 .map(turnoMapper::toDto)
@@ -93,7 +94,7 @@ public class TurnoServiceImp implements TurnoService {
     }
 
     @Override
-    public TurnoResponceDto obtenerPorId(Long id) {
+    public TurnoResponse obtenerPorId(Long id) {
         TurnoEntity turno = turnoRepository.findById(id)
                 .orElseThrow(() -> new TurnoNotFoundException("Turno no encontrado"));
         return turnoMapper.toDto(turno);
@@ -232,7 +233,7 @@ public class TurnoServiceImp implements TurnoService {
 
     private void validarHorarioAtencion(ComercioEntity comercio, java.time.LocalDate fecha, LocalTime horaInicio, LocalTime horaFin) {
         DiaSemana diaTurno = mapearDiaSemana(fecha.getDayOfWeek());
-        HorarioAtencionEntity horario = comercio.getHorarios().stream()
+        HorarioDeAtencionEntity horario = comercio.getHorarios().stream()
                 .filter(h -> h.getDiaSemana() == diaTurno)
                 .findFirst()
                 .orElseThrow(() -> new HorarioFueraDeAtencionException("El comercio no atiende los días " + diaTurno));
