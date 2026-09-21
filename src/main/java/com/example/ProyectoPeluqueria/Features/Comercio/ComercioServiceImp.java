@@ -5,7 +5,9 @@ import com.example.ProyectoPeluqueria.Exceptions.catalog.ComercioNotFoundExcepti
 import com.example.ProyectoPeluqueria.Features.Comercio.Dtos.ComercioRequest;
 import com.example.ProyectoPeluqueria.Features.Comercio.Dtos.ComercioResponse;
 import com.example.ProyectoPeluqueria.Features.Comercio.Mapper.ComercioMapper;
+import org.springframework.stereotype.Service;
 
+@Service
 public class ComercioServiceImp implements  ComercioService {
 
     private final ComercioRepository comercioRepository;

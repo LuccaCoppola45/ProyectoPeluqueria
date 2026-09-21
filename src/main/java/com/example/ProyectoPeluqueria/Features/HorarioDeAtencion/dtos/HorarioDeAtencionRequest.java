@@ -3,6 +3,7 @@ package com.example.ProyectoPeluqueria.Features.HorarioDeAtencion.dtos;
 import com.example.ProyectoPeluqueria.Features.Enums.DiaSemana;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
+import jakarta.validation.constraints.AssertTrue;
 import lombok.Data;
 
 import java.time.LocalTime;
@@ -22,4 +23,9 @@ public class HorarioDeAtencionRequest
 
     @NotNull(message = "La hora de cierre es obligatoria")
     private LocalTime horaCierre;
+
+    @AssertTrue(message = "La hora de apertura debe ser anterior a la hora de cierre")
+    public boolean isRangoHorarioValido() {
+        return horaApertura == null || horaCierre == null || horaApertura.isBefore(horaCierre);
+    }
 }

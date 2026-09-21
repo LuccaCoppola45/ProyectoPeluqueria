@@ -1,5 +1,6 @@
 package com.example.ProyectoPeluqueria.Features.HorarioDeAtencion;
 
+import com.example.ProyectoPeluqueria.Features.Comercio.ComercioEntity;
 import com.example.ProyectoPeluqueria.Features.Enums.DiaSemana;
 import com.example.ProyectoPeluqueria.Features.Turno.TurnoEntity;
 import com.example.ProyectoPeluqueria.Features.Usuario.UsuarioEntity;
@@ -34,18 +35,13 @@ public class HorarioDeAtencionEntity
     private LocalTime horaCierre;
 
 
-    @ManyToOne
-    @JoinColumn(name = "id_usuario",
-            nullable = false, updatable = false,
-            foreignKey = @ForeignKey(name = "fk_cancelacion_usuario"))
-    @JsonIgnore
-    private UsuarioEntity usuario;
 
-    @OneToOne
-    @JoinColumn(name = "id_turno", referencedColumnName = "id_turno", nullable = false,
-            updatable = false,
-            foreignKey = @ForeignKey (name = "fk_cancelacion_turno"))
+    @ManyToOne
+    @JoinColumn(name = "id_comercio",
+            foreignKey = @ForeignKey(name = "FK_horario_comercio"),
+            nullable = true)
     @JsonIgnore
-    private TurnoEntity turno;
+    private ComercioEntity comercio;
+
 
 }

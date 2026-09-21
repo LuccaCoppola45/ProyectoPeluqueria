@@ -1,6 +1,7 @@
 package com.example.ProyectoPeluqueria.Features.Turno.dtos;
 
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -22,8 +23,10 @@ public class TurnoRequest
     private LocalTime horaInicio;
 
     @NotNull(message = "El id del servicio es obligatorio")
+    @Positive(message = "El id del servicio debe ser positivo")
     private Long servicioId;
 
     @NotNull (message = "El id del comercio es obligatorio")
+    @Positive(message = "El id del comercio debe ser positivo")
     private Long idComercio;
 }

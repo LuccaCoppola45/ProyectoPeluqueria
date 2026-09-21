@@ -4,6 +4,8 @@ import com.example.ProyectoPeluqueria.Features.Turno.dtos.TurnoRequest;
 import com.example.ProyectoPeluqueria.Features.Turno.dtos.TurnoResponse;
 
 import java.util.List;
+import java.time.LocalDate;
+import java.time.LocalTime;
 
 public interface TurnoService
 {
@@ -11,5 +13,6 @@ public interface TurnoService
     List<TurnoResponse> obtenerTodos ();
     TurnoResponse obtenerPorId (Long id);
     TurnoResponse actualizarTurno(Long id, TurnoRequest dto);
-     void eliminarUnTurno (Long id);
+    void eliminarUnTurno (Long id);
+    List<LocalTime> obtenerDisponibilidad(LocalDate fecha, Long servicioId);
 }

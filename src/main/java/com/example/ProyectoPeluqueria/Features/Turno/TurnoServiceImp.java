@@ -1,9 +1,13 @@
 package com.example.ProyectoPeluqueria.Features.Turno;
 
 import com.example.ProyectoPeluqueria.Exceptions.TurnoExceptions.*;
+import com.example.ProyectoPeluqueria.Exceptions.horarioAtencion.HorarioFueraDeAtencionException;
+import com.example.ProyectoPeluqueria.Exceptions.servicio.ServicioNotFoundException;
+import com.example.ProyectoPeluqueria.Exceptions.user.UserProfileNotFoundException;
 import com.example.ProyectoPeluqueria.Features.Comercio.ComercioEntity;
 import com.example.ProyectoPeluqueria.Features.Enums.DiaSemana;
 import com.example.ProyectoPeluqueria.Features.Enums.EstadoTurno;
+import com.example.ProyectoPeluqueria.Features.Enums.Rol;
 import com.example.ProyectoPeluqueria.Features.HorarioDeAtencion.HorarioDeAtencionEntity;
 import com.example.ProyectoPeluqueria.Features.Servicio.ServicioEntity;
 import com.example.ProyectoPeluqueria.Features.Servicio.ServicioRepository;
@@ -18,48 +22,51 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
-import javax.naming.Context;
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.util.ArrayList;
 import java.util.List;
+import org.thymeleaf.context.Context;
 
 @Service
 @Transactional
 @RequiredArgsConstructor
 public class TurnoServiceImp implements TurnoService {
 
-    private final NotificacionService  notificacionService;
+    private final NotificacionesService notificacionService;
     private final TurnoRepository turnoRepository;
     private final UsuarioRepository usuarioRepository;
     private final ServicioRepository servicioRepository;
     private final TurnoMapper turnoMapper;
 
     @Override
-    public TurnoResponse crearTurno(TurnoRequest requestDto) {
-        validarFechaYHora(requestDto);
+    public TurnoResponse crearTurno(TurnoRequest dto) {
+        validarFechaYHora(dto);
 
         // Obtener usuario autenticado (ya no viene en el request)
-        String emailUsuario = obtenerEmailUsuarioAutenticado();
-        UsuarioEntity usuario = usuarioRepository.findByEmail(emailUsuario)
-                .orElseThrow(() -> new UserProfileNotFoundException("Usuario autenticado no encontrado"));
+        UsuarioEntity usuario = obtenerUsuarioAutenticado();
 
-        ServicioEntity servicio = servicioRepository.findById(requestDto.getServicioId())
+        ServicioEntity servicio = servicioRepository.findById(dto.getServicioId())
                 .orElseThrow(() -> new ServicioNotFoundException("Servicio no encontrado"));
+        validarComercio(dto, servicio);
+        validarDuracion(servicio);
 
-        LocalTime horaInicio = requestDto.getHoraInicio();
+        LocalTime horaInicio = dto.getHoraInicio();
         LocalTime horaFinCalculada = horaInicio.plusMinutes(servicio.getDuracionDelServicio());
+        validarRangoCalculado(horaInicio, horaFinCalculada);
 
         // Validar horario en base al comercio del servicio
-        validarHorarioAtencion(servicio.getComercio(), requestDto.getFecha(), horaInicio, horaFinCalculada);
+        validarHorarioAtencion(servicio.getComercio(), dto.getFecha(), horaInicio, horaFinCalculada);
 
         // Validaciones de superposición usan el servicio y el usuario autenticado
-        validarSuperposicionServicio(servicio.getIdServicio(), requestDto.getFecha(), horaInicio, horaFinCalculada);
-        validarSuperposicionUsuario(usuario.getIdUsuario(), requestDto.getFecha(), horaInicio, horaFinCalculada);
+        validarSuperposicionServicio(servicio.getIdServicio(), dto.getFecha(), horaInicio, horaFinCalculada);
+        validarSuperposicionUsuario(usuario.getIdUsuario(), dto.getFecha(), horaInicio, horaFinCalculada);
 
-        TurnoEntity turno = turnoMapper.toEntity(requestDto);
+        TurnoEntity turno = turnoMapper.toEntity(dto);
         turno.setUsuario(usuario);
         turno.setServicio(servicio);
         turno.setHoraFin(horaFinCalculada);
+        turno.setComercio(servicio.getComercio());
         turno.setEstado(EstadoTurno.PENDIENTE);
 
         TurnoEntity guardado = turnoRepository.save(turno);
@@ -87,8 +94,12 @@ public class TurnoServiceImp implements TurnoService {
     }
 
     @Override
-    public List<TurnoResponse> obtenerTodos() {{
-        return turnoRepository.findAll()
+    public List<TurnoResponse> obtenerTodos() {
+        UsuarioEntity usuario = obtenerUsuarioAutenticado();
+        List<TurnoEntity> turnos = esAdmin(usuario)
+                ? turnoRepository.findAll()
+                : turnoRepository.findByUsuario_IdUsuario(usuario.getIdUsuario());
+        return turnos
                 .stream()
                 .map(turnoMapper::toDto)
                 .toList();
@@ -98,6 +109,10 @@ public class TurnoServiceImp implements TurnoService {
     public TurnoResponse obtenerPorId(Long id) {
         TurnoEntity turno = turnoRepository.findById(id)
                 .orElseThrow(() -> new TurnoNotFoundException("Turno no encontrado"));
+        UsuarioEntity usuario = obtenerUsuarioAutenticado();
+        if (!esAdmin(usuario) && !turno.getUsuario().getIdUsuario().equals(usuario.getIdUsuario())) {
+            throw new UnauthorizedTurnoAccessException("No tienes permisos para consultar este turno");
+        }
         return turnoMapper.toDto(turno);
     }
 
@@ -109,37 +124,44 @@ public class TurnoServiceImp implements TurnoService {
         if (turno.getEstado() == EstadoTurno.CANCELADO) {
             throw new TurnoAlreadyCancelledException("No se puede modificar un turno cancelado");
         }
+        if (turno.getEstado() == EstadoTurno.FINALIZADO) {
+            throw new TurnFinishedException("No se puede modificar un turno finalizado");
+        }
 
         validarFechaYHora(dto);
 
         // Obtener usuario autenticado
-        String emailUsuario = obtenerEmailUsuarioAutenticado();
-        UsuarioEntity usuarioAutenticado = usuarioRepository.findByEmail(emailUsuario)
-                .orElseThrow(() -> new UserProfileNotFoundException("Usuario autenticado no encontrado"));
+        UsuarioEntity usuarioAutenticado = obtenerUsuarioAutenticado();
 
         // Verificar permisos: solo el propietario o ADMIN pueden modificar
-        boolean esAdmin = usuarioAutenticado.getAuthorities().stream()
-                .anyMatch(auth -> auth.getAuthority().equals("ROLE_ADMIN"));
+        boolean esAdmin = esAdmin(usuarioAutenticado);
 
         if (!turno.getUsuario().getIdUsuario().equals(usuarioAutenticado.getIdUsuario()) && !esAdmin) {
-            throw new AccessDeniedException("No tienes permisos para modificar este turno");
+            throw new UnauthorizedTurnoAccessException(
+                    "No tienes permisos para modificar este turno"
+            );
         }
 
         ServicioEntity servicio = servicioRepository.findById(dto.getServicioId())
                 .orElseThrow(() -> new ServicioNotFoundException("Servicio no encontrado"));
+        validarComercio(dto, servicio);
+        validarDuracion(servicio);
 
         LocalTime horaInicio = dto.getHoraInicio();
         LocalTime horaFinCalculada = horaInicio.plusMinutes(servicio.getDuracionDelServicio());
+        validarRangoCalculado(horaInicio, horaFinCalculada);
 
         validarHorarioAtencion(servicio.getComercio(), dto.getFecha(), horaInicio, horaFinCalculada);
 
         validarSuperposicionServicioExcluyendoActual(turno.getIdTurno(), servicio.getIdServicio(), dto.getFecha(), horaInicio, horaFinCalculada);
-        validarSuperposicionUsuarioExcluyendoActual(turno.getIdTurno(), usuarioAutenticado.getIdUsuario(), dto.getFecha(), horaInicio, horaFinCalculada);
+        validarSuperposicionUsuarioExcluyendoActual(turno.getIdTurno(),
+                turno.getUsuario().getIdUsuario(), dto.getFecha(), horaInicio, horaFinCalculada);
 
         turno.setFecha(dto.getFecha());
         turno.setHoraInicio(horaInicio);
         turno.setHoraFin(horaFinCalculada);
         turno.setServicio(servicio);
+        turno.setComercio(servicio.getComercio());
 
         TurnoEntity actualizado = turnoRepository.save(turno);
         return turnoMapper.toDto(actualizado);
@@ -154,22 +176,64 @@ public class TurnoServiceImp implements TurnoService {
             throw new TurnFinishedException("No se puede eliminar un turno finalizado");
         }
 
-        String emailUsuario = obtenerEmailUsuarioAutenticado();
-        UsuarioEntity usuarioAutenticado = usuarioRepository.findByEmail(emailUsuario)
-                .orElseThrow(() -> new UserProfileNotFoundException("Usuario autenticado no encontrado"));
+        UsuarioEntity usuarioAutenticado = obtenerUsuarioAutenticado();
 
         // Verificar permisos: solo el propietario o ADMIN pueden eliminar
-        boolean esAdmin = usuarioAutenticado.getAuthorities().stream()
-                .anyMatch(auth -> auth.getAuthority().equals("ROLE_ADMIN"));
-
-        if (!turno.getUsuario().getIdUsuario().equals(usuarioAutenticado.getIdUsuario()) && !esAdmin) {
-            throw new AccessDeniedException("No tienes permisos para eliminar este turno");
+        if (!turno.getUsuario().getIdUsuario().equals(usuarioAutenticado.getIdUsuario())
+                && !esAdmin(usuarioAutenticado)) {
+            throw new UnauthorizedTurnoAccessException("No tienes permisos para eliminar este turno");
         }
 
-        turnoRepository.delete(turno);
+        if (turno.getEstado() == EstadoTurno.CANCELADO) {
+            throw new TurnoAlreadyCancelledException("El turno ya se encuentra cancelado");
+        }
+        turno.setEstado(EstadoTurno.CANCELADO);
+        turnoRepository.save(turno);
+
+    }
+
+    @Override
+    public List<LocalTime> obtenerDisponibilidad(LocalDate fecha, Long servicioId) {
+        if (fecha == null || fecha.isBefore(LocalDate.now())) {
+            throw new TurnoPastDateException("La fecha debe ser hoy o una fecha futura");
+        }
+        if (servicioId == null || servicioId <= 0) {
+            throw new IllegalArgumentException("El ID del servicio debe ser positivo");
+        }
+        ServicioEntity servicio = servicioRepository.findById(servicioId)
+                .orElseThrow(() -> new ServicioNotFoundException("Servicio no encontrado"));
+        validarDuracion(servicio);
+        DiaSemana dia = mapearDiaSemana(fecha.getDayOfWeek());
+        if (servicio.getComercio() == null || servicio.getComercio().getHorarios() == null) {
+            throw new HorarioFueraDeAtencionException("El comercio no tiene horarios configurados");
+        }
+        HorarioDeAtencionEntity horario = servicio.getComercio().getHorarios().stream()
+                .filter(h -> h.getDiaSemana() == dia)
+                .findFirst()
+                .orElseThrow(() -> new HorarioFueraDeAtencionException("El comercio no atiende los días " + dia));
+        List<TurnoEntity> ocupados = turnoRepository
+                .findByServicio_IdServicioAndFecha(servicioId, fecha)
+                .stream()
+                .filter(t -> t.getEstado() != EstadoTurno.CANCELADO)
+                .toList();
+        List<LocalTime> disponibles = new ArrayList<>();
+        LocalTime inicio = horario.getHoraApertura();
+        while (!inicio.plusMinutes(servicio.getDuracionDelServicio()).isAfter(horario.getHoraCierre())) {
+            LocalTime inicioCandidato = inicio;
+            LocalTime finCandidato = inicioCandidato.plusMinutes(servicio.getDuracionDelServicio());
+            boolean noPaso = !fecha.equals(LocalDate.now()) || !inicioCandidato.isBefore(LocalTime.now());
+            if (noPaso && ocupados.stream().noneMatch(t -> haySuperposicion(t, inicioCandidato, finCandidato))) {
+                disponibles.add(inicioCandidato);
+            }
+            inicio = inicio.plusMinutes(15);
+        }
+        return disponibles;
     }
 
     private void validarFechaYHora(TurnoRequest dto) {
+        if (dto == null || dto.getFecha() == null || dto.getHoraInicio() == null) {
+            throw new IllegalArgumentException("La fecha y hora de inicio son obligatorias");
+        }
         if (dto.getFecha().isBefore(LocalDate.now())) {
             throw new TurnoPastDateException("No se puede crear un turno en una fecha pasada");
         }
@@ -233,6 +297,9 @@ public class TurnoServiceImp implements TurnoService {
     }
 
     private void validarHorarioAtencion(ComercioEntity comercio, java.time.LocalDate fecha, LocalTime horaInicio, LocalTime horaFin) {
+        if (comercio == null || comercio.getHorarios() == null) {
+            throw new HorarioFueraDeAtencionException("El comercio no tiene horarios configurados");
+        }
         DiaSemana diaTurno = mapearDiaSemana(fecha.getDayOfWeek());
         HorarioDeAtencionEntity horario = comercio.getHorarios().stream()
                 .filter(h -> h.getDiaSemana() == diaTurno)
@@ -260,18 +327,38 @@ public class TurnoServiceImp implements TurnoService {
         };
     }
 
-    private String obtenerEmailUsuarioAutenticado() {
+    private UsuarioEntity obtenerUsuarioAutenticado() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (authentication == null || authentication.getName() == null) {
+        if (authentication == null || authentication.getName() == null
+                || "anonymousUser".equals(authentication.getName())) {
             throw new UserProfileNotFoundException("No hay usuario autenticado");
         }
-        return authentication.getName();
+        return usuarioRepository.findByEmail(authentication.getName())
+                .orElseThrow(() -> new UserProfileNotFoundException("Usuario autenticado no encontrado"));
     }
 
-    // Clase de excepción local que puedes usar o reemplazar por la que ya tengas
-    private static class AccessDeniedException extends RuntimeException {
-        public AccessDeniedException(String message) {
-            super(message);
+    private boolean esAdmin(UsuarioEntity usuario) {
+        return usuario.getRol() == Rol.ADMIN;
+    }
+
+    private void validarComercio(TurnoRequest dto, ServicioEntity servicio) {
+        if (dto.getIdComercio() == null || servicio.getComercio() == null
+                || !dto.getIdComercio().equals(servicio.getComercio().getIdComercio())) {
+            throw new IllegalArgumentException("El servicio no pertenece al comercio indicado");
         }
     }
+
+    private void validarDuracion(ServicioEntity servicio) {
+        if (servicio.getDuracionDelServicio() == null || servicio.getDuracionDelServicio() <= 0
+                || servicio.getDuracionDelServicio() > 24 * 60) {
+            throw new IllegalArgumentException("La duración del servicio debe ser positiva");
+        }
+    }
+
+    private void validarRangoCalculado(LocalTime inicio, LocalTime fin) {
+        if (!fin.isAfter(inicio)) {
+            throw new HorarioFueraDeAtencionException("El turno excede el límite del día");
+        }
+    }
+
 }

@@ -19,8 +19,10 @@ public class CancelacionRequest
     @Positive(message = "El ID del turno debe ser un número positivo mayor a 0")
     private Long idTurno;
 
-    @NotNull(message = "El ID del usuario es obligatorio")
-    @Positive(message = "El ID del usuario debe ser un número positivo mayor a 0")
+    /*
+     * Se conserva por compatibilidad con clientes antiguos, pero nunca se usa
+     * para autorizar la operación. El usuario se obtiene del JWT.
+     */
     private Long idUsuario;
 
     @NotBlank(message = "El motivo de la cancelacion no puede estar vacio")
