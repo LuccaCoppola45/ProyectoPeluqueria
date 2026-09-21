@@ -94,8 +94,10 @@ private final JwtAuthenticationFilter jwtAuthFilter;
                         .requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+                        // El catálogo puede consultarse sin iniciar sesión.
                         .requestMatchers(HttpMethod.GET, "/api/servicios/**", "/api/comercios/**",
-                                "/api/horarios/**").hasAnyAuthority("CLIENTE", "COMERCIO", "ADMIN")
+                                "/api/horarios/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/turnos/disponibilidad").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/turnos").hasAnyAuthority("CLIENTE", "ADMIN")
                         .requestMatchers(HttpMethod.GET, "/api/turnos/**").hasAnyAuthority("CLIENTE", "ADMIN")
                         .requestMatchers(HttpMethod.PUT, "/api/turnos/**").hasAnyAuthority("CLIENTE", "ADMIN")

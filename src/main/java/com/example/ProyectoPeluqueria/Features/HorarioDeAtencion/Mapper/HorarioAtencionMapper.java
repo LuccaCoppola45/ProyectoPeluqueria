@@ -25,6 +25,9 @@ public class HorarioAtencionMapper
     public HorarioDeAtencionResponse toDto(HorarioDeAtencionEntity entity)
     {
         HorarioDeAtencionResponse response = modelMapper.map(entity, HorarioDeAtencionResponse.class);
+        if (entity.getComercio() != null) {
+            response.setComercioId(entity.getComercio().getIdComercio());
+        }
         return response;
     }
 }

@@ -11,6 +11,7 @@ import com.example.ProyectoPeluqueria.Features.HorarioDeAtencion.Mapper.HorarioA
 import com.example.ProyectoPeluqueria.Features.HorarioDeAtencion.dtos.HorarioDeAtencionRequest;
 import com.example.ProyectoPeluqueria.Features.HorarioDeAtencion.dtos.HorarioDeAtencionResponse;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -65,8 +66,25 @@ public class HorarioDeAtencionServiceImp implements HorarioDeAtencionService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<HorarioDeAtencionResponse> ListarHorarios() {
         return repository.findAll().stream()
+                .map(mapper::toDto)
+                .toList();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<HorarioDeAtencionResponse> listarHorariosPorComercio(Long comercioId) {
+        if (comercioId == null || comercioId <= 0) {
+            throw new IllegalArgumentException("El ID del comercio debe ser positivo");
+        }
+
+        if (!comercioRepository.existsById(comercioId)) {
+            throw new ComercioNotFoundException("Comercio no encontrado con ID: " + comercioId);
+        }
+
+        return repository.findByComercio_IdComercio(comercioId).stream()
                 .map(mapper::toDto)
                 .toList();
     }

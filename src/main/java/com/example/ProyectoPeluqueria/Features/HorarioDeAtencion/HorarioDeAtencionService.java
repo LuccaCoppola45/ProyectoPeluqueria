@@ -10,6 +10,8 @@ public interface HorarioDeAtencionService {
 
     List<HorarioDeAtencionResponse> ListarHorarios();
 
+    List<HorarioDeAtencionResponse> listarHorariosPorComercio(Long comercioId);
+
     void EliminarHorarioAtencion(long id);
 
     HorarioDeAtencionResponse ActualizarHorarioAtencion(long id, HorarioDeAtencionRequest request);

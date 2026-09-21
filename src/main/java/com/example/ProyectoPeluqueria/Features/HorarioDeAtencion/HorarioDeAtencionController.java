@@ -25,7 +25,11 @@ public class HorarioDeAtencionController {
     }
 
     @GetMapping
-    public ResponseEntity<List<HorarioDeAtencionResponse>> listar() {
+    public ResponseEntity<List<HorarioDeAtencionResponse>> listar(
+            @RequestParam(required = false) Long comercioId) {
+        if (comercioId != null) {
+            return ResponseEntity.ok(horarioService.listarHorariosPorComercio(comercioId));
+        }
         return ResponseEntity.ok(horarioService.ListarHorarios());
     }
 

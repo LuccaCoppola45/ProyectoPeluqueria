@@ -6,6 +6,7 @@ import com.example.ProyectoPeluqueria.Features.Comercio.Dtos.ComercioRequest;
 import com.example.ProyectoPeluqueria.Features.Comercio.Dtos.ComercioResponse;
 import com.example.ProyectoPeluqueria.Features.Comercio.Mapper.ComercioMapper;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class ComercioServiceImp implements  ComercioService {
@@ -52,6 +53,7 @@ public class ComercioServiceImp implements  ComercioService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public ComercioResponse ObtenerInfo() {
         ComercioEntity comercio = comercioRepository.findAll()
                 .stream()
