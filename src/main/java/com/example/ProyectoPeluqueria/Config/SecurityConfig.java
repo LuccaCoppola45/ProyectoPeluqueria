@@ -103,6 +103,10 @@ private final JwtAuthenticationFilter jwtAuthFilter;
                         .requestMatchers(HttpMethod.PUT, "/api/turnos/**").hasAnyAuthority("CLIENTE", "ADMIN")
                         .requestMatchers(HttpMethod.DELETE, "/api/turnos/**").hasAnyAuthority("CLIENTE", "ADMIN")
                         .requestMatchers("/api/cancelaciones/**").hasAnyAuthority("CLIENTE", "ADMIN")
+                        .requestMatchers(HttpMethod.POST, "/api/horarios/bloqueos")
+                                .hasAuthority("ADMIN")
+                        .requestMatchers(HttpMethod.DELETE, "/api/horarios/bloqueos/**")
+                                .hasAuthority("ADMIN")
                         .requestMatchers(HttpMethod.POST, "/api/servicios/**", "/api/horarios/**",
                                 "/api/comercios/**").hasAnyAuthority("COMERCIO", "ADMIN")
                         .requestMatchers(HttpMethod.PUT, "/api/servicios/**", "/api/horarios/**",

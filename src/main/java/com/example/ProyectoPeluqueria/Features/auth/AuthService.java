@@ -66,6 +66,10 @@ public class AuthService {
         String jwtToken = jwtService.generateToken(userDetails);
 
         // Devolvemos tu DTO armado
-        return new LoginResponseDTO(true, "Inicio de sesión exitoso", jwtToken);
+        return new LoginResponseDTO(
+                true,
+                "Inicio de sesión exitoso",
+                jwtToken,
+                usuario.getRol().name());
     }
 }

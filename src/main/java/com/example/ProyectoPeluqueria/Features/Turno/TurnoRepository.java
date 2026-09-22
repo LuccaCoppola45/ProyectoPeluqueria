@@ -19,6 +19,10 @@ public interface TurnoRepository extends JpaRepository<TurnoEntity, Long>
             Long servicioId,
             LocalDate fecha);
 
+    List<TurnoEntity> findByComercio_IdComercioAndFecha(
+            Long comercioId,
+            LocalDate fecha);
+
     List<TurnoEntity> findByUsuario_IdUsuarioAndFecha(
             Long usuarioId,
             LocalDate fecha);

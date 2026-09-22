@@ -33,6 +33,8 @@ public class TurnoMapper {
 
         if (entity.getUsuario() != null) {
             dto.setUsuarioId(entity.getUsuario().getIdUsuario());
+            dto.setNombreUsuario(entity.getUsuario().getNombre());
+            dto.setApellidoUsuario(entity.getUsuario().getApellido());
         }
 
         if (entity.getServicio() != null) {

@@ -2,6 +2,8 @@ package com.example.ProyectoPeluqueria.Features.HorarioDeAtencion;
 
 import com.example.ProyectoPeluqueria.Features.HorarioDeAtencion.dtos.HorarioDeAtencionRequest;
 import com.example.ProyectoPeluqueria.Features.HorarioDeAtencion.dtos.HorarioDeAtencionResponse;
+import com.example.ProyectoPeluqueria.Features.HorarioDeAtencion.dtos.BloqueoHorarioRequest;
+import com.example.ProyectoPeluqueria.Features.HorarioDeAtencion.dtos.BloqueoHorarioResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -9,6 +11,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.time.LocalDate;
+import org.springframework.format.annotation.DateTimeFormat;
 
 @RestController
 @RequestMapping("/api/horarios")
@@ -16,6 +20,30 @@ import java.util.List;
 public class HorarioDeAtencionController {
 
     private final HorarioDeAtencionService horarioService;
+    private final BloqueoHorarioService bloqueoService;
+
+    @GetMapping("/bloqueos")
+    public ResponseEntity<List<BloqueoHorarioResponse>> listarBloqueos(
+            @RequestParam Long comercioId,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate desde,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate hasta) {
+        return ResponseEntity.ok(bloqueoService.listar(comercioId, desde, hasta));
+    }
+
+    @PostMapping("/bloqueos")
+    public ResponseEntity<BloqueoHorarioResponse> bloquearDia(
+            @Valid @RequestBody BloqueoHorarioRequest request) {
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(bloqueoService.bloquear(request.getComercioId(), request.getFecha()));
+    }
+
+    @DeleteMapping("/bloqueos/{fecha}")
+    public ResponseEntity<Void> desbloquearDia(
+            @PathVariable @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fecha,
+            @RequestParam Long comercioId) {
+        bloqueoService.desbloquear(comercioId, fecha);
+        return ResponseEntity.noContent().build();
+    }
 
     @PostMapping
     public ResponseEntity<HorarioDeAtencionResponse> crear(

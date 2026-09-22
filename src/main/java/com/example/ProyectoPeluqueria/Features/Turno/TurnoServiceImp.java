@@ -9,6 +9,7 @@ import com.example.ProyectoPeluqueria.Features.Enums.DiaSemana;
 import com.example.ProyectoPeluqueria.Features.Enums.EstadoTurno;
 import com.example.ProyectoPeluqueria.Features.Enums.Rol;
 import com.example.ProyectoPeluqueria.Features.HorarioDeAtencion.HorarioDeAtencionEntity;
+import com.example.ProyectoPeluqueria.Features.HorarioDeAtencion.BloqueoHorarioService;
 import com.example.ProyectoPeluqueria.Features.Servicio.ServicioEntity;
 import com.example.ProyectoPeluqueria.Features.Servicio.ServicioRepository;
 import com.example.ProyectoPeluqueria.Features.Turno.Mapper.TurnoMapper;
@@ -36,16 +37,18 @@ public class TurnoServiceImp implements TurnoService {
     private final UsuarioRepository usuarioRepository;
     private final ServicioRepository servicioRepository;
     private final TurnoMapper turnoMapper;
+    private final BloqueoHorarioService bloqueoHorarioService;
 
     @Override
     public TurnoResponse crearTurno(TurnoRequest dto) {
         validarFechaYHora(dto);
 
-        // Obtener usuario autenticado (ya no viene en el request)
-        UsuarioEntity usuario = obtenerUsuarioAutenticado();
+        UsuarioEntity usuarioAutenticado = obtenerUsuarioAutenticado();
+        UsuarioEntity usuario = resolverUsuarioDelTurno(dto, usuarioAutenticado);
 
         ServicioEntity servicio = servicioRepository.findById(dto.getServicioId())
                 .orElseThrow(() -> new ServicioNotFoundException("Servicio no encontrado"));
+        validarDiaNoBloqueado(servicio.getComercio().getIdComercio(), dto.getFecha());
         validarComercio(dto, servicio);
         validarDuracion(servicio);
 
@@ -56,8 +59,12 @@ public class TurnoServiceImp implements TurnoService {
         // Validar horario en base al comercio del servicio
         validarHorarioAtencion(servicio.getComercio(), dto.getFecha(), horaInicio, horaFinCalculada);
 
-        // Validaciones de superposición usan el servicio y el usuario autenticado
-        validarSuperposicionServicio(servicio.getIdServicio(), dto.getFecha(), horaInicio, horaFinCalculada);
+        // Un solo profesional atiende el comercio: ningún servicio puede solaparse.
+        validarSuperposicionComercio(
+                servicio.getComercio().getIdComercio(),
+                dto.getFecha(),
+                horaInicio,
+                horaFinCalculada);
         validarSuperposicionUsuario(usuario.getIdUsuario(), dto.getFecha(), horaInicio, horaFinCalculada);
 
         TurnoEntity turno = turnoMapper.toEntity(dto);
@@ -70,6 +77,27 @@ public class TurnoServiceImp implements TurnoService {
         TurnoEntity guardado = turnoRepository.save(turno);
 
         return turnoMapper.toDto(guardado);
+    }
+
+    private UsuarioEntity resolverUsuarioDelTurno(
+            TurnoRequest dto,
+            UsuarioEntity usuarioAutenticado) {
+        if (esAdmin(usuarioAutenticado)) {
+            if (dto.getUsuarioId() == null) {
+                throw new IllegalArgumentException(
+                        "El usuarioId es obligatorio cuando un administrador crea un turno");
+            }
+            return usuarioRepository.findById(dto.getUsuarioId())
+                    .orElseThrow(() -> new UserProfileNotFoundException(
+                            "Usuario no encontrado con ID: " + dto.getUsuarioId()));
+        }
+
+        if (dto.getUsuarioId() != null
+                && !dto.getUsuarioId().equals(usuarioAutenticado.getIdUsuario())) {
+            throw new UnauthorizedTurnoAccessException(
+                    "No puedes crear un turno para otro usuario");
+        }
+        return usuarioAutenticado;
     }
 
     @Override
@@ -123,6 +151,7 @@ public class TurnoServiceImp implements TurnoService {
 
         ServicioEntity servicio = servicioRepository.findById(dto.getServicioId())
                 .orElseThrow(() -> new ServicioNotFoundException("Servicio no encontrado"));
+        validarDiaNoBloqueado(servicio.getComercio().getIdComercio(), dto.getFecha());
         validarComercio(dto, servicio);
         validarDuracion(servicio);
 
@@ -132,7 +161,12 @@ public class TurnoServiceImp implements TurnoService {
 
         validarHorarioAtencion(servicio.getComercio(), dto.getFecha(), horaInicio, horaFinCalculada);
 
-        validarSuperposicionServicioExcluyendoActual(turno.getIdTurno(), servicio.getIdServicio(), dto.getFecha(), horaInicio, horaFinCalculada);
+        validarSuperposicionComercioExcluyendoActual(
+                turno.getIdTurno(),
+                servicio.getComercio().getIdComercio(),
+                dto.getFecha(),
+                horaInicio,
+                horaFinCalculada);
         validarSuperposicionUsuarioExcluyendoActual(turno.getIdTurno(),
                 turno.getUsuario().getIdUsuario(), dto.getFecha(), horaInicio, horaFinCalculada);
 
@@ -181,6 +215,11 @@ public class TurnoServiceImp implements TurnoService {
         }
         ServicioEntity servicio = servicioRepository.findById(servicioId)
                 .orElseThrow(() -> new ServicioNotFoundException("Servicio no encontrado"));
+        if (servicio.getComercio() != null
+                && bloqueoHorarioService.estaBloqueado(
+                servicio.getComercio().getIdComercio(), fecha)) {
+            return List.of();
+        }
         validarDuracion(servicio);
         DiaSemana dia = mapearDiaSemana(fecha.getDayOfWeek());
         if (servicio.getComercio() == null || servicio.getComercio().getHorarios() == null) {
@@ -191,7 +230,9 @@ public class TurnoServiceImp implements TurnoService {
                 .findFirst()
                 .orElseThrow(() -> new HorarioFueraDeAtencionException("El comercio no atiende los días " + dia));
         List<TurnoEntity> ocupados = turnoRepository
-                .findByServicio_IdServicioAndFecha(servicioId, fecha)
+                .findByComercio_IdComercioAndFecha(
+                        servicio.getComercio().getIdComercio(),
+                        fecha)
                 .stream()
                 .filter(t -> t.getEstado() != EstadoTurno.CANCELADO)
                 .toList();
@@ -209,6 +250,13 @@ public class TurnoServiceImp implements TurnoService {
         return disponibles;
     }
 
+    private void validarDiaNoBloqueado(Long comercioId, LocalDate fecha) {
+        if (bloqueoHorarioService.estaBloqueado(comercioId, fecha)) {
+            throw new HorarioFueraDeAtencionException(
+                    "El comercio está cerrado el día seleccionado");
+        }
+    }
+
     private void validarFechaYHora(TurnoRequest dto) {
         if (dto == null || dto.getFecha() == null || dto.getHoraInicio() == null) {
             throw new IllegalArgumentException("La fecha y hora de inicio son obligatorias");
@@ -223,8 +271,12 @@ public class TurnoServiceImp implements TurnoService {
         }
     }
 
-    private void validarSuperposicionServicio(Long servicioId, java.time.LocalDate fecha, LocalTime horaInicio, LocalTime horaFin) {
-        boolean existeSuperposicion = turnoRepository.findByServicio_IdServicioAndFecha(servicioId, fecha)
+    private void validarSuperposicionComercio(
+            Long comercioId,
+            java.time.LocalDate fecha,
+            LocalTime horaInicio,
+            LocalTime horaFin) {
+        boolean existeSuperposicion = turnoRepository.findByComercio_IdComercioAndFecha(comercioId, fecha)
                 .stream()
                 .filter(t -> t.getEstado() != EstadoTurno.CANCELADO)
                 .anyMatch(t -> haySuperposicion(t, horaInicio, horaFin));
@@ -245,8 +297,13 @@ public class TurnoServiceImp implements TurnoService {
         }
     }
 
-    private void validarSuperposicionServicioExcluyendoActual(Long idTurno, Long servicioId, java.time.LocalDate fecha, LocalTime horaInicio, LocalTime horaFin) {
-        boolean existeSuperposicion = turnoRepository.findByServicio_IdServicioAndFecha(servicioId, fecha)
+    private void validarSuperposicionComercioExcluyendoActual(
+            Long idTurno,
+            Long comercioId,
+            java.time.LocalDate fecha,
+            LocalTime horaInicio,
+            LocalTime horaFin) {
+        boolean existeSuperposicion = turnoRepository.findByComercio_IdComercioAndFecha(comercioId, fecha)
                 .stream()
                 .filter(t -> !t.getIdTurno().equals(idTurno))
                 .filter(t -> t.getEstado() != EstadoTurno.CANCELADO)

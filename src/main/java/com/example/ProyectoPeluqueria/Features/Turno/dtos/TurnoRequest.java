@@ -22,6 +22,10 @@ public class TurnoRequest
     @NotNull(message = "La hora de inicio es obligatoria")
     private LocalTime horaInicio;
 
+    // Solo ADMIN lo usa para reservar en nombre de otro usuario.
+    @Positive(message = "El id del usuario debe ser positivo")
+    private Long usuarioId;
+
     @NotNull(message = "El id del servicio es obligatorio")
     @Positive(message = "El id del servicio debe ser positivo")
     private Long servicioId;

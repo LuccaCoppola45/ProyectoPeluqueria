@@ -21,6 +21,8 @@ public class TurnoResponse
     private LocalTime horaFin;
     private EstadoTurno estado;
     private Long usuarioId;
+    private String nombreUsuario;
+    private String apellidoUsuario;
     private Long servicioId;
     private Long cancelacionId;
     private Long idComercio;
