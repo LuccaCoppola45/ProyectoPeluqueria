@@ -15,6 +15,7 @@ import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.security.web.access.AccessDeniedHandler;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.DispatcherType;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
@@ -92,17 +93,25 @@ private final JwtAuthenticationFilter jwtAuthFilter;
                 .authorizeHttpRequests(auth -> auth
                         // Rutas públicas (No piden Token)
                         .requestMatchers("/api/auth/**").permitAll()
+                        .requestMatchers("/api/webhooks/whatsapp/**").permitAll()
+                        .dispatcherTypeMatchers(DispatcherType.ERROR).permitAll()
                         .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         // El catálogo puede consultarse sin iniciar sesión.
                         .requestMatchers(HttpMethod.GET, "/api/servicios/**", "/api/comercios/**",
-                                "/api/horarios/**").permitAll()
+                                "/api/horarios/**", "/api/resenias/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/turnos/disponibilidad").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/turnos/*/recordatorio-prueba")
+                                .hasAuthority("ADMIN")
                         .requestMatchers(HttpMethod.POST, "/api/turnos").hasAnyAuthority("CLIENTE", "ADMIN")
                         .requestMatchers(HttpMethod.GET, "/api/turnos/**").hasAnyAuthority("CLIENTE", "ADMIN")
                         .requestMatchers(HttpMethod.PUT, "/api/turnos/**").hasAnyAuthority("CLIENTE", "ADMIN")
                         .requestMatchers(HttpMethod.DELETE, "/api/turnos/**").hasAnyAuthority("CLIENTE", "ADMIN")
                         .requestMatchers("/api/cancelaciones/**").hasAnyAuthority("CLIENTE", "ADMIN")
+                        .requestMatchers(HttpMethod.POST, "/api/resenias")
+                                .hasAnyAuthority("CLIENTE", "ADMIN")
+                        .requestMatchers(HttpMethod.DELETE, "/api/resenias/**")
+                                .hasAnyAuthority("CLIENTE", "ADMIN")
                         .requestMatchers(HttpMethod.POST, "/api/horarios/bloqueos")
                                 .hasAuthority("ADMIN")
                         .requestMatchers(HttpMethod.DELETE, "/api/horarios/bloqueos/**")

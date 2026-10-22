@@ -42,6 +42,11 @@ public class TurnoEntity
     @Column(nullable = false)
     private EstadoTurno estado;
 
+    @Column(name = "respuesta_cliente", length = 20)
+    private String respuestaCliente;
+
+    private java.time.LocalDateTime fechaRespuesta;
+
 
 
     // RELACIÓN: Muchos turnos pueden ser de un Usuario

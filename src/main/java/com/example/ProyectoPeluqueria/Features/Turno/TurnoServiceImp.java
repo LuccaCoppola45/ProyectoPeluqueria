@@ -19,6 +19,7 @@ import com.example.ProyectoPeluqueria.Features.Usuario.UsuarioEntity;
 import com.example.ProyectoPeluqueria.Features.Usuario.UsuarioRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -38,6 +39,8 @@ public class TurnoServiceImp implements TurnoService {
     private final ServicioRepository servicioRepository;
     private final TurnoMapper turnoMapper;
     private final BloqueoHorarioService bloqueoHorarioService;
+    private final WhatsappService whatsappService;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Override
     public TurnoResponse crearTurno(TurnoRequest dto) {
@@ -75,6 +78,7 @@ public class TurnoServiceImp implements TurnoService {
         turno.setEstado(EstadoTurno.PENDIENTE);
 
         TurnoEntity guardado = turnoRepository.save(turno);
+        eventPublisher.publishEvent(new TurnoCreadoEvent(guardado.getIdTurno()));
 
         return turnoMapper.toDto(guardado);
     }
@@ -250,6 +254,16 @@ public class TurnoServiceImp implements TurnoService {
         return disponibles;
     }
 
+    @Override
+    public void enviarRecordatorioPrueba(Long turnoId) {
+        TurnoEntity turno = turnoRepository.findById(turnoId)
+                .orElseThrow(() -> new TurnoNotFoundException("Turno no encontrado"));
+        if (!whatsappService.enviarRecordatorio(turno)) {
+            throw new IllegalStateException(
+                    "WhatsApp está desactivado. Configurá WHATSAPP_ENABLED=true para probar el envío.");
+        }
+    }
+
     private void validarDiaNoBloqueado(Long comercioId, LocalDate fecha) {
         if (bloqueoHorarioService.estaBloqueado(comercioId, fecha)) {
             throw new HorarioFueraDeAtencionException(
@@ -369,7 +383,7 @@ public class TurnoServiceImp implements TurnoService {
                 || "anonymousUser".equals(authentication.getName())) {
             throw new UserProfileNotFoundException("No hay usuario autenticado");
         }
-        return usuarioRepository.findByEmail(authentication.getName())
+        return usuarioRepository.findByDniOrEmail(authentication.getName(), authentication.getName())
                 .orElseThrow(() -> new UserProfileNotFoundException("Usuario autenticado no encontrado"));
     }
 

@@ -8,6 +8,7 @@ import com.example.ProyectoPeluqueria.Features.Usuario.Dtos.UpdateUserResponse;
 import com.example.ProyectoPeluqueria.Features.Usuario.Dtos.UsuarioRequest;
 import com.example.ProyectoPeluqueria.Features.Usuario.Dtos.UsuarioResponse;
 import com.example.ProyectoPeluqueria.Features.Usuario.Mapper.UsuarioMapper;
+import com.example.ProyectoPeluqueria.Exceptions.user.UserDniAlreadyInUseException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -16,6 +17,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 @RequiredArgsConstructor
@@ -31,12 +33,17 @@ public class UsuarioServiceImp implements UsuarioService {
     @Override
     @Transactional
     public UsuarioResponse crearUsuario(UsuarioRequest dto) {
-        String email = dto.getEmail().trim().toLowerCase();
-        if (usuarioRepository.existsByEmail(email))
-        {
-            throw new UserEmailAlreadyInUseException("Ya existe un usuario con ese email");
+        String dni = dto.getDni().trim();
+        if (usuarioRepository.existsByDni(dni)) {
+            throw new UserDniAlreadyInUseException("Ya existe un usuario con ese DNI");
         }
         UsuarioEntity usuario = usuarioMapper.toEntity(dto);
+        usuario.setDni(dni);
+        String email = normalizarEmail(dto.getEmail());
+        if (email != null && usuarioRepository.existsByEmail(email)) {
+            throw new UserEmailAlreadyInUseException("Ya existe un usuario con ese email");
+        }
+        usuario.setEmail(email);
         usuario.setPassword(passwordEncoder.encode(usuario.getPassword()));
         UsuarioEntity guardado = usuarioRepository.save(usuario);
         return usuarioMapper.toResponce(guardado);
@@ -80,8 +87,9 @@ public class UsuarioServiceImp implements UsuarioService {
     @Transactional
     public UpdateUserResponse actualizarUsuario(Long id, UpdateUserRequestDTO dto) {
         // Obtener usuario autenticado
-        String emailUsuarioAutenticado = obtenerEmailUsuarioAutenticado();
-        UsuarioEntity usuarioAutenticado = usuarioRepository.findByEmail(emailUsuarioAutenticado)
+        String identificadorAutenticado = obtenerIdentificadorAutenticado();
+        UsuarioEntity usuarioAutenticado = usuarioRepository.findByDniOrEmail(
+                        identificadorAutenticado, identificadorAutenticado)
                 .orElseThrow(() -> new UserProfileNotFoundException("Usuario autenticado no encontrado"));
 
         // VALIDACIÓN: Solo puede actualizar su propia cuenta
@@ -92,16 +100,16 @@ public class UsuarioServiceImp implements UsuarioService {
         UsuarioEntity user = usuarioRepository.findById(id)
                 .orElseThrow(() -> new UserProfileNotFoundException("Usuario no encontrado"));
 
-        String nuevoEmail = dto.getEmail().trim().toLowerCase();
+        String nuevoEmail = normalizarEmail(dto.getEmail());
 
-        if (!user.getEmail().equalsIgnoreCase(nuevoEmail)
-                && usuarioRepository.existsByEmail(nuevoEmail)) {
+        if (!Objects.equals(user.getEmail(), nuevoEmail)
+                && nuevoEmail != null && usuarioRepository.existsByEmail(nuevoEmail)) {
             throw new UserEmailAlreadyInUseException("Ya existe un usuario con ese email");
         }
 
         if (user.getNombre().equals(dto.getNombre())
                 && user.getApellido().equals(dto.getApellido())
-                && user.getEmail().equalsIgnoreCase(nuevoEmail)) {
+                && Objects.equals(user.getEmail(), nuevoEmail)) {
             throw new UserWithoutChangesException("No se detectaron cambios para actualizar");
         }
 
@@ -118,12 +126,18 @@ public class UsuarioServiceImp implements UsuarioService {
                 .build();
     }
 
-    // Método auxiliar para obtener email del usuario autenticado
-    private String obtenerEmailUsuarioAutenticado() {
+    private String obtenerIdentificadorAutenticado() {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         if (auth == null || auth.getName() == null) {
             throw new UserProfileNotFoundException("No hay un usuario autenticado");
         }
         return auth.getName();
+    }
+
+    private String normalizarEmail(String email) {
+        if (email == null || email.isBlank()) {
+            return null;
+        }
+        return email.trim().toLowerCase();
     }
 }

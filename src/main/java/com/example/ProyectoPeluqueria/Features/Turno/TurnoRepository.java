@@ -1,5 +1,6 @@
 package com.example.ProyectoPeluqueria.Features.Turno;
 
+import com.example.ProyectoPeluqueria.Features.Enums.EstadoTurno;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
@@ -32,4 +33,8 @@ public interface TurnoRepository extends JpaRepository<TurnoEntity, Long>
     boolean existsByUsuario_IdUsuario(Long idUsuario);
 
     boolean existsByServicio_IdServicio(long id);
+
+    List<TurnoEntity> findByUsuario_IdUsuarioAndEstadoOrderByFechaAscHoraInicioAsc(
+            Long usuarioId,
+            EstadoTurno estado);
 }

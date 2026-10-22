@@ -41,8 +41,14 @@ public class UsuarioEntity
     @Column(unique = true)
     private String email;
 
+    @Column(unique = true, length = 8)
+    private String dni;
+
     @Column(nullable = false)
     private String password;
+
+    @Column(length = 20)
+    private String telefono;
 
 
     @ManyToMany

@@ -11,6 +11,7 @@ import com.example.ProyectoPeluqueria.Exceptions.servicio.ServicioNotFoundExcept
 import com.example.ProyectoPeluqueria.Exceptions.user.UserProfileNotFoundException;
 import com.example.ProyectoPeluqueria.Exceptions.user.UnauthorizedUserAccessException;
 import com.example.ProyectoPeluqueria.Exceptions.user.UserEmailAlreadyInUseException;
+import com.example.ProyectoPeluqueria.Exceptions.user.UserDniAlreadyInUseException;
 import com.example.ProyectoPeluqueria.Exceptions.user.UserHasAssociatedTurnosException;
 import com.example.ProyectoPeluqueria.Exceptions.user.UserWithoutChangesException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -450,6 +451,13 @@ public class GlobalExceptionHandler
     @ExceptionHandler(UserEmailAlreadyInUseException.class)
     public ResponseEntity<@NonNull ErrorResponse> handleUserEmailAlreadyInUseException(
             UserEmailAlreadyInUseException ex,
+            HttpServletRequest request) {
+        return buildErrorResponse(ex.getMessage(), request, HttpStatus.CONFLICT);
+    }
+
+    @ExceptionHandler(UserDniAlreadyInUseException.class)
+    public ResponseEntity<@NonNull ErrorResponse> handleUserDniAlreadyInUseException(
+            UserDniAlreadyInUseException ex,
             HttpServletRequest request) {
         return buildErrorResponse(ex.getMessage(), request, HttpStatus.CONFLICT);
     }

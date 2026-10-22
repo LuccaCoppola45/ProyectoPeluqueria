@@ -110,7 +110,7 @@ public class CancelacionServiceImp implements CancelacionService {
                 || "anonymousUser".equals(authentication.getName())) {
             throw new UnauthorizedTurnoAccessException("Se requiere un usuario autenticado.");
         }
-        return usuarioRepository.findByEmail(authentication.getName())
+        return usuarioRepository.findByDniOrEmail(authentication.getName(), authentication.getName())
                 .orElseThrow(() -> new UserProfileNotFoundException("Usuario autenticado no encontrado"));
     }
 

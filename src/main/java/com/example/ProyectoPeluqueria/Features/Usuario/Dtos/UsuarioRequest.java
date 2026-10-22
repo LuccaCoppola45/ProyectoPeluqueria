@@ -2,6 +2,7 @@ package com.example.ProyectoPeluqueria.Features.Usuario.Dtos;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -22,9 +23,14 @@ public class UsuarioRequest
     @Size(min = 3)
     private String apellido;
 
-    @NotBlank(message =  "el email es obligatorio")
-    @Email(message = "el email debe cumplir con el formato estandar")
-    private  String email;
+    @NotBlank(message = "El DNI es obligatorio")
+    @Pattern(regexp = "\\d{7,8}", message = "El DNI debe tener 7 u 8 dígitos")
+    private String dni;
+
+    @Email(message = "El email debe cumplir con el formato estándar")
+    private String email;
+
+    private String telefono;
 
     @NotBlank(message = "la contraseña es obligatoria")
     @Size(min = 6)

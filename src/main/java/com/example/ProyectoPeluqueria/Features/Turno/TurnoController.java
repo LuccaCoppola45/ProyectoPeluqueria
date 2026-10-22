@@ -56,4 +56,10 @@ public class TurnoController {
         turnoService.eliminarUnTurno(id);
         return ResponseEntity.noContent().build();
     }
+
+    @PostMapping("/{id}/recordatorio-prueba")
+    public ResponseEntity<String> enviarRecordatorioPrueba(@PathVariable Long id) {
+        turnoService.enviarRecordatorioPrueba(id);
+        return ResponseEntity.ok("Meta aceptó la solicitud de envío del recordatorio de prueba.");
+    }
 }

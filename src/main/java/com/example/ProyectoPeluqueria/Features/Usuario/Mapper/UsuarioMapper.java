@@ -31,6 +31,7 @@ public class UsuarioMapper
                 .addMapping(src -> Rol.CLIENTE, UsuarioEntity::setRol) // Rol por defecto
                 .addMapping(UsuarioRequest::getNombre, UsuarioEntity::setNombre)
                 .addMapping(UsuarioRequest::getApellido, UsuarioEntity::setApellido)
+                .addMapping(UsuarioRequest::getDni, UsuarioEntity::setDni)
                 .addMapping(UsuarioRequest::getEmail, UsuarioEntity::setEmail)
                 .addMapping(UsuarioRequest::getPassword, UsuarioEntity::setPassword);
 

@@ -20,6 +20,7 @@ public class UsuarioResponse
     private String apellido;
     private Rol rol;
     private String email;
+    private String dni;
 
     private List<Long> serviciosId;
     private List<Long>turnosIds;

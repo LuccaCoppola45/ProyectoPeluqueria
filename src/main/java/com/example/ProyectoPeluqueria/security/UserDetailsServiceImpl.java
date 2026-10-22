@@ -16,16 +16,16 @@ public class UserDetailsServiceImpl implements UserDetailsService {
     private final UsuarioRepository usuarioRepository;
 
     @Override
-    public UserDetails loadUserByUsername(String email) {
-        UsuarioEntity usuario = usuarioRepository.findByEmail(email)
+    public UserDetails loadUserByUsername(String identifier) {
+        UsuarioEntity usuario = usuarioRepository.findByDniOrEmail(identifier, identifier)
                 .orElseThrow(() ->
                         new UsernameNotFoundException(
-                                "Usuario no encontrado: " + email
+                                "Usuario no encontrado: " + identifier
                         )
                 );
 
         return User.builder()
-                .username(usuario.getEmail())
+                .username(identifier)
                 .password(usuario.getPassword())
                 .authorities(usuario.getRol().name())
                 .build();

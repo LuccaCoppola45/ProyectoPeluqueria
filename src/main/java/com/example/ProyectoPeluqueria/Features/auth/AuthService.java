@@ -5,6 +5,7 @@ import com.example.ProyectoPeluqueria.Features.Usuario.Dtos.LoginResquestDTO;
 import com.example.ProyectoPeluqueria.Features.Usuario.Dtos.UsuarioRequest;
 import com.example.ProyectoPeluqueria.Features.Usuario.UsuarioEntity;
 import com.example.ProyectoPeluqueria.Features.Usuario.UsuarioRepository;
+import com.example.ProyectoPeluqueria.Exceptions.user.UserDniAlreadyInUseException;
 import com.example.ProyectoPeluqueria.Exceptions.user.UserEmailAlreadyInUseException;
 import com.example.ProyectoPeluqueria.security.JwtService;
 import lombok.RequiredArgsConstructor;
@@ -26,16 +27,17 @@ public class AuthService {
 
     // 1. Lógica de Registro
     public String registrar(UsuarioRequest request) {
-
-        // (Opcional pero recomendado) Validar que el email no exista ya en la BD
-        if (usuarioRepository.findByEmail(request.getEmail()).isPresent()) {
-            throw new UserEmailAlreadyInUseException("El email ya está registrado");
+        String dni = request.getDni().trim();
+        if (usuarioRepository.existsByDni(dni)) {
+            throw new UserDniAlreadyInUseException("El DNI ya está registrado");
         }
 
         UsuarioEntity usuario = new UsuarioEntity();
         usuario.setNombre(request.getNombre());
         usuario.setApellido(request.getApellido());
-        usuario.setEmail(request.getEmail());
+        usuario.setDni(dni);
+        usuario.setEmail(normalizarEmail(request.getEmail()));
+        usuario.setTelefono(request.getTelefono());
 
         // ¡SÚPER IMPORTANTE! Encriptamos la contraseña
         usuario.setPassword(passwordEncoder.encode(request.getPassword()));
@@ -47,22 +49,25 @@ public class AuthService {
 
     // 2. Lógica de Inicio de Sesión (Login)
     public LoginResponseDTO login(LoginResquestDTO request) {
+        String identifier = request.getDni() != null && !request.getDni().isBlank()
+                ? request.getDni().trim()
+                : request.getEmail().trim().toLowerCase();
 
         // El AuthenticationManager de Spring Security compara la contraseña encriptada por nosotros
         authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(
-                        request.getEmail(),
+                        identifier,
                         request.getPassword()
                 )
         );
 
         // Si pasa la línea anterior, las credenciales están bien. Buscamos al usuario:
-        UsuarioEntity usuario = usuarioRepository.findByEmail(request.getEmail())
+        UsuarioEntity usuario = usuarioRepository.findByDniOrEmail(identifier, identifier)
                 .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
 
         // JwtService recibe UserDetails, no directamente UsuarioEntity.
         UserDetails userDetails =
-                userDetailsService.loadUserByUsername(usuario.getEmail());
+                userDetailsService.loadUserByUsername(identifier);
         String jwtToken = jwtService.generateToken(userDetails);
 
         // Devolvemos tu DTO armado
@@ -71,5 +76,16 @@ public class AuthService {
                 "Inicio de sesión exitoso",
                 jwtToken,
                 usuario.getRol().name());
+    }
+
+    private String normalizarEmail(String email) {
+        if (email == null || email.isBlank()) {
+            return null;
+        }
+        String emailNormalizado = email.trim().toLowerCase();
+        if (usuarioRepository.existsByEmail(emailNormalizado)) {
+            throw new UserEmailAlreadyInUseException("El email ya está registrado");
+        }
+        return emailNormalizado;
     }
 }

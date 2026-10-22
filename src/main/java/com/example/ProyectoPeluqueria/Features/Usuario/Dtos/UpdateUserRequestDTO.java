@@ -1,6 +1,7 @@
 package com.example.ProyectoPeluqueria.Features.Usuario.Dtos;
 
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
@@ -22,7 +23,6 @@ public class UpdateUserRequestDTO {
     @Size(min = 3)
     String apellido;
 
-    @NotNull(message = "El email es obligatorio")
-    @Size(min = 3)
+    @Email(message = "El email debe cumplir con el formato estándar")
     String email;
 }
