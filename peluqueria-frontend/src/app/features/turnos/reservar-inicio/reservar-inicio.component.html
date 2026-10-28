@@ -1,0 +1,48 @@
+<section class="reservar-page">
+  <header class="reservar-header">
+    <p class="eyebrow">Piazzolla</p>
+    <h1>Reservar un turno</h1>
+    <p class="lead">
+      Elegí el servicio que querés. Después vas a elegir el día y la hora que te quede cómodo.
+    </p>
+  </header>
+
+  <app-pasos-reserva [actual]="1" />
+
+  <h2 class="titulo-seccion" id="titulo-servicios">Elegí el servicio</h2>
+
+  <p *ngIf="cargando()" class="loading-message" aria-live="polite">Cargando los servicios...</p>
+
+  <p *ngIf="errorMsg()" class="error-msg" role="alert">{{ errorMsg() }}</p>
+
+  <p *ngIf="!cargando() && !errorMsg() && servicios().length === 0" class="empty-state">
+    Todavía no hay servicios cargados. Llamanos y te atendemos.
+  </p>
+
+  <ul class="servicios-lista" *ngIf="!cargando() && servicios().length > 0">
+    <li class="servicio-item" *ngFor="let servicio of servicios()">
+      <div class="servicio-datos">
+        <h3 class="servicio-nombre">{{ servicio.nombreServicio }}</h3>
+        <ul class="servicio-meta">
+          <li class="meta-duracion">
+            <span class="meta-icono" aria-hidden="true">&#9201;</span>
+            <span>Duración: <strong>{{ duracionLegible(servicio) }}</strong></span>
+          </li>
+          <li class="meta-precio">
+            <span class="meta-icono" aria-hidden="true">&#36;</span>
+            <span>Precio: <strong>{{ precioLegible(servicio) }}</strong></span>
+          </li>
+        </ul>
+      </div>
+
+      <a class="boton-reservar" [routerLink]="['/turnos/reservar', servicio.idServicio]">
+        Reservar este servicio
+      </a>
+    </li>
+  </ul>
+
+  <div class="ayuda">
+    <p>¿Ya tenés un turno reservado?</p>
+    <a routerLink="/turnos/mis-turnos" class="ayuda-enlace">Mirá tus turnos</a>
+  </div>
+</section>

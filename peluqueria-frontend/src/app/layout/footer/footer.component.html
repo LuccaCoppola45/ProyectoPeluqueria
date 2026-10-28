@@ -1,0 +1,58 @@
+<footer class="site-footer">
+  <div class="container footer-inner">
+    <div class="footer-col footer-col--marca">
+      <p class="footer-marca">Piazzolla</p>
+      <p class="footer-texto">Peluquería y estilo. Reservá tu turno en línea, sin esperas ni llamados.</p>
+
+      <div class="footer-ayuda">
+        <h2 class="footer-titulo-mini">¿Necesitás ayuda?</h2>
+        <p class="footer-texto">
+          Si algo no te sale, llamanos al
+          <a class="footer-telefono" [href]="telefonoLimpio() ? 'tel:' + telefonoLimpio() : null">
+            <span aria-hidden="true">&#128222;</span>
+            {{ telefonoLegible() || 'nuestro teléfono' }}
+          </a>
+          y te ayudamos a reservar.
+        </p>
+      </div>
+    </div>
+
+    <div class="footer-col">
+      <h2 class="footer-titulo-mini">Dónde estamos</h2>
+      <p class="footer-texto" *ngIf="comercio() as datos">
+        {{ datos.direccion }}
+      </p>
+
+      <h2 class="footer-titulo-mini footer-titulo-mini--separado">Horario de atención</h2>
+      <ul class="footer-horarios" *ngIf="comercio()?.horarios?.length; else sinHorarios">
+        <li *ngFor="let horario of horariosOrdenados(comercio()!.horarios!)">
+          <span class="footer-dia">{{ diaLegible(horario.diaSemana) }}</span>
+          <span class="footer-hora">
+            {{ horario.horaApertura.substring(0, 5) }} a {{ horario.horaCierre.substring(0, 5) }} hs
+          </span>
+        </li>
+      </ul>
+      <ng-template #sinHorarios>
+        <p class="footer-texto">Consultá los horarios al reservar tu turno.</p>
+      </ng-template>
+    </div>
+
+    <div class="footer-col">
+      <h2 class="footer-titulo-mini">Ir a...</h2>
+      <nav class="footer-nav" aria-label="Enlaces del pie de página">
+        <a routerLink="/turnos/reservar" class="footer-enlace">Reservar un turno</a>
+        <a routerLink="/servicios" class="footer-enlace">Ver los servicios</a>
+        <a routerLink="/turnos/mis-turnos" class="footer-enlace">Mis turnos</a>
+        <a routerLink="/login" class="footer-enlace" *ngIf="!authService.logueado()">Iniciar sesión</a>
+        <a routerLink="/register" class="footer-enlace" *ngIf="!authService.logueado()">Crear cuenta</a>
+        <a routerLink="/admin" class="footer-enlace" *ngIf="authService.isAdmin()">Administrar turnos</a>
+      </nav>
+
+      <button type="button" class="footer-subir" (click)="subir()">
+        <span aria-hidden="true">&#8593;</span> Volver arriba
+      </button>
+    </div>
+  </div>
+
+  <p class="footer-legal">Piazzolla · Todos los derechos reservados</p>
+</footer>

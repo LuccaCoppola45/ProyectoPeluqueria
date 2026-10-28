@@ -1,0 +1,201 @@
+:host {
+  display: block;
+  min-height: 100%;
+}
+
+.reservar-page {
+  width: min(1000px, calc(100% - 32px));
+  margin: 0 auto;
+  padding: 24px 0 64px;
+}
+
+/* ------------------------------------------------------------------ */
+/* Encabezado: dice en una línea qué hay que hacer                     */
+/* ------------------------------------------------------------------ */
+
+.reservar-header {
+  margin-bottom: 28px;
+}
+
+.reservar-header h1 {
+  margin: 0;
+  color: var(--texto-fuerte);
+  font-size: clamp(2.4rem, 6vw, 3.8rem);
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: -0.04em;
+}
+
+.lead {
+  max-width: 640px;
+  margin: 18px 0 0;
+  color: var(--texto-suave);
+  font-size: 1.25rem;
+  line-height: 1.6;
+}
+
+.titulo-seccion {
+  margin: 0 0 20px;
+  color: var(--texto-fuerte);
+  font-size: clamp(1.6rem, 3.5vw, 2.2rem);
+  font-weight: 700;
+  line-height: 1.1;
+  letter-spacing: -0.03em;
+}
+
+/* ------------------------------------------------------------------ */
+/* Lista de servicios: una fila por servicio, botón grande a la derecha */
+/* ------------------------------------------------------------------ */
+
+.servicios-lista {
+  display: grid;
+  gap: 16px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.servicio-item {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 24px 26px;
+  border: 2px solid var(--borde);
+  border-radius: 14px;
+  background: var(--fondo);
+  box-shadow: 0 8px 22px var(--sombra-suave);
+}
+
+.servicio-item:hover {
+  border-color: var(--borde-acento);
+}
+
+.servicio-datos {
+  flex: 1 1 320px;
+  min-width: 0;
+}
+
+.servicio-nombre {
+  margin: 0 0 12px;
+  color: var(--texto-fuerte);
+  font-size: clamp(1.4rem, 2.6vw, 1.85rem);
+  font-weight: 700;
+  line-height: 1.15;
+  letter-spacing: -0.025em;
+}
+
+.servicio-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 26px;
+  margin: 0;
+  padding: 0;
+  color: var(--texto-suave);
+  font-size: 1.1rem;
+  list-style: none;
+}
+
+.servicio-meta li {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+
+.meta-icono {
+  color: var(--marca);
+  font-size: 1.2rem;
+}
+
+.servicio-meta strong {
+  color: var(--texto-fuerte);
+  font-size: 1.2rem;
+  font-weight: 700;
+}
+
+.boton-reservar {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  min-height: 62px;
+  padding: 14px 32px;
+  border-radius: 10px;
+  background: var(--marca);
+  color: var(--texto-blanco);
+  font-size: 1.2rem;
+  font-weight: 700;
+  text-align: center;
+  text-decoration: none;
+  transition: background-color 0.15s ease;
+}
+
+.boton-reservar:hover {
+  background: var(--marca-fuerte);
+}
+
+/* ------------------------------------------------------------------ */
+/* Estados y ayuda                                                       */
+/* ------------------------------------------------------------------ */
+
+.loading-message,
+.empty-state,
+.error-msg {
+  margin: 0 0 18px;
+  font-size: 1.15rem;
+}
+
+.ayuda {
+  margin-top: 32px;
+  padding: 20px 24px;
+  border: 2px solid var(--borde-2);
+  border-radius: 12px;
+  background: var(--fondo-2);
+}
+
+.ayuda p {
+  margin: 0 0 14px;
+  color: var(--texto-suave);
+  font-size: 1.15rem;
+}
+
+/* Link con altura de botón: es más fácil de tocar que un link dentro de la frase. */
+.ayuda-enlace {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 48px;
+  padding: 10px 24px;
+  border: 2px solid var(--borde-acento);
+  border-radius: 999px;
+  background: var(--fondo);
+  color: var(--marca-texto);
+  font-size: 1.1rem;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.ayuda-enlace:hover {
+  background: var(--marca-tenue);
+  border-color: var(--marca);
+}
+
+/* ------------------------------------------------------------------ */
+/* Pantallas chicas                                                      */
+/* ------------------------------------------------------------------ */
+
+@media (max-width: 640px) {
+  .reservar-page {
+    width: min(100% - 20px, 1000px);
+    padding-top: 16px;
+  }
+
+  .servicio-item {
+    padding: 20px 16px;
+  }
+
+  .boton-reservar {
+    width: 100%;
+  }
+}

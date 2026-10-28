@@ -1,0 +1,165 @@
+/* Pie de página:Visible en todas las pantallas, con los datos del salón
+   y accesos rápidos para no perderse. */
+
+.site-footer {
+  margin-top: 48px;
+  padding: 44px 0 0;
+  background: var(--fondo-footer);
+  color: var(--fondo-nota-2);
+}
+
+.footer-inner {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 36px;
+  padding-bottom: 32px;
+}
+
+.footer-col {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  align-items: flex-start;
+}
+
+.footer-marca {
+  margin: 0;
+  font-size: 1.8rem;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  color: var(--texto-blanco);
+}
+
+.footer-titulo-mini {
+  margin: 0;
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--texto-blanco);
+}
+
+.footer-titulo-mini--separado {
+  margin-top: 14px;
+}
+
+.footer-texto {
+  margin: 0;
+  font-size: 1.05rem;
+  line-height: 1.7;
+  color: var(--borde-4);
+}
+
+.footer-ayuda {
+  margin-top: 10px;
+  padding: 18px 20px;
+  border-left: 5px solid var(--marca);
+  background: var(--fondo-footer-2);
+}
+
+.footer-ayuda .footer-titulo-mini {
+  margin-bottom: 8px;
+}
+
+.footer-telefono {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 48px;
+  margin-top: 6px;
+  padding: 8px 16px;
+  border-radius: 8px;
+  background: var(--marca);
+  color: var(--texto-blanco);
+  font-size: 1.15rem;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.footer-telefono:hover {
+  background: var(--marca-texto-suave);
+}
+
+.footer-horarios {
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.footer-horarios li {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 4px 16px;
+  padding: 10px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.14);
+  font-size: 1.05rem;
+}
+
+.footer-dia {
+  font-weight: 700;
+  color: var(--texto-blanco);
+}
+
+.footer-hora {
+  color: var(--borde-4);
+}
+
+.footer-nav {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  width: 100%;
+}
+
+.footer-enlace {
+  display: inline-flex;
+  align-items: center;
+  min-height: 48px;
+  padding: 6px 0;
+  color: var(--fondo-nota-2);
+  font-size: 1.05rem;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.footer-enlace:hover {
+  color: var(--texto-blanco);
+  text-decoration: underline;
+}
+
+.footer-subir {
+  margin-top: 14px;
+  min-height: 48px;
+  padding: 12px 20px;
+  border: 2px solid var(--marca);
+  background: transparent;
+  color: var(--texto-blanco);
+  font-size: 1.05rem;
+  font-weight: 700;
+}
+
+.footer-subir:hover {
+  background: var(--marca);
+}
+
+.footer-legal {
+  margin: 0;
+  padding: 18px 20px 26px;
+  border-top: 1px solid rgba(255, 255, 255, 0.16);
+  color: var(--marca-texto-3);
+  font-size: 1rem;
+  text-align: center;
+}
+
+@media (max-width: 820px) {
+  .site-footer {
+    margin-top: 32px;
+    padding-top: 32px;
+  }
+
+  .footer-inner {
+    grid-template-columns: 1fr;
+    gap: 28px;
+  }
+}

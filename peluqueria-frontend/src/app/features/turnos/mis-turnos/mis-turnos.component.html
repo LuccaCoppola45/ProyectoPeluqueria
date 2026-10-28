@@ -1,0 +1,109 @@
+<section class="container mis-turnos-page">
+  <header class="page-header">
+    <p class="eyebrow">Piazzolla</p>
+    <h1>Mis turnos</h1>
+    <p class="helper-text">
+      Acá están los turnos que reservaste. Si necesitás cambiar algo, cancelá el turno
+      y reservá uno nuevo, es muy fácil.
+    </p>
+  </header>
+
+  <div *ngIf="cargando()" class="card" aria-live="polite">
+    <p class="loading-message">Buscando tus turnos...</p>
+  </div>
+
+  <div *ngIf="aviso()" class="card aviso-ok" role="status">{{ aviso() }}</div>
+  <div *ngIf="errorMsg()" class="card aviso-error" role="alert">{{ errorMsg() }}</div>
+
+  <ng-container *ngIf="!cargando()">
+    <!-- Turnos por venir -->
+    <section class="turnos-seccion" aria-labelledby="titulo-proximos">
+      <h2 id="titulo-proximos">
+        Turnos por venir
+        <span class="contador" *ngIf="proximos().length > 0">{{ proximos().length }}</span>
+      </h2>
+
+      <p *ngIf="proximos().length === 0" class="card estado-vacio">
+        No tenés turnos reservados por venir.
+      </p>
+
+      <article class="turno-card" *ngFor="let turno of proximos()">
+        <div class="turno-fecha">
+          <span class="turno-dia">{{ dia(turno) }}</span>
+          <span class="turno-mes">{{ mes(turno) }}</span>
+          <span class="turno-anio">{{ anio(turno) }}</span>
+        </div>
+
+        <div class="turno-datos">
+          <h3>{{ nombreServicio(turno) }}</h3>
+          <p class="turno-dia-semana">{{ fechaLarga(turno) }}</p>
+          <p class="turno-hora">
+            <span class="icono" aria-hidden="true">&#128337;</span>
+            <span>Hora: <strong>{{ hora(turno) }}</strong></span>
+          </p>
+          <p class="turno-estado" [class]="claseEstado(turno)">
+            <span class="punto" aria-hidden="true"></span>
+            {{ estadoTurno(turno) }}
+          </p>
+        </div>
+
+        <div class="turno-acciones">
+          <button
+            class="danger"
+            type="button"
+            *ngIf="puedeCancelar(turno) && cancelacionPendiente() !== turno.idTurno"
+            (click)="pedirCancelacion(turno)">
+            Cancelar turno
+          </button>
+
+          <div class="confirmacion" *ngIf="cancelacionPendiente() === turno.idTurno" role="group" aria-label="Confirmar cancelación">
+            <p class="confirmacion-pregunta">¿Seguro que querés cancelar este turno?</p>
+            <div class="confirmacion-botones">
+              <button class="danger" type="button" [disabled]="cancelando()" (click)="confirmarCancelacion(turno)">
+                {{ cancelando() ? 'Cancelando...' : 'Sí, cancelar' }}
+              </button>
+              <button class="secondary" type="button" (click)="descartarCancelacion()">No, mantener el turno</button>
+            </div>
+          </div>
+        </div>
+      </article>
+    </section>
+
+    <!-- Turnos ya transcurridos -->
+    <section class="turnos-seccion" aria-labelledby="titulo-anteriores" *ngIf="anteriores().length > 0">
+      <h2 id="titulo-anteriores">
+        Turnos anteriores
+        <span class="contador">{{ anteriores().length }}</span>
+      </h2>
+
+      <article class="turno-card turno-card--pasado" *ngFor="let turno of anteriores()">
+        <div class="turno-fecha">
+          <span class="turno-dia">{{ dia(turno) }}</span>
+          <span class="turno-mes">{{ mes(turno) }}</span>
+          <span class="turno-anio">{{ anio(turno) }}</span>
+        </div>
+
+        <div class="turno-datos">
+          <h3>{{ nombreServicio(turno) }}</h3>
+          <p class="turno-dia-semana">{{ fechaLarga(turno) }}</p>
+          <p class="turno-hora">
+            <span class="icono" aria-hidden="true">&#128337;</span>
+            <span>Hora: <strong>{{ hora(turno) }}</strong></span>
+          </p>
+          <p class="turno-estado" [class]="claseEstado(turno)">
+            <span class="punto" aria-hidden="true"></span>
+            {{ estadoTurno(turno) }}
+          </p>
+        </div>
+      </article>
+    </section>
+
+    <!-- Acción principal -->
+    <div class="accion-principal">
+      <a routerLink="/turnos/reservar" class="boton-grande">Reservar un turno nuevo</a>
+      <p class="ayuda" *ngIf="telefono()">
+        ¿Necesitás ayuda? Llamanos al <strong>{{ telefono() }}</strong> y te atendemos.
+      </p>
+    </div>
+  </ng-container>
+</section>

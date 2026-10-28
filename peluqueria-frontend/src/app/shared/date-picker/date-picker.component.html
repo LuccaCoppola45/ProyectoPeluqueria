@@ -1,0 +1,47 @@
+<div class="date-picker" aria-label="Calendario para elegir una fecha">
+  <div class="calendar-header">
+    <button
+      class="month-nav"
+      type="button"
+      aria-label="Ver mes anterior"
+      [disabled]="previousMonthDisabled"
+      (click)="changeMonth(-1)">
+      <span aria-hidden="true">‹</span>
+    </button>
+    <h3 aria-live="polite">{{ monthLabel }}</h3>
+    <button
+      class="month-nav"
+      type="button"
+      aria-label="Ver mes siguiente"
+      (click)="changeMonth(1)">
+      <span aria-hidden="true">›</span>
+    </button>
+  </div>
+
+  <div class="calendar-grid calendar-weekdays" aria-hidden="true">
+    <span *ngFor="let weekday of weekdays">{{ weekday }}</span>
+  </div>
+
+  <div class="calendar-grid" role="group" [attr.aria-label]="'Días de ' + monthLabel">
+    <ng-container *ngFor="let day of calendarDays">
+      <span *ngIf="!day" class="calendar-empty" aria-hidden="true"></span>
+      <button
+        *ngIf="day as calendarDay"
+        class="calendar-day"
+        type="button"
+        [class.is-selected]="date === calendarDay.date"
+        [class.is-today]="calendarDay.isToday"
+        [disabled]="calendarDay.disabled"
+        [attr.aria-label]="accessibleDate(calendarDay.date)"
+        [attr.aria-pressed]="date === calendarDay.date"
+        (click)="selectDate(calendarDay.date)">
+        <span>{{ calendarDay.number }}</span>
+        <span *ngIf="calendarDay.isToday" class="today-label">Hoy</span>
+      </button>
+    </ng-container>
+  </div>
+
+  <p *ngIf="date" class="selected-date" aria-live="polite">
+    Fecha seleccionada: <strong>{{ selectedDateLabel }}</strong>
+  </p>
+</div>

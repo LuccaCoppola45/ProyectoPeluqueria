@@ -1,0 +1,84 @@
+<section class="container auth-shell">
+  <div class="auth-layout">
+    <div class="auth-visual">
+      <div class="visual-glow"></div>
+      <div class="visual-panel">
+        <p class="eyebrow">Peluquería Piazzolla</p>
+        <h1>Pedí tu turno en pocos pasos.</h1>
+        <p>
+          Iniciá sesión con tu DNI y tu contraseña. Después vas a poder ver tus turnos
+          y reservar cuando quieras.
+        </p>
+        <ol class="pasos-auth">
+          <li><span aria-hidden="true">1</span> Iniciá sesión</li>
+          <li><span aria-hidden="true">2</span> Elegí el servicio y el día</li>
+          <li><span aria-hidden="true">3</span> Confirmá tu turno</li>
+        </ol>
+      </div>
+    </div>
+
+    <div class="card auth-card">
+      <a routerLink="/" class="back-home" aria-label="Volver al inicio">
+        <span class="back-arrow" aria-hidden="true">&#8592;</span>
+        <span class="back-home-label">Volver al inicio</span>
+      </a>
+
+      <h1 class="auth-title">Iniciar sesión</h1>
+      <p class="auth-intro">Escribí tus datos para entrar a tu cuenta.</p>
+
+      <form [formGroup]="form" (ngSubmit)="onSubmit()" novalidate>
+        <div class="campo">
+          <label for="dni">Número de DNI</label>
+          <input
+            id="dni"
+            type="text"
+            formControlName="dni"
+            inputmode="numeric"
+            autocomplete="username"
+            maxlength="8"
+            placeholder="Por ejemplo, 12345678"
+            (input)="onDniInput($event)" />
+          <small class="field-hint">Ingresá los 7 u 8 números, sin puntos.</small>
+          <div class="error-msg" *ngIf="form.get('dni')?.touched && form.get('dni')?.invalid">
+            Ingresá un DNI válido de 7 u 8 números.
+          </div>
+        </div>
+
+        <div class="campo">
+          <label for="password">Contraseña</label>
+          <div class="password-wrapper">
+            <input
+              id="password"
+              [type]="mostrarPassword() ? 'text' : 'password'"
+              formControlName="password"
+              placeholder="Tu contraseña"
+              autocomplete="current-password" />
+            <button
+              class="ver-password"
+              type="button"
+              [attr.aria-pressed]="mostrarPassword()"
+              (click)="togglePassword()">
+              {{ mostrarPassword() ? 'Ocultar' : 'mostrar' }}
+            </button>
+          </div>
+          <small class="field-hint">La contraseña tiene al menos 6 caracteres.</small>
+          <div class="error-msg" *ngIf="form.get('password')?.touched && form.get('password')?.invalid">
+            La contraseña debe tener al menos 6 caracteres.
+          </div>
+        </div>
+
+        <div class="error-msg error-general" *ngIf="errorMsg()" role="alert">
+          <span aria-hidden="true">&#9888;</span> {{ errorMsg() }}
+        </div>
+
+        <button type="submit" class="primary" [disabled]="cargando()">
+          {{ cargando() ? 'Entrando...' : 'Iniciar sesión' }}
+        </button>
+      </form>
+
+      <p class="auth-link">
+        ¿No tenés cuenta? <a routerLink="/register">Crear una cuenta</a>
+      </p>
+    </div>
+  </div>
+</section>

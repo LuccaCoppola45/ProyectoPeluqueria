@@ -1,0 +1,117 @@
+<section class="container auth-shell">
+  <div class="card auth-card">
+    <a routerLink="/" class="back-home" aria-label="Volver al inicio">
+      <span class="back-arrow" aria-hidden="true">&#8592;</span>
+      <span class="back-home-label">Volver al inicio</span>
+    </a>
+
+    <p class="register-brand">Piazzolla · Peluquería &amp; Estilo</p>
+    <h1 class="auth-title">Crear una cuenta</h1>
+    <p class="register-intro">Escribí tus datos. Tarda menos de un minuto y después podés reservar tus turnos.</p>
+
+    <div *ngIf="exito()" class="success-msg aviso-ok" role="status">
+      <strong>¡Listo! Tu cuenta fue creada.</strong>
+      <p>Te llevamos al inicio de sesión para que entres con tu DNI y tu contraseña.</p>
+    </div>
+
+    <form [formGroup]="form" (ngSubmit)="onSubmit()" *ngIf="!exito()" novalidate>
+      <div class="campo">
+        <label for="nombre">Nombre</label>
+        <input
+          id="nombre"
+          type="text"
+          formControlName="nombre"
+          autocomplete="given-name"
+          placeholder="Por ejemplo, María" />
+        <div class="error-msg" *ngIf="form.get('nombre')?.touched && form.get('nombre')?.invalid">
+          Ingresá tu nombre (al menos 3 caracteres).
+        </div>
+      </div>
+
+      <div class="campo">
+        <label for="apellido">Apellido</label>
+        <input
+          id="apellido"
+          type="text"
+          formControlName="apellido"
+          autocomplete="family-name"
+          placeholder="Por ejemplo, González" />
+        <div class="error-msg" *ngIf="form.get('apellido')?.touched && form.get('apellido')?.invalid">
+          Ingresá tu apellido (al menos 3 caracteres).
+        </div>
+      </div>
+
+      <div class="campo">
+        <label for="dni">Número de DNI</label>
+        <input
+          id="dni"
+          type="text"
+          formControlName="dni"
+          inputmode="numeric"
+          autocomplete="off"
+          maxlength="8"
+          placeholder="Por ejemplo, 12345678"
+          (input)="onDniInput($event)" />
+        <small class="field-hint">Ingresá los 7 u 8 números, sin puntos.</small>
+        <div class="error-msg" *ngIf="form.get('dni')?.touched && form.get('dni')?.invalid">
+          Ingresá un DNI válido de 7 u 8 números.
+        </div>
+      </div>
+
+      <div class="campo">
+        <label for="telefono">Teléfono</label>
+        <div class="telefono-wrapper">
+          <span class="telefono-prefix" role="img" aria-label="Prefijo de Argentina">+54</span>
+          <input
+            id="telefono"
+            type="tel"
+            formControlName="telefono"
+            inputmode="numeric"
+            autocomplete="tel"
+            placeholder="1123456789"
+            (input)="onTelefonoInput($event)"
+          />
+        </div>
+        <small class="field-hint">Sin el 15. Por ejemplo: 1123456789.</small>
+        <div class="error-msg" *ngIf="form.get('telefono')?.touched && form.get('telefono')?.invalid">
+          Ingresá un teléfono válido, por ejemplo 1123456789.
+        </div>
+      </div>
+
+      <div class="campo">
+        <label for="password">Contraseña</label>
+        <div class="password-wrapper">
+          <input
+            id="password"
+            [type]="mostrarPassword() ? 'text' : 'password'"
+            formControlName="password"
+            placeholder="Mínimo 6 caracteres"
+            autocomplete="new-password" />
+          <button
+            class="ver-password"
+            type="button"
+            [attr.aria-pressed]="mostrarPassword()"
+            (click)="togglePassword()">
+            {{ mostrarPassword() ? 'Ocultar' : 'Ver' }}
+          </button>
+        </div>
+        <small class="field-hint">Usá al menos 6 caracteres. Podés usar números y letras.</small>
+        <div class="error-msg" *ngIf="form.get('password')?.touched && form.get('password')?.invalid">
+          La contraseña debe tener al menos 6 caracteres.
+        </div>
+      </div>
+
+      <div class="error-msg error-general" *ngIf="errorMsg()" role="alert">
+        <span aria-hidden="true">&#9888;</span> {{ errorMsg() }}
+      </div>
+
+      <button type="submit" class="primary" [disabled]="cargando()">
+        {{ cargando() ? 'Creando tu cuenta...' : 'Crear mi cuenta' }}
+      </button>
+    </form>
+
+    <p class="auth-link">
+      ¿Ya tenés cuenta? <a routerLink="/login">Iniciá sesión</a>
+    </p>
+  </div>
+</section>

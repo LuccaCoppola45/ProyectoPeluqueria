@@ -1,0 +1,401 @@
+:host {
+  display: block;
+  min-height: 100%;
+}
+
+.booking-page {
+  width: min(1100px, calc(100% - 32px));
+  margin: 0 auto;
+  padding: 24px 0 56px;
+}
+
+/* ------------------------------------------------------------------ */
+/* Migas de pan: siempre hay una salida visible hacia atrás            */
+/* ------------------------------------------------------------------ */
+
+.miga-pan {
+  margin-bottom: 18px;
+}
+
+.miga-enlace {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 48px;
+  padding: 10px 18px;
+  border: 2px solid var(--marca-borde-2);
+  border-radius: 999px;
+  background: var(--fondo);
+  color: var(--marca-texto);
+  font-size: 1.05rem;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.miga-enlace:hover {
+  background: var(--marca-tenue);
+  border-color: var(--marca);
+}
+
+/* ------------------------------------------------------------------ */
+/* Encabezado                                                           */
+/* ------------------------------------------------------------------ */
+
+.booking-hero {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1.3fr) minmax(220px, 0.7fr);
+  align-items: end;
+  gap: 24px;
+  padding: 44px 44px 30px;
+  margin-bottom: 22px;
+  border-radius: 22px;
+  /* Color de respaldo: si la foto no llega a cargar, el texto blanco
+     sigue leyéndose sobre un fondo oscuro. */
+  background-color: var(--fondo-hero-2);
+  background-image:
+    linear-gradient(120deg, rgba(0, 0, 0, 0.78), rgba(0, 0, 0, 0.48)),
+    url('/assets/home-salon.jpg');
+  background-position: center;
+  background-size: cover;
+  background-repeat: no-repeat;
+  color: var(--texto-blanco);
+  box-shadow: 0 24px 60px var(--sombra);
+}
+
+.hero-copy {
+  max-width: 620px;
+}
+
+.eyebrow {
+  margin: 0 0 12px;
+  color: var(--texto-blanco);
+  font-size: 1rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+.booking-hero h1 {
+  margin: 0;
+  font-size: clamp(2.4rem, 5.5vw, 4.4rem);
+  line-height: 0.98;
+  letter-spacing: -0.04em;
+  font-weight: 800;
+}
+
+.service-details {
+  margin: 16px 0 0;
+  color: var(--texto-blanco);
+  font-size: 1.25rem;
+  font-weight: 500;
+}
+
+.hero-summary {
+  display: grid;
+  gap: 14px;
+  justify-items: stretch;
+}
+
+.summary-card {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 16px 20px;
+  background: rgba(255, 255, 255, 0.14);
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  border-radius: 14px;
+}
+
+.summary-card.subtle {
+  background: rgba(255, 255, 255, 0.07);
+}
+
+.summary-label {
+  font-size: 1rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--texto-blanco);
+}
+
+.summary-card strong {
+  font-size: 1.35rem;
+  font-weight: 700;
+}
+
+/* ------------------------------------------------------------------ */
+/* Paneles de cada paso                                                 */
+/* ------------------------------------------------------------------ */
+
+.booking-panel {
+  background: var(--fondo);
+  border: 1px solid var(--borde);
+  border-radius: 14px;
+  padding: 28px;
+  box-shadow: 0 12px 34px var(--sombra);
+}
+
+.booking-step + .booking-step {
+  margin-top: 20px;
+}
+
+.panel-header {
+  margin-bottom: 24px;
+}
+
+.panel-step {
+  display: inline-block;
+  margin: 0 0 10px;
+  padding: 6px 14px;
+  border-radius: 999px;
+  background: var(--fondo-ticket);
+  color: var(--marca-texto-2);
+  font-size: 1rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.panel-header h2,
+.success-msg h2 {
+  margin: 0;
+  font-size: clamp(1.9rem, 3.5vw, 2.5rem);
+  line-height: 1.05;
+  letter-spacing: -0.04em;
+  color: var(--texto-fuerte);
+}
+
+.fecha-elegida {
+  margin: 12px 0 0;
+  color: var(--texto-suave);
+  font-size: 1.15rem;
+}
+
+.fecha-elegida strong {
+  color: var(--texto);
+}
+
+.instruccion-horarios {
+  margin: 0 0 20px;
+  color: var(--texto-suave);
+  font-size: 1.15rem;
+  line-height: 1.6;
+}
+
+.field-group {
+  display: grid;
+  /* minmax(0, 1fr) evita que el calendario estire la columna
+     y empuje el contenido fuera de la pantalla. */
+  grid-template-columns: minmax(0, 1fr);
+  gap: 12px;
+  margin-bottom: 22px;
+}
+
+.booking-label {
+  display: block;
+  margin: 0;
+  font-size: 1.25rem;
+  color: var(--texto);
+  font-weight: 700;
+}
+
+.availability-status,
+.empty-availability,
+.loading-message {
+  margin: 0 0 18px;
+  font-size: 1.15rem;
+  color: var(--texto-suave);
+}
+
+/* ------------------------------------------------------------------ */
+/* Franjas horarias                                                     */
+/* ------------------------------------------------------------------ */
+
+.franja {
+  margin-bottom: 26px;
+}
+
+.franja:last-child {
+  margin-bottom: 0;
+}
+
+.franja-titulo {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 12px;
+  margin: 0 0 14px;
+  font-size: 1.35rem;
+  color: var(--texto-fuerte);
+}
+
+.franja-descripcion {
+  color: var(--texto-medio);
+  font-size: 1rem;
+  font-weight: 400;
+}
+
+.slots {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin: 0;
+}
+
+.slot-btn {
+  min-width: 128px;
+  min-height: 62px;
+  padding: 0 18px;
+  border-radius: 10px;
+  border: 2px solid var(--borde-fuerte);
+  background: var(--fondo-ticket-3);
+  color: var(--texto);
+  font: inherit;
+  font-size: 1.2rem;
+  font-weight: 700;
+  transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+
+.slot-btn:hover {
+  background: var(--fondo-ticket-4);
+  border-color: var(--marca);
+}
+
+.slot-btn.selected {
+  background: var(--marca);
+  border-color: var(--marca);
+  color: var(--texto-blanco);
+}
+
+.slot-btn.selected:hover {
+  background: var(--marca-fuerte);
+}
+
+.error-msg {
+  margin-top: 18px;
+  color: var(--error-texto);
+  font-weight: 600;
+}
+
+/* ------------------------------------------------------------------ */
+/* Resumen del turno                                                    */
+/* ------------------------------------------------------------------ */
+
+.booking-summary {
+  display: grid;
+  gap: 0;
+  margin: 0;
+  padding: 6px 20px;
+  border: 2px solid var(--borde);
+  border-radius: 12px;
+  background: var(--fondo-2);
+}
+
+.resumen-fila {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 14px 0;
+  border-bottom: 1px solid var(--borde-5);
+}
+
+.resumen-fila:last-child {
+  border-bottom: none;
+}
+
+.resumen-fila dt {
+  color: var(--texto-medio);
+  font-size: 1.05rem;
+  font-weight: 700;
+}
+
+.resumen-fila dd {
+  margin: 0;
+  color: var(--texto);
+  font-size: 1.2rem;
+  font-weight: 700;
+  text-align: right;
+}
+
+.primary {
+  margin-top: 24px;
+  width: 100%;
+  min-height: 62px;
+  border: none;
+  border-radius: 10px;
+  background: var(--marca);
+  color: var(--texto-blanco);
+  font: inherit;
+  font-size: 1.25rem;
+  font-weight: 700;
+  transition: background-color 0.15s ease;
+}
+
+.primary:hover:not(:disabled) {
+  background: var(--marca-fuerte);
+}
+
+.primary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.success-msg {
+  padding: 32px 28px;
+  background: linear-gradient(135deg, var(--fondo) 0%, var(--fondo-3) 100%);
+}
+
+.success-kicker {
+  margin: 0 0 10px;
+  color: var(--ok-texto);
+  font-size: 1rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  font-weight: 800;
+}
+
+.success-msg p {
+  margin: 14px 0 0;
+  color: var(--texto-suave);
+  font-size: 1.15rem;
+}
+
+/* ------------------------------------------------------------------ */
+/* Pantallas chicas                                                      */
+/* ------------------------------------------------------------------ */
+
+@media (max-width: 760px) {
+  .booking-hero {
+    grid-template-columns: 1fr;
+    padding: 30px 24px 22px;
+  }
+
+  .slot-btn {
+    flex: 1 1 42%;
+    min-width: 0;
+  }
+}
+
+@media (max-width: 520px) {
+  .booking-page {
+    width: min(100% - 20px, 1100px);
+    padding-top: 16px;
+  }
+
+  .booking-panel {
+    padding: 22px 12px 20px;
+    border-radius: 12px;
+  }
+
+  .resumen-fila {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+  }
+
+  .resumen-fila dd {
+    text-align: left;
+  }
+}

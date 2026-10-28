@@ -1,0 +1,1031 @@
+/* ==========================================================================
+   Estilos globales
+   Pauta de accesibilidad pensada para adultos mayores:
+   - Texto legible: cuerpo de texto >= 1.05rem (16.8px), nunca menos de 1rem.
+   - Targets táctiles >= 48px de alto (recomendación WCAG 2.5.5).
+   - Foco siempre visible y bien contrastado.
+   ========================================================================== */
+
+/* ==========================================================================
+   PALETA
+   Los colores viven en variables CSS: para cambiar la paleta de la peluquería
+   alcanza con cambiar los valores de abajo, sin tocar ningún componente.
+   Hay tres paletas disponibles:
+     - (sin clase)  -> Terracota, la cálida de siempre
+     - .tema-negro   -> Negro y blanco, marca negra sobre fondo claro
+     - .tema-noche   -> Modo oscuro completo
+   ========================================================================== */
+
+:root {
+  color-scheme: light;
+
+  /* --- Marca (botones, acentos, títulos de color) --- */
+  --marca: #8a5a44;
+  --marca-fuerte: #71483a;
+  --marca-texto: #6d4636;
+  --marca-tenue: #f7f1ed;
+  --marca-punto: #a8623f;
+  --marca-texto-suave: #a06e56;
+  --marca-borde: #bd9a8b;
+  --marca-texto-2: #5c463a;
+  --marca-sombra: #4a2e24;
+  --marca-borde-2: #d8c3b8;
+  --marca-texto-3: #cfc0b6;
+  /* Texto que va ENCIMA de un fondo de marca (botones principales) */
+  --texto-sobre-marca: #ffffff;
+
+  /* --- Superficies cálidas --- */
+  --fondo: #ffffff;
+  --fondo-2: #faf7f5;
+  --fondo-3: #f7f5f3;
+  --fondo-4: #faf8f6;
+  --fondo-5: #fdf8f5;
+  --fondo-ticket: #f0e9e2;
+  --fondo-ticket-2: #e4dad1;
+  --fondo-ticket-3: #f5f2ef;
+  --fondo-ticket-4: #ebe3dc;
+  --fondo-ticket-5: #e6ddd5;
+  --fondo-nota: #f4ece7;
+  --fondo-nota-2: #f3ece7;
+  --fondo-hover: #f2ebe5;
+  --fondo-hero: #2b2422;
+  --fondo-hero-2: #2b2724;
+  --fondo-footer: #241c18;
+  --fondo-footer-2: #332c28;
+  /* Panel oscuro de la pantalla de login */
+  --fondo-visual: #111111;
+
+  /* --- Superficies neutras (gris) --- */
+  --g-100: #fafafa;
+  --g-200: #f5f5f5;
+  --g-250: #eeeeee;
+  --g-300: #f4f4f4;
+  --g-400: #f3f3f3;
+  --g-500: #f2f2f2;
+  --g-600: #ededed;
+  --g-700: #e8e8e8;
+  --g-800: #e5e5e5;
+  --g-900: #e3e3e3;
+  --g-950: #e0e0e0;
+  --g-975: #dedede;
+  --g-990: #dcdcdc;
+  --g-b1: #d9d9d9;
+  --g-b2: #d6d6d6;
+  --g-b3: #d4d4d4;
+  --g-b4: #c9c9c9;
+  --g-b5: #c4c4c4;
+  --g-b6: #bdbdbd;
+
+  /* --- Texto --- */
+  --texto: #1a1a1a;
+  --texto-fuerte: #111111;
+  --texto-fuerte-2: #222222;
+  --texto-oscuro: #333333;
+  --texto-gris: #555555;
+  --texto-suave: #4f463f;
+  --texto-tenue: #55504c;
+  --texto-medio: #5c534c;
+  --texto-label: #33291f;
+  --texto-blanco: #ffffff;
+  --texto-hero: #ffffff;
+  --texto-hero-2: #d6c3b8;
+  --texto-visual: #f0e6df;
+  --texto-placeholder: #6b6b6b;
+  --texto-deshabilitado: #707070;
+  --texto-deshabilitado-2: #808080;
+  --texto-deshabilitado-3: #8a8a8a;
+
+  /* --- Superficies oscuras (botones oscuros) --- */
+  --negro: #111111;
+  --negro-2: #333333;
+  --texto-sobre-negro: #ffffff;
+
+  /* --- Texto del pie de página --- */
+  --texto-footer: #f3ece7;
+  --texto-footer-suave: #e4d9d1;
+  --texto-footer-legal: #cfc0b6;
+
+  /* --- Estados (errores, avisos, ok) --- */
+  --error-texto: var(--error-texto);
+  --error-fuerte: #8b1e1e;
+  --error-fuerte-2: #741818;
+  --error-borde: #7d1717;
+  --error-fondo: #fbe9e7;
+  --error-fondo-2: #f8eaea;
+  --error-fondo-3: #fbe3e1;
+  --ok-texto: #1b6b39;
+  --ok-texto-2: #16603a;
+  --ok-texto-3: #1b7a3d;
+  --ok-fondo: #dcf1e3;
+  --aviso-texto: #7a5a05;
+  --aviso-fondo: #fdf3d8;
+  --neutro-fondo: #e8e6e4;
+
+  /* --- Bordes --- */
+  --borde: #e1d8d0;
+  --borde-2: #e6ded7;
+  --borde-3: #eee6df;
+  --borde-4: #e4d9d1;
+  --borde-5: #e7ded7;
+  --borde-6: #e9e2dd;
+  --borde-fuerte: #b6a89c;
+  --borde-fuerte-2: #b9aca2;
+  --borde-fuerte-3: #cdb7ac;
+  --borde-acento: #c3ada0;
+
+  /* --- Foco y sombras --- */
+  --foco: #1c5d99;
+  --sombra: rgba(17, 17, 17, 0.08);
+  --sombra-suave: rgba(17, 17, 17, 0.05);
+  --sombra-marca: rgba(138, 90, 68, 0.18);
+
+  /* --- Panel de registro: siempre oscuro, en todos los temas --- */
+  --panel-fondo: #090909;
+  --panel-fondo-2: #1c1c1c;
+  --panel-fondo-3: #101010;
+  --panel-borde: #4a4a4a;
+  --panel-borde-2: #707070;
+  --panel-borde-3: #808080;
+  --panel-texto: #f5f5f5;
+  --panel-texto-2: #d6d6d6;
+  --panel-texto-3: #e0e0e0;
+  --panel-texto-4: #dcdcdc;
+  --panel-texto-5: #f2f2f2;
+  --panel-texto-6: #e6e6e6;
+  --panel-texto-oscuro: #111111;
+  --panel-placeholder: #6b6b6b;
+  --panel-input-bg: #f2f2f2;
+  --panel-prefijo-bg: #e0e0e0;
+  --panel-prefijo-borde: #c4c4c4;
+  --panel-boton-bg: #f5f5f5;
+  --panel-boton-hover: #dcdcdc;
+  --panel-boton-oscuro: #111111;
+  --panel-btn-sec-bg: #dedede;
+  --panel-btn-sec-texto: #333333;
+  --panel-btn-sec-hover: #c9c9c9;
+  --panel-foco: #ffd9a0;
+  --panel-error: #ffc9c2;
+  --panel-error-borde: #ff8f80;
+  --panel-ok-borde: #6ee7a0;
+}
+
+/* --------------------------------------------------------------------------
+   Paleta NEGRO: la marca pasa a negro y los beige a gris.
+   Fondo claro, mucho contraste: sigue siendo la más cómoda para leer.
+   -------------------------------------------------------------------------- */
+html.tema-negro {
+  color-scheme: light;
+
+  --marca: #111111;
+  --marca-fuerte: #000000;
+  --marca-texto: #1a1a1a;
+  --marca-tenue: #f2f2f2;
+  --marca-punto: #4d4d4d;
+  --marca-texto-suave: #8a8a8a;
+  --marca-borde: #6b6b6b;
+  --marca-texto-2: #4d4d4d;
+  --marca-sombra: #000000;
+  --marca-borde-2: #6b6b6b;
+  --marca-texto-3: #9c9c9c;
+  --texto-sobre-marca: #ffffff;
+
+  --fondo: #ffffff;
+  --fondo-2: #fafafa;
+  --fondo-3: #f7f7f7;
+  --fondo-4: #fafafa;
+  --fondo-5: #fdfdfd;
+  --fondo-ticket: #f0f0f0;
+  --fondo-ticket-2: #dedede;
+  --fondo-ticket-3: #f5f5f5;
+  --fondo-ticket-4: #eaeaea;
+  --fondo-ticket-5: #e6e6e6;
+  --fondo-nota: #f4f4f4;
+  --fondo-nota-2: #f3f3f3;
+  --fondo-hover: #f2f2f2;
+  --fondo-hero: #101010;
+  --fondo-hero-2: #171717;
+  --fondo-footer: #000000;
+  --fondo-footer-2: #2b2b2b;
+  --fondo-visual: #111111;
+
+  --g-100: #fafafa;
+  --g-200: #f5f5f5;
+  --g-250: #eeeeee;
+  --g-300: #f4f4f4;
+  --g-400: #f3f3f3;
+  --g-500: #f2f2f2;
+  --g-600: #ededed;
+  --g-700: #e8e8e8;
+  --g-800: #e5e5e5;
+  --g-900: #e3e3e3;
+  --g-950: #e0e0e0;
+  --g-975: #dedede;
+  --g-990: #dcdcdc;
+  --g-b1: #d9d9d9;
+  --g-b2: #d6d6d6;
+  --g-b3: #d4d4d4;
+  --g-b4: #c9c9c9;
+  --g-b5: #c4c4c4;
+  --g-b6: #bdbdbd;
+
+  --texto: #1a1a1a;
+  --texto-fuerte: #000000;
+  --texto-fuerte-2: #222222;
+  --texto-oscuro: #333333;
+  --texto-gris: #555555;
+  --texto-suave: #454545;
+  --texto-tenue: #555555;
+  --texto-medio: #5c5c5c;
+  --texto-label: #333333;
+  --texto-blanco: #ffffff;
+  --texto-hero: #ffffff;
+  --texto-hero-2: #b3b3b3;
+  --texto-visual: #f0e6df;
+  --texto-placeholder: #6b6b6b;
+  --texto-deshabilitado: #707070;
+  --texto-deshabilitado-2: #808080;
+  --texto-deshabilitado-3: #8a8a8a;
+
+  --negro: #111111;
+  --negro-2: #333333;
+  --texto-sobre-negro: #ffffff;
+
+  --texto-footer: #e8e8e8;
+  --texto-footer-suave: #d4d4d4;
+  --texto-footer-legal: #a8a8a8;
+
+  --error-texto: #a32020;
+  --error-fuerte: #8b1e1e;
+  --error-fuerte-2: #741818;
+  --error-borde: #7d1717;
+  --error-fondo: #fbe9e7;
+  --error-fondo-2: #f8eaea;
+  --error-fondo-3: #fbe3e1;
+  --ok-texto: #1b6b39;
+  --ok-texto-2: #16603a;
+  --ok-texto-3: #1b7a3d;
+  --ok-fondo: #dcf1e3;
+  --aviso-texto: #7a5a05;
+  --aviso-fondo: #fdf3d8;
+  --neutro-fondo: #e8e6e4;
+
+  --borde: #dedede;
+  --borde-2: #e6e6e6;
+  --borde-3: #ececec;
+  --borde-4: #e2e2e2;
+  --borde-5: #e6e6e6;
+  --borde-6: #e7e7e7;
+  --borde-fuerte: #a8a8a8;
+  --borde-fuerte-2: #adadad;
+  --borde-fuerte-3: #c0c0c0;
+  --borde-acento: #b8b8b8;
+
+  --foco: #1c5d99;
+  --sombra: rgba(0, 0, 0, 0.12);
+  --sombra-suave: rgba(0, 0, 0, 0.07);
+  --sombra-marca: rgba(0, 0, 0, 0.2);
+}
+
+/* --------------------------------------------------------------------------
+   Paleta NOCHE: modo oscuro completo.
+   -------------------------------------------------------------------------- */
+html.tema-noche {
+  color-scheme: dark;
+
+  --marca: #e6b98a;
+  --marca-fuerte: #d4a06a;
+  --marca-texto: #f0c99a;
+  --marca-tenue: #2a231c;
+  --marca-punto: #e6b98a;
+  --marca-texto-suave: #b99a7c;
+  --marca-borde: #7a5c3f;
+  --marca-texto-2: #c9a983;
+  --marca-sombra: #000000;
+  --marca-borde-2: #6b6b6b;
+  --marca-texto-3: #9c9c9c;
+  /* Sobre el dorado de la marca va texto oscuro */
+  --texto-sobre-marca: #1a1a1a;
+
+  --fondo: #0f0f0f;
+  --fondo-2: #171717;
+  --fondo-3: #1a1a1a;
+  --fondo-4: #161616;
+  --fondo-5: #121212;
+  --fondo-ticket: #242424;
+  --fondo-ticket-2: #2e2e2e;
+  --fondo-ticket-3: #1f1f1f;
+  --fondo-ticket-4: #262626;
+  --fondo-ticket-5: #2a2a2a;
+  --fondo-nota: #1c1c1c;
+  --fondo-nota-2: #1b1b1b;
+  --fondo-hover: #262626;
+  --fondo-hero: #080808;
+  --fondo-hero-2: #141414;
+  --fondo-footer: #000000;
+  --fondo-footer-2: #1f1f1f;
+  --fondo-visual: #0a0a0a;
+
+  --g-100: #171717;
+  --g-200: #1c1c1c;
+  --g-250: #1e1e1e;
+  --g-300: #202020;
+  --g-400: #222222;
+  --g-500: #242424;
+  --g-600: #262626;
+  --g-700: #2a2a2a;
+  --g-800: #2e2e2e;
+  --g-900: #323232;
+  --g-950: #363636;
+  --g-975: #3a3a3a;
+  --g-990: #3e3e3e;
+  --g-b1: #444444;
+  --g-b2: #484848;
+  --g-b3: #4c4c4c;
+  --g-b4: #525252;
+  --g-b5: #585858;
+  --g-b6: #616161;
+
+  --texto: #f2f2f2;
+  --texto-fuerte: #ffffff;
+  --texto-fuerte-2: #f5f5f5;
+  --texto-oscuro: #dcdcdc;
+  --texto-gris: #b8b8b8;
+  --texto-suave: #c9c9c9;
+  --texto-tenue: #b8b8b8;
+  --texto-medio: #b0b0b0;
+  --texto-label: #e0e0e0;
+  --texto-blanco: #ffffff;
+  --texto-hero: #ffffff;
+  --texto-hero-2: #b3b3b3;
+  --texto-visual: #f0e6df;
+  --texto-placeholder: #9a9a9a;
+  --texto-deshabilitado: #9a9a9a;
+  --texto-deshabilitado-2: #a3a3a3;
+  --texto-deshabilitado-3: #adadad;
+
+  --negro: #f2f2f2;
+  --negro-2: #dcdcdc;
+  --texto-sobre-negro: #1a1a1a;
+
+  --texto-footer: #d4d4d4;
+  --texto-footer-suave: #a8a8a8;
+  --texto-footer-legal: #8c8c8c;
+
+  --error-texto: #ff9c94;
+  --error-fuerte: #ff8f80;
+  --error-fuerte-2: #f5a49a;
+  --error-borde: #a33a30;
+  --error-fondo: #3a1c1a;
+  --error-fondo-2: #351a18;
+  --error-fondo-3: #331917;
+  --ok-texto: #7fd8a3;
+  --ok-texto-2: #8adcae;
+  --ok-texto-3: #79d29c;
+  --ok-fondo: #14301f;
+  --aviso-texto: #f0c674;
+  --aviso-fondo: #33290f;
+  --neutro-fondo: #242424;
+
+  --borde: #333333;
+  --borde-2: #3a3a3a;
+  --borde-3: #2e2e2e;
+  --borde-4: #303030;
+  --borde-5: #383838;
+  --borde-6: #353535;
+  --borde-fuerte: #6e6e6e;
+  --borde-fuerte-2: #737373;
+  --borde-fuerte-3: #7a7a7a;
+  --borde-acento: #4d4d4d;
+
+  --foco: #7ab8ff;
+  --sombra: rgba(0, 0, 0, 0.5);
+  --sombra-suave: rgba(0, 0, 0, 0.35);
+  --sombra-marca: rgba(0, 0, 0, 0.4);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  /* Permite que el usuario haga zoom sin romper el layout */
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  font-family: 'Segoe UI', Arial, sans-serif;
+  font-size: 1.05rem;
+  line-height: 1.6;
+  background-color: var(--fondo);
+  color: var(--texto);
+}
+
+/* Foco visible y consistente en TODOS los elementos interactivos */
+:focus-visible {
+  outline: 3px solid var(--foco);
+  outline-offset: 3px;
+  border-radius: 4px;
+}
+
+/* Enlace de salto: permite al usuario de teclado saltar al contenido */
+.skip-link {
+  position: absolute;
+  top: -100px;
+  left: 12px;
+  z-index: 1000;
+  padding: 14px 22px;
+  background: var(--texto);
+  color: var(--texto-blanco);
+  font-size: 1.05rem;
+  font-weight: 700;
+  text-decoration: none;
+  border-radius: 0 0 8px 8px;
+}
+
+.skip-link:focus {
+  top: 0;
+}
+
+.visually-hidden {
+  position: absolute !important;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.container {
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 32px 20px;
+}
+
+.booking-container {
+  max-width: 720px;
+}
+
+/* ------------------------------------------------------------------ */
+/* Encabezado reutilizable dentro de las tarjetas                       */
+/* ------------------------------------------------------------------ */
+
+.card {
+  background: var(--fondo);
+  border-radius: 10px;
+  padding: 24px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.06);
+  margin-bottom: 16px;
+}
+
+.eyebrow {
+  margin: 0 0 8px;
+  color: var(--marca);
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+/* ------------------------------------------------------------------ */
+/* Botones                                                              */
+/* ------------------------------------------------------------------ */
+
+button {
+  cursor: pointer;
+  border: none;
+  border-radius: 8px;
+  padding: 12px 22px;
+  min-height: 48px;
+  font-family: inherit;
+  font-size: 1.05rem;
+  font-weight: 600;
+  transition: opacity 0.15s ease, background-color 0.15s ease;
+}
+
+button.primary {
+  min-height: 56px;
+  padding: 14px 28px;
+  font-size: 1.15rem;
+  font-weight: 700;
+}
+
+button.primary {
+  background-color: var(--marca);
+  color: var(--texto-blanco);
+}
+
+button.secondary {
+  min-height: 48px;
+  background-color: #e8e0da;
+  color: var(--texto-label);
+  border: 1px solid var(--borde-fuerte-2);
+}
+
+button.danger {
+  background-color: #a32020;
+  color: var(--texto-blanco);
+  border: 1px solid var(--error-borde);
+}
+
+.admin-nav-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 48px;
+  padding: 10px 18px;
+  border-radius: 8px;
+  background-color: var(--fondo-ticket);
+  color: var(--texto-label);
+  font-weight: 700;
+  text-decoration: none;
+}
+
+button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+button:hover:not(:disabled) {
+  opacity: 0.9;
+}
+
+/* ------------------------------------------------------------------ */
+/* Formularios                                                          */
+/* ------------------------------------------------------------------ */
+
+input,
+select,
+textarea {
+  width: 100%;
+  min-height: 56px;
+  padding: 12px 14px;
+  margin-top: 6px;
+  margin-bottom: 18px;
+  border: 2px solid var(--borde-fuerte);
+  border-radius: 8px;
+  background: var(--fondo);
+  color: var(--texto);
+  font-family: inherit;
+  font-size: 1.1rem;
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+  border-color: var(--marca);
+  outline: 3px solid var(--foco);
+  outline-offset: 1px;
+}
+
+label {
+  display: block;
+  font-weight: 700;
+  font-size: 1.05rem;
+  color: var(--texto-label);
+}
+
+.error-msg {
+  color: var(--error-texto);
+  font-size: 1rem;
+  font-weight: 600;
+  line-height: 1.5;
+  margin-top: -10px;
+  margin-bottom: 12px;
+}
+
+.success-msg {
+  color: var(--ok-texto);
+  font-weight: 600;
+}
+
+/* ------------------------------------------------------------------ */
+/* Turnos: horarios y selector de fecha                                 */
+/* ------------------------------------------------------------------ */
+
+.slots {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 12px 0;
+}
+
+.slot-btn {
+  min-width: 118px;
+  min-height: 60px;
+  background: var(--fondo-ticket);
+  color: var(--texto-label);
+  border: 2px solid var(--borde-fuerte);
+  font-size: 1.15rem;
+  font-weight: 700;
+}
+
+.slot-btn:hover:not(:disabled) {
+  background: var(--fondo-ticket-2);
+  border-color: var(--marca);
+}
+
+.slot-btn.selected {
+  background-color: var(--marca);
+  border-color: var(--marca);
+  color: var(--texto-blanco);
+}
+
+.slot-btn.selected:hover:not(:disabled) {
+  background-color: var(--marca-fuerte);
+}
+
+/* ------------------------------------------------------------------ */
+/* Panel de administración                                               */
+/* ------------------------------------------------------------------ */
+
+.admin-container {
+  max-width: 1320px;
+  padding: 42px 28px 100px;
+  color: var(--texto-fuerte);
+}
+
+.admin-heading {
+  max-width: 720px;
+}
+
+.admin-hero {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 32px;
+  min-height: 240px;
+  margin-bottom: 28px;
+  padding: 42px 48px;
+  background: linear-gradient(115deg, #080808 0%, #171717 65%, #292929 100%);
+  color: var(--texto-blanco);
+}
+
+/* El eyebrow del hero va sobre fondo oscuro: color claro. */
+.admin-heading .eyebrow {
+  margin: 0 0 12px;
+  color: #d6c3b8;
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+/* En los paneles claros el eyebrow va en terracota para que se lea bien. */
+.admin-panel-heading .eyebrow,
+.section-header .eyebrow {
+  margin: 0 0 12px;
+  color: var(--marca);
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.admin-heading h1 {
+  margin: 0;
+  font-size: clamp(2.4rem, 5vw, 4.4rem);
+  font-weight: 400;
+  letter-spacing: -0.06em;
+  line-height: 1;
+}
+
+.admin-heading > p:last-child {
+  margin: 18px 0 0;
+  color: rgba(255, 255, 255, 0.85);
+  font-size: 1.15rem;
+  line-height: 1.7;
+}
+
+.admin-hero-stat {
+  display: flex;
+  min-width: 170px;
+  min-height: 150px;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.admin-hero-stat span {
+  color: rgba(255, 255, 255, 0.88);
+  font-size: 1rem;
+  letter-spacing: 0.06em;
+  text-align: center;
+  text-transform: uppercase;
+}
+
+.admin-hero-stat strong {
+  color: var(--texto-blanco);
+  font-size: 3.2rem;
+  font-weight: 400;
+  line-height: 1;
+}
+
+.admin-container .admin-panel {
+  margin-bottom: 22px;
+  padding: clamp(22px, 4vw, 36px);
+  border: 1px solid var(--g-800);
+  border-radius: 10px;
+  box-shadow: 0 14px 38px rgba(0, 0, 0, 0.06);
+}
+
+.admin-container .admin-panel h2,
+.admin-container .admin-panel h3 {
+  margin: 0;
+  color: var(--texto-fuerte);
+  font-size: clamp(1.55rem, 3vw, 2rem);
+  font-weight: 400;
+  letter-spacing: -0.04em;
+}
+
+.admin-panel-heading {
+  margin-bottom: 24px;
+}
+
+.admin-panel-heading .helper-text {
+  margin: 10px 0 0;
+  line-height: 1.6;
+}
+
+.admin-alert {
+  margin-bottom: 16px;
+  padding: 16px 20px;
+  border-left: 5px solid currentColor;
+  background: var(--fondo);
+  font-size: 1.05rem;
+}
+
+.admin-loading {
+  color: var(--texto-oscuro);
+  font-size: 1.15rem;
+}
+
+.admin-form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px 24px;
+  align-items: start;
+  margin-bottom: 22px;
+}
+
+.admin-form-grid label {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  color: var(--texto-oscuro);
+  font-size: 1.05rem;
+  font-weight: 700;
+  letter-spacing: normal;
+  text-transform: none;
+}
+
+.admin-form-grid select {
+  min-height: 56px;
+  margin: 0;
+  padding: 0 14px;
+  border-color: var(--borde-fuerte);
+  border-radius: 8px;
+  background-color: var(--fondo);
+  color: var(--texto-fuerte);
+  font: inherit;
+  font-size: 1.1rem;
+  letter-spacing: normal;
+  text-transform: none;
+}
+
+.admin-date-field {
+  grid-column: 1 / -1;
+  min-width: 0;
+}
+
+.admin-date-label {
+  margin: 0 0 10px;
+  color: var(--texto-oscuro);
+  font-size: 1.05rem;
+  font-weight: 700;
+  letter-spacing: normal;
+  text-transform: none;
+}
+
+.admin-date-field app-date-picker {
+  display: block;
+  width: min(100%, 560px);
+  max-width: 100%;
+}
+
+.admin-turno,
+.admin-horario {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 16px 0;
+  border-top: 1px solid var(--borde-3);
+}
+
+.admin-turno span {
+  display: block;
+  margin-top: 5px;
+  color: var(--texto-suave);
+  font-size: 1rem;
+}
+
+.admin-horario input {
+  width: auto;
+  min-width: 150px;
+  margin: 0;
+}
+
+@media (max-width: 700px) {
+  .admin-container {
+    padding: 24px 8px 64px;
+  }
+
+  /* Menos aire alrededor del contenido: deja que el calendario
+     entre completo en el celular sin que las celdas queden chicas. */
+  .admin-container .admin-panel {
+    padding: 16px 12px;
+  }
+
+  .admin-hero {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 24px;
+    padding: 30px 24px;
+  }
+
+  .admin-hero-stat {
+    min-width: 0;
+    min-height: 86px;
+    flex-direction: row;
+    gap: 14px;
+    padding: 0 18px;
+  }
+
+  .admin-hero-stat strong {
+    font-size: 2rem;
+  }
+
+  .admin-form-grid {
+    /* minmax(0, 1fr) evita que la columna se agrande por el calendario
+       y empuje el contenido fuera de la pantalla. */
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .admin-date-field {
+    grid-column: auto;
+  }
+
+  .section-header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}
+
+/* ------------------------------------------------------------------ */
+/* Tira de días (bloqueos del admin)                                    */
+/* ------------------------------------------------------------------ */
+
+.days-strip {
+  display: flex;
+  gap: 12px;
+  overflow-x: auto;
+  padding: 6px 2px 12px;
+  scroll-snap-type: x proximity;
+}
+
+.day-card {
+  display: flex;
+  flex: 0 0 148px;
+  min-height: 100px;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding: 14px;
+  border: 2px solid var(--borde-fuerte);
+  background: var(--fondo-ticket);
+  color: var(--texto-label);
+  text-align: left;
+  scroll-snap-align: start;
+  font-size: 1rem;
+}
+
+.day-card span {
+  font-size: 1.05rem;
+  text-transform: capitalize;
+}
+
+.day-card strong {
+  font-size: 1.05rem;
+}
+
+.day-card.blocked {
+  border-color: #a32020;
+  background: #f9e3e0;
+  color: #7d1717;
+}
+
+@media (max-width: 700px) {
+  .admin-turno,
+  .admin-horario {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .admin-horario input {
+    width: 100%;
+  }
+}
+
+/* ------------------------------------------------------------------ */
+/* Reserva de turno                                                     */
+/* ------------------------------------------------------------------ */
+
+.booking-header {
+  margin-bottom: 24px;
+}
+
+.service-details,
+.helper-text {
+  color: var(--texto-suave);
+  font-size: 1.15rem;
+  line-height: 1.65;
+}
+
+.booking-panel {
+  background: var(--fondo);
+  border: 1px solid var(--borde);
+  border-radius: 10px;
+  padding: 24px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.06);
+}
+
+.booking-label {
+  display: block;
+  margin-bottom: 8px;
+  font-size: 1.25rem;
+  font-weight: 700;
+}
+
+.date-input {
+  min-height: 56px;
+  margin-bottom: 24px;
+  font-size: 1.15rem;
+}
+
+.availability-section h3 {
+  margin-bottom: 4px;
+  font-size: 1.35rem;
+}
+
+.availability-section h4 {
+  margin-bottom: 8px;
+  font-size: 1.2rem;
+}
+
+.helper-text {
+  margin-top: 0;
+}
+
+.availability-status,
+.empty-availability,
+.loading-message {
+  padding: 16px 0;
+  font-size: 1.15rem;
+}
+
+/* ------------------------------------------------------------------ */
+/* Preferencias del sistema: menos movimiento                           */
+/* ------------------------------------------------------------------ */
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .booking-panel {
+    padding: 18px;
+  }
+
+  .booking-header h2 {
+    font-size: 1.7rem;
+  }
+
+  .slot-btn {
+    flex: 1 1 42%;
+  }
+}

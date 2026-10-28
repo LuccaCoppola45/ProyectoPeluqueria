@@ -1,0 +1,24 @@
+app-navbar {
+  display: block;
+}
+
+router-outlet {
+  display: block;
+}
+
+/* El <main> del shell envuelve todas las páginas: así el enlace de salto
+   siempre tiene un destino real y existe un único landmark "main". */
+#contenido-principal {
+  display: block;
+  min-height: 60vh;
+}
+
+/* Al saltar con el teclado, el foco debe verse aunque no se navegue. */
+#contenido-principal:focus {
+  outline: none;
+}
+
+#contenido-principal:focus-visible {
+  outline: 3px solid var(--foco);
+  outline-offset: -3px;
+}

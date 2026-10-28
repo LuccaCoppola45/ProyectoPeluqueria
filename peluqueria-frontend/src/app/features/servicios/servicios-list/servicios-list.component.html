@@ -1,0 +1,215 @@
+<section class="container services-page">
+  <section class="services-hero">
+    <div class="hero-copy">
+      <div class="brand-lockup">
+        <img class="brand-mark" src="assets/piazzolla-logo.png" alt="" />
+        <span>Piazzolla</span>
+      </div>
+      <p class="eyebrow">Peluquería · Estilo · Detalle</p>
+      <h1>Una forma distinta de llevar tu estilo.</h1>
+      <p class="hero-text">
+        Técnica, cuidado y atención personalizada para que cada visita se sienta como un momento para vos.
+      </p>
+
+      <div class="hero-actions">
+        <a routerLink="/turnos/reservar" class="primary-btn">Reservar un turno</a>
+        <a routerLink="/turnos/mis-turnos" class="secondary-btn">Mis turnos</a>
+        <a href="#servicios" class="text-link">Ver los servicios <span aria-hidden="true">&#8595;</span></a>
+      </div>
+    </div>
+
+    <div
+      class="hero-gallery"
+      [class.monochrome]="fotosEnBlancoYNegro()"
+      aria-label="El espacio y el trabajo de Piazzolla">
+      <button
+        class="photo-toggle"
+        type="button"
+        [attr.aria-pressed]="fotosEnBlancoYNegro()"
+        (click)="alternarTratamientoFotos()">
+        <span class="toggle-indicator" aria-hidden="true"></span>
+        {{ fotosEnBlancoYNegro() ? 'Ver fotos a color' : 'Ver en blanco y negro' }}
+      </button>
+      <figure class="gallery-main">
+        <img
+          src="assets/home-salon.jpg"
+          alt="Interior luminoso de un salón de peluquería" />
+        <figcaption>Un espacio para vos</figcaption>
+      </figure>
+      <div class="gallery-side">
+        <figure>
+          <img
+            src="assets/home-styling.jpg"
+            alt="Cabello largo trabajado en detalle" />
+        </figure>
+        <div class="gallery-note">
+          <span>PIAZZOLLA</span>
+          <p>Estilo propio.<br />Cuidado en cada detalle.</p>
+          <img src="assets/piazzolla-logo.png" alt="" />
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Cómo reservar: el paso a paso evita las dudas -->
+  <section class="pasos-section" aria-labelledby="titulo-como-reservar">
+    <div class="section-heading">
+      <p class="eyebrow">Cómo reservar</p>
+      <h2 id="titulo-como-reservar">Reservar tu turno es muy fácil.</h2>
+      <p class="section-lead">Son cuatro pasos y no te lleva más de un minuto.</p>
+    </div>
+
+    <ol class="pasos-grid">
+      <li class="paso-card" *ngFor="let paso of pasosReserva">
+        <span class="paso-numero" aria-hidden="true">{{ paso.numero }}</span>
+        <h3>{{ paso.titulo }}</h3>
+        <p>{{ paso.texto }}</p>
+      </li>
+    </ol>
+
+    <div class="pasos-cta">
+      <a routerLink="/turnos/reservar" class="primary-btn">Reservar un turno</a>
+      <a routerLink="/register" class="secondary-btn">Crear mi cuenta</a>
+      <a routerLink="/login" class="secondary-btn">Ya tengo cuenta</a>
+    </div>
+  </section>
+
+  <section id="nosotros" class="about-section">
+    <div class="about-photo">
+      <img
+        src="assets/about-style.jpg"
+        alt="Cabello con volumen y textura" />
+      <span>Un lugar pensado para vos</span>
+    </div>
+    <div class="about-copy">
+      <p class="eyebrow">Sobre nosotros</p>
+      <h2>Más que un cambio de look, un momento para sentirte bien.</h2>
+      <p>
+        En Piazzolla creemos que el estilo empieza por escuchar. Creamos una experiencia cercana y cuidada,
+        donde cada servicio se adapta a vos, a tu rutina y a lo que querés transmitir.
+      </p>
+      <a href="#servicios" class="text-link">Conocé nuestros servicios <span aria-hidden="true">&#8594;</span></a>
+    </div>
+  </section>
+
+  <section class="info-section">
+    <div class="section-heading">
+      <p class="eyebrow">Nuestra esencia</p>
+      <h2>El cuidado está en los detalles.</h2>
+    </div>
+    <div class="info-grid">
+      <article class="info-card" *ngFor="let item of infoPuntos; let i = index">
+        <span class="info-number">0{{ i + 1 }}</span>
+        <h3>{{ item.titulo }}</h3>
+        <p>{{ item.texto }}</p>
+      </article>
+    </div>
+  </section>
+
+  <section id="servicios" class="services-section">
+    <div class="section-heading">
+      <p class="eyebrow">Nuestros servicios</p>
+      <h2>Encontrá tu próximo estilo.</h2>
+      <p class="section-lead">Elegí el que quieras y reservá el día y la hora que te quede cómodo.</p>
+    </div>
+
+    <p *ngIf="cargando()" class="loading-message">Cargando servicios...</p>
+    <p class="error-msg" *ngIf="errorMsg()">{{ errorMsg() }}</p>
+    <p *ngIf="!cargando() && !errorMsg() && servicios().length === 0" class="empty-state">
+      Todavía no hay servicios cargados.
+    </p>
+
+    <div class="services-grid" *ngIf="!cargando() && servicios().length > 0">
+      <article class="service-card" *ngFor="let servicio of servicios(); let i = index">
+        <div class="service-index">0{{ i + 1 }}</div>
+        <div class="service-body">
+          <h3>{{ servicio.nombreServicio }}</h3>
+          <p>{{ servicio.descripcion || 'Servicio profesional pensado para cuidarte y dejarte impecable.' }}</p>
+        </div>
+
+        <ul class="service-meta">
+          <li class="meta-duracion">
+            <span class="meta-icono" aria-hidden="true">&#9201;</span>
+            <span>Duración: <strong>{{ duracionLegible(servicio) }}</strong></span>
+          </li>
+          <li class="meta-precio">
+            <span class="meta-icono" aria-hidden="true">&#36;</span>
+            <span>Precio: <strong>{{ precioLegible(servicio) }}</strong></span>
+          </li>
+        </ul>
+
+        <button class="primary" type="button" (click)="elegirServicio(servicio)">
+          Reservar este servicio
+        </button>
+      </article>
+    </div>
+  </section>
+
+  <!-- Datos del salón: dirección, teléfono y horarios -->
+  <section class="salon-section" *ngIf="comercio() as datos" aria-labelledby="titulo-salon">
+    <div class="section-heading">
+      <p class="eyebrow">Dónde estamos</p>
+      <h2 id="titulo-salon">Datos del salón</h2>
+    </div>
+
+    <div class="salon-grid">
+      <div class="dato-card">
+        <span class="dato-icono" aria-hidden="true">&#128205;</span>
+        <h3>Dirección</h3>
+        <p>{{ datos.direccion }}</p>
+      </div>
+
+      <div class="dato-card" *ngIf="datos.telefono">
+        <span class="dato-icono" aria-hidden="true">&#128222;</span>
+        <h3>Teléfono</h3>
+        <p>{{ datos.telefono }}</p>
+        <p class="dato-ayuda">Si preferís, llamanos y te reservamos el turno.</p>
+      </div>
+
+      <div class="dato-card" *ngIf="datos.horarios?.length">
+        <span class="dato-icono" aria-hidden="true">&#128337;</span>
+        <h3>Horario de atención</h3>
+        <ul class="horarios-lista">
+          <li *ngFor="let horario of datos.horarios">
+            <span class="dia">{{ diaLegible(horario.diaSemana) }}</span>
+            <span class="horario-hora">
+              {{ horario.horaApertura.substring(0, 5) }} a {{ horario.horaCierre.substring(0, 5) }} hs
+            </span>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <section class="reviews-section">
+    <div class="section-heading section-heading-inline">
+      <div>
+        <p class="eyebrow">Reseñas</p>
+        <h2>Lo que dicen nuestros clientes</h2>
+      </div>
+      <div class="reviews-score" *ngIf="promedio() as promedio">
+        <strong>{{ promedio }}</strong>
+        <span>promedio</span>
+      </div>
+    </div>
+
+    <div class="reviews-grid" *ngIf="resenas().length > 0; else sinResenas">
+      <article class="review-card" *ngFor="let resena of resenas()">
+        <div class="review-header">
+          <div>
+            <h3>{{ nombreCliente(resena) }}</h3>
+            <span>{{ fechaResena(resena) }}</span>
+          </div>
+          <div class="stars" [attr.aria-label]="'Puntuación: ' + resena.valoracion + ' de 5'">{{ getEstrellas(resena.valoracion) }}</div>
+        </div>
+        <p>{{ resena.comentario }}</p>
+      </article>
+    </div>
+
+    <ng-template #sinResenas>
+      <p class="empty-state">
+        Todavía no hay reseñas publicadas. Si venís, a vos te encantaría contarnos cómo te fue.
+      </p>
+    </ng-template>
+  </section>
+</section>

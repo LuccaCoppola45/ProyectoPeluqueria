@@ -1,0 +1,42 @@
+<header class="navbar">
+  <div class="container navbar-inner">
+    <a routerLink="/" class="navbar-brand" aria-label="Piazzolla - Volver al inicio">
+      <img src="assets/piazzolla-logo.png" alt="" class="brand-icon" />
+      <span class="brand-name">Piazzolla</span>
+    </a>
+
+    <!-- Botón de menú para pantallas chicas -->
+    <button
+      class="menu-toggle"
+      type="button"
+      [attr.aria-expanded]="menuAbierto()"
+      aria-controls="navbar-menu"
+      (click)="toggleMenu()">
+      <span class="menu-icon" aria-hidden="true"></span>
+      {{ menuAbierto() ? 'Cerrar menú' : 'Menú' }}
+    </button>
+
+    <nav
+      id="navbar-menu"
+      class="navbar-menu"
+      [class.navbar-menu--open]="menuAbierto()"
+      aria-label="Menú principal">
+      <div *ngIf="authService.logueado() && !authService.isAdmin()" class="navbar-actions">
+        <a routerLink="/turnos/reservar" class="navbar-link" routerLinkActive="navbar-link--active">Reservar turno</a>
+        <a routerLink="/turnos/mis-turnos" class="navbar-link" routerLinkActive="navbar-link--active">Mis turnos</a>
+        <button class="secondary navbar-salir" type="button" (click)="logout()">Cerrar sesión</button>
+      </div>
+
+      <div *ngIf="authService.logueado() && authService.isAdmin()" class="navbar-actions">
+        <a routerLink="/admin" class="admin-nav-button" routerLinkActive="admin-nav-button--active">Administrar turnos</a>
+        <button class="secondary navbar-salir" type="button" (click)="logout()">Cerrar sesión</button>
+      </div>
+
+      <div *ngIf="!authService.logueado()" class="navbar-actions navbar-auth">
+        <a routerLink="/turnos/reservar" class="navbar-link" routerLinkActive="navbar-link--active">Reservar turno</a>
+        <a routerLink="/login" class="navbar-link" routerLinkActive="navbar-link--active">Iniciar sesión</a>
+        <a routerLink="/register" class="navbar-link navbar-link--destacado" routerLinkActive="navbar-link--active">Crear cuenta</a>
+      </div>
+    </nav>
+  </div>
+</header>

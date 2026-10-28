@@ -1,0 +1,148 @@
+<section class="booking-page">
+  <nav class="miga-pan" aria-label="Ruta de navegación">
+    <a routerLink="/turnos/reservar" class="miga-enlace">
+      <span aria-hidden="true">&#8592;</span> Cambiar el servicio
+    </a>
+  </nav>
+
+  <p *ngIf="cargandoServicio()" class="loading-message">Cargando servicio...</p>
+
+  <ng-container *ngIf="!cargandoServicio() && servicio() as s">
+    <section class="booking-hero">
+      <div class="hero-copy">
+        <p class="eyebrow">Reserva tu cita</p>
+        <h1>{{ s.nombreServicio }}</h1>
+        <p class="service-details">
+          Dura {{ duracionLegible() }} · Precio: {{ precioLegible() }}
+        </p>
+      </div>
+
+      <div class="hero-summary">
+        <div class="summary-card">
+          <span class="summary-label">Servicio</span>
+          <strong>{{ s.nombreServicio }}</strong>
+        </div>
+        <div class="summary-card subtle">
+          <span class="summary-label">Duración</span>
+          <strong>{{ duracionLegible() }}</strong>
+        </div>
+      </div>
+    </section>
+
+    <!-- Resumen de pasos: el servicio ya está elegido, por eso se empieza en el 2 -->
+    <app-pasos-reserva [actual]="pasoActual()" />
+
+    <!-- Paso 2: fecha -->
+    <section class="booking-panel booking-step" *ngIf="!turnoConfirmado()" aria-labelledby="fecha-step-title">
+      <div class="panel-header">
+        <p class="panel-step">Paso 2 de 4</p>
+        <h2 id="fecha-step-title">Elegí el día</h2>
+      </div>
+
+      <div class="field-group">
+        <p class="booking-label">¿Qué día querés venir? Tocá el día en el calendario.</p>
+        <app-date-picker
+          [date]="fecha()"
+          [minDate]="fechaMinima"
+          (dateChange)="elegirFecha($event)" />
+      </div>
+    </section>
+
+    <!-- Paso 3: horario -->
+    <section
+      class="booking-panel booking-step"
+      *ngIf="fecha() && !turnoConfirmado()"
+      aria-labelledby="horario-step-title">
+      <div class="panel-header">
+        <p class="panel-step">Paso 3 de 4</p>
+        <h2 id="horario-step-title">Elegí la hora</h2>
+        <p class="fecha-elegida" *ngIf="fechaVisible()">Día elegido: <strong>{{ fechaVisible() }}</strong></p>
+      </div>
+
+      <p *ngIf="buscandoHorarios()" class="availability-status" aria-live="polite">
+        Buscando horarios disponibles...
+      </p>
+
+      <div *ngIf="!buscandoHorarios() && horarios().length > 0" class="availability-section">
+        <p class="instruccion-horarios">
+          Tocá la hora que te quede cómoda. Hay {{ horarios().length }} horarios libres este día.
+        </p>
+
+        <div *ngFor="let franja of franjas()" class="franja">
+          <h3 class="franja-titulo">{{ franja.nombre }} <span class="franja-descripcion">{{ franja.descripcion }}</span></h3>
+          <div class="slots" role="group" [attr.aria-label]="'Horarios de la ' + franja.nombre">
+            <button
+              *ngFor="let horario of franja.horarios"
+              class="slot-btn"
+              type="button"
+              [class.selected]="horarioSeleccionado() === horario"
+              [attr.aria-pressed]="horarioSeleccionado() === horario"
+              (click)="seleccionarHorario(horario)">
+              {{ horaLegible(horario) }}
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <p *ngIf="!buscandoHorarios() && horarios().length === 0 && !errorMsg()" class="empty-availability">
+        No hay horarios disponibles ese día. Probá con otra fecha.
+      </p>
+
+      <div class="error-msg" *ngIf="errorMsg() && !horarioSeleccionado()" aria-live="assertive">
+        {{ errorMsg() }}
+      </div>
+    </section>
+
+    <!-- Paso 4: confirmación -->
+    <section
+      class="booking-panel booking-step"
+      *ngIf="horarioSeleccionado() && !turnoConfirmado()"
+      aria-labelledby="confirm-step-title">
+      <div class="panel-header">
+        <p class="panel-step">Paso 4 de 4</p>
+        <h2 id="confirm-step-title">Revisá tu turno</h2>
+        <p class="instruccion-horarios">Revisá que todo esté bien y presioná el botón para reservar.</p>
+      </div>
+
+      <dl class="booking-summary">
+        <div class="resumen-fila">
+          <dt>Servicio</dt>
+          <dd>{{ s.nombreServicio }}</dd>
+        </div>
+        <div class="resumen-fila">
+          <dt>Fecha</dt>
+          <dd>{{ fechaVisible() }}</dd>
+        </div>
+        <div class="resumen-fila">
+          <dt>Hora</dt>
+          <dd>{{ horaLegible(horarioSeleccionado()) }}</dd>
+        </div>
+        <div class="resumen-fila">
+          <dt>Duración</dt>
+          <dd>{{ duracionLegible() }}</dd>
+        </div>
+        <div class="resumen-fila">
+          <dt>Precio</dt>
+          <dd>{{ precioLegible() }}</dd>
+        </div>
+      </dl>
+
+      <div class="error-msg" *ngIf="errorMsg()" aria-live="assertive">{{ errorMsg() }}</div>
+
+      <button
+        class="primary"
+        type="button"
+        [disabled]="confirmando()"
+        (click)="confirmarTurno()">
+        {{ confirmando() ? 'Guardando tu turno...' : 'Sí, reservar este turno' }}
+      </button>
+    </section>
+
+    <!-- Confirmación -->
+    <section class="booking-panel success-msg" *ngIf="turnoConfirmado()" role="status">
+      <p class="success-kicker">Reserva confirmada</p>
+      <h2>¡Turno reservado con éxito!</h2>
+      <p>Te llevamos a “Mis turnos” para que puedas ver todos tus horarios.</p>
+    </section>
+  </ng-container>
+</section>

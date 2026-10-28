@@ -1,0 +1,202 @@
+<section class="container admin-container">
+  <header class="admin-hero">
+    <div class="admin-heading">
+      <p class="eyebrow">Piazzolla · Gestión del salón</p>
+      <h1>Panel de administración</h1>
+      <p>Organizá los turnos y mantené al día los horarios de atención.</p>
+    </div>
+    <div class="admin-hero-stat" aria-label="Cantidad de turnos activos">
+      <span>Turnos activos</span>
+      <strong>{{ turnosActivos().length }}</strong>
+    </div>
+  </header>
+
+  <div *ngIf="cargando()" class="booking-panel admin-panel admin-loading" aria-live="polite">
+    Cargando información...
+  </div>
+  <div *ngIf="mensaje()" class="success-msg admin-alert" role="status">{{ mensaje() }}</div>
+  <div *ngIf="errorMsg()" class="error-msg admin-alert" role="alert">{{ errorMsg() }}</div>
+
+  <section class="booking-panel admin-panel" *ngIf="!cargando()">
+      <div class="admin-panel-heading">
+        <p class="eyebrow">Nueva reserva</p>
+        <h2>Agendar turno para un usuario</h2>
+        <p class="helper-text">Elegí el cliente, el servicio y la fecha para consultar los horarios disponibles.</p>
+      </div>
+      <div class="admin-form-grid">
+        <label>Cliente
+          <select [(ngModel)]="reserva.usuarioId" (ngModelChange)="limpiarMensajes()">
+            <option [ngValue]="null">Seleccionar cliente</option>
+            <option *ngFor="let usuario of usuarios()" [ngValue]="usuario.idUsuario">
+              {{ nombreParaSeleccionar(usuario) }}
+            </option>
+          </select>
+        </label>
+        <label>Servicio
+          <select [(ngModel)]="reserva.servicioId" (ngModelChange)="buscarHorarios()">
+            <option [ngValue]="null">Seleccionar servicio</option>
+            <option *ngFor="let servicio of servicios()" [ngValue]="servicio.idServicio">
+              {{ servicio.nombreServicio }}
+            </option>
+          </select>
+        </label>
+        <div class="admin-date-field">
+          <p class="admin-date-label">Fecha</p>
+          <app-date-picker
+            [date]="reserva.fecha"
+            [minDate]="fechaMinima"
+            (dateChange)="reserva.fecha = $event; buscarHorarios()" />
+        </div>
+      </div>
+      <div *ngIf="buscandoHorarios()" class="availability-status">Buscando horarios disponibles...</div>
+      <div *ngIf="!buscandoHorarios() && horariosDisponibles().length > 0" class="availability-section">
+        <h4>Elegí un horario disponible</h4>
+        <div class="slots" role="group" aria-label="Horarios disponibles para el turno">
+          <button
+            *ngFor="let horario of horariosDisponibles()"
+            class="slot-btn"
+            type="button"
+            [class.selected]="reserva.horaInicio === horario"
+            (click)="seleccionarHorario(horario)">
+            {{ horario.substring(0, 5) }}
+          </button>
+        </div>
+      </div>
+      <p
+        *ngIf="!buscandoHorarios() && reserva.fecha && reserva.servicioId && horariosDisponibles().length === 0 && !errorMsg()"
+        class="empty-availability">
+        No hay horarios disponibles para esa fecha.
+      </p>
+      <button class="primary" type="button" (click)="reservarParaUsuario()">Agendar turno</button>
+  </section>
+
+  <div class="booking-panel success-msg" *ngIf="mensaje()">
+    <strong>Turno agendado con éxito.</strong>
+    <p>El turno quedó registrado correctamente.</p>
+  </div>
+
+  <section class="booking-panel admin-panel">
+        <div class="section-header">
+          <div>
+            <p class="eyebrow">Agenda</p>
+            <h2 id="titulo-turnos-reservados">{{ mostrarHistorial() ? 'Historial de turnos' : 'Turnos reservados' }}</h2>
+          </div>
+          <button class="secondary small" type="button" (click)="mostrarHistorial.set(!mostrarHistorial())">
+            {{ mostrarHistorial() ? 'Volver a activos' : 'Ver historial' }}
+          </button>
+        </div>
+
+        <p *ngIf="(mostrarHistorial() ? turnosHistoricosAgrupados() : turnosAgrupados()).length === 0">
+          {{ mostrarHistorial() ? 'Todavía no hay turnos anteriores.' : 'No hay turnos activos para mostrar.' }}
+        </p>
+
+        <details class="turnos-group" *ngFor="let grupo of (mostrarHistorial() ? turnosHistoricosAgrupados() : turnosAgrupados())" open>
+          <summary class="turnos-group-header">
+            <strong>{{ grupo.etiqueta }}</strong>
+            <span>{{ grupo.turnos.length }} turno(s)</span>
+          </summary>
+
+          <div class="admin-turno" *ngFor="let turno of grupo.turnos">
+            <div>
+              <strong>{{ turno.horaInicio.substring(0, 5) }} - {{ turno.horaFin.substring(0, 5) }}</strong>
+              <span>
+                <strong>Cliente:</strong> {{ nombreDelUsuario(turno) }}
+                · <strong>DNI:</strong> {{ dniDelUsuario(turno) || 'No disponible' }}
+                · <strong>Servicio:</strong> {{ nombreDelServicio(turno) }} ·
+                <span class="turno-estado" [class.turno-estado--terminado]="mostrarHistorial() || turnoVencido(turno)">
+                  {{ estadoTurno(turno) }}
+                </span>
+              </span>
+            </div>
+            <button
+              class="secondary"
+              type="button"
+              *ngIf="!mostrarHistorial() && turno.estado !== 'CANCELADO' && turno.estado !== 'FINALIZADO'"
+              (click)="cancelarTurno(turno)">
+              Cancelar
+            </button>
+          </div>
+        </details>
+  </section>
+
+  <section class="booking-panel admin-panel">
+        <div class="admin-panel-heading">
+          <p class="eyebrow">Configuración</p>
+          <h2>Horarios de atención</h2>
+          <p class="helper-text">Modificá la apertura o el cierre de un día y guardá el cambio.</p>
+        </div>
+        <div class="admin-horario" *ngFor="let horario of horarios()">
+          <strong>{{ diaLegible(horario.diaSemana) }}</strong>
+
+          <div class="time-editor">
+            <button
+              class="time-step"
+              type="button"
+              (click)="ajustarHorario(horario, 'horaApertura', -30)"
+              [attr.aria-label]="'Restar 30 minutos a la apertura del ' + diaLegible(horario.diaSemana)">
+              &minus;
+            </button>
+            <input
+              type="time"
+              [ngModel]="horario.horaApertura"
+              (ngModelChange)="horario.horaApertura = $event"
+              [attr.aria-label]="'Hora de apertura del ' + diaLegible(horario.diaSemana)" />
+            <button
+              class="time-step"
+              type="button"
+              (click)="ajustarHorario(horario, 'horaApertura', 30)"
+              [attr.aria-label]="'Sumar 30 minutos a la apertura del ' + diaLegible(horario.diaSemana)">
+              +
+            </button>
+          </div>
+
+          <span>hasta</span>
+
+          <div class="time-editor">
+            <button
+              class="time-step"
+              type="button"
+              (click)="ajustarHorario(horario, 'horaCierre', -30)"
+              [attr.aria-label]="'Restar 30 minutos al cierre del ' + diaLegible(horario.diaSemana)">
+              &minus;
+            </button>
+            <input
+              type="time"
+              [ngModel]="horario.horaCierre"
+              (ngModelChange)="horario.horaCierre = $event"
+              [attr.aria-label]="'Hora de cierre del ' + diaLegible(horario.diaSemana)" />
+            <button
+              class="time-step"
+              type="button"
+              (click)="ajustarHorario(horario, 'horaCierre', 30)"
+              [attr.aria-label]="'Sumar 30 minutos al cierre del ' + diaLegible(horario.diaSemana)">
+              +
+            </button>
+          </div>
+
+          <button class="secondary" type="button" (click)="guardarHorario(horario)">
+            Guardar
+          </button>
+        </div>
+  </section>
+
+  <section class="booking-panel admin-panel">
+        <div class="admin-panel-heading">
+          <p class="eyebrow">Calendario</p>
+          <h2>Días sin atención</h2>
+          <p class="helper-text">Deslizá para ver los próximos días y tocá uno para bloquearlo.</p>
+        </div>
+        <div class="days-strip" aria-label="Próximos días">
+          <button
+            *ngFor="let dia of dias()"
+            type="button"
+            class="day-card"
+            [class.blocked]="diaBloqueado(dia)"
+            [attr.aria-pressed]="diaBloqueado(dia)"
+            (click)="cambiarBloqueo(dia)">
+            <span>{{ fechaVisible(dia) }}</span>
+            <strong>{{ diaBloqueado(dia) ? 'Sin atención' : 'Abierto' }}</strong>
+          </button>
+        </div>
+  </section>
+</section>
