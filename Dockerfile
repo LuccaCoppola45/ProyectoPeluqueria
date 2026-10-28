@@ -13,7 +13,9 @@ COPY pom.xml .
 RUN mvn dependency:go-offline -B
 COPY src ./src
 # Copiar el build de Angular a los recursos estáticos
-COPY --from=frontend-build /app/frontend/dist/peluqueria-frontend /app/src/main/resources/static
+RUN mkdir -p /app/src/main/resources/static
+COPY --from=frontend-build /app/frontend/dist/peluqueria-frontend /tmp/frontend
+RUN if [ -d /tmp/frontend/browser ]; then cp -r /tmp/frontend/browser/* /app/src/main/resources/static/; else cp -r /tmp/frontend/* /app/src/main/resources/static/; fi && rm -rf /tmp/frontend
 RUN mvn clean package -DskipTests
 
 # Stage 3: Run
