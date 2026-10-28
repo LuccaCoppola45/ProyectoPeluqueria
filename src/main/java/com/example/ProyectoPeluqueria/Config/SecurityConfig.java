@@ -92,6 +92,7 @@ private final JwtAuthenticationFilter jwtAuthFilter;
                 // 3. Configuramos las rutas
                 .authorizeHttpRequests(auth -> auth
                         // Rutas públicas (No piden Token)
+                        .requestMatchers("/", "/index.html", "/favicon.ico", "/assets/**", "/*.js", "/*.css", "/*.png", "/*.jpg", "/*.jpeg", "/*.svg", "/*.ico", "/*.woff", "/*.woff2", "/*.ttf", "/*.map").permitAll()
                         .requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers("/api/webhooks/whatsapp/**").permitAll()
                         .dispatcherTypeMatchers(DispatcherType.ERROR).permitAll()
