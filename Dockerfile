@@ -15,6 +15,7 @@ COPY src ./src
 # Copiar el build de Angular a los recursos estáticos
 RUN mkdir -p /app/src/main/resources/static
 COPY --from=frontend-build /app/frontend/dist/peluqueria-frontend/browser/ /app/src/main/resources/static/
+RUN ls -la /app/src/main/resources/static/ | head -25
 RUN mvn clean package -DskipTests
 
 # Stage 3: Run
