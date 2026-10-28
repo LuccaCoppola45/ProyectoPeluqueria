@@ -1,12 +1,17 @@
 package com.example.ProyectoPeluqueria.Config;
 
 import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.GetMapping;
 
 @Controller
 public class FrontendController {
-    @RequestMapping(value = {"/", "/{path:[^\\.]*}", "/**/{path:[^\\.]*}"})
-    public String redirect() {
+
+    @GetMapping(value = {
+            "/",
+            "/{path:^(?!api$)(?!api/).*}",
+            "/{path:^(?!api$)(?!api/).*}/**"
+    })
+    public String forward() {
         return "forward:/index.html";
     }
 }
