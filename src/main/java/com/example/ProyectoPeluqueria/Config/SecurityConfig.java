@@ -92,12 +92,15 @@ private final JwtAuthenticationFilter jwtAuthFilter;
                 // 3. Configuramos las rutas
                 .authorizeHttpRequests(auth -> auth
                         // Rutas públicas (No piden Token)
-                        .requestMatchers("/", "/index.html", "/favicon.ico", "/assets/**", "/*.js", "/*.css", "/*.png", "/*.jpg", "/*.jpeg", "/*.svg", "/*.ico", "/*.woff", "/*.woff2", "/*.ttf", "/*.map").permitAll()
+                        .requestMatchers("/", "/index.html", "/favicon.ico", "/assets/**", "/**/*.js", "/**/*.css", "/**/*.png", "/**/*.jpg", "/**/*.jpeg", "/**/*.svg", "/**/*.ico", "/**/*.woff", "/**/*.woff2", "/**/*.ttf", "/**/*.map", "/**/*.json").permitAll()
+                        .requestMatchers("/error").permitAll()
                         .requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers("/api/webhooks/whatsapp/**").permitAll()
                         .dispatcherTypeMatchers(DispatcherType.ERROR).permitAll()
                         .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+                        // Permitir rutas del frontend (SPA) sin autenticación
+                        .requestMatchers("/login", "/register", "/servicios", "/turnos/**", "/admin/**", "/perfil/**").permitAll()
                         // El catálogo puede consultarse sin iniciar sesión.
                         .requestMatchers(HttpMethod.GET, "/api/servicios/**", "/api/comercios/**",
                                 "/api/horarios/**", "/api/resenias/**").permitAll()
