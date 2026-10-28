@@ -19,6 +19,7 @@ import jakarta.servlet.DispatcherType;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+import org.springframework.boot.autoconfigure.security.servlet.PathRequest;
 
 import java.util.Arrays;
 
@@ -91,16 +92,18 @@ private final JwtAuthenticationFilter jwtAuthFilter;
                 .csrf(AbstractHttpConfigurer::disable)
                 // 3. Configuramos las rutas
                 .authorizeHttpRequests(auth -> auth
+                        // Recursos estáticos
+                        .requestMatchers(PathRequest.toStaticResourcesAtCommonLocations()).permitAll()
                         // Rutas públicas (No piden Token)
-                        .requestMatchers("/", "/index.html", "/favicon.ico", "/assets/**", "/**/*.js", "/**/*.css", "/**/*.png", "/**/*.jpg", "/**/*.jpeg", "/**/*.svg", "/**/*.ico", "/**/*.woff", "/**/*.woff2", "/**/*.ttf", "/**/*.map", "/**/*.json").permitAll()
-                        .requestMatchers("/error").permitAll()
+                        .requestMatchers("/", "/index.html", "/error", "/*.js", "/*.mjs", "/*.css", "/*.html", "/*.ico", "/*.png", "/*.jpg", "/*.jpeg", "/*.svg", "/*.gif", "/*.woff", "/*.woff2", "/*.ttf", "/*.map", "/*.json").permitAll()
+                        .requestMatchers("/assets/**").permitAll()
                         .requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers("/api/webhooks/whatsapp/**").permitAll()
                         .dispatcherTypeMatchers(DispatcherType.ERROR).permitAll()
                         .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         // Permitir rutas del frontend (SPA) sin autenticación
-                        .requestMatchers("/login", "/register", "/servicios", "/turnos/**", "/admin/**", "/perfil/**").permitAll()
+                        .requestMatchers("/login", "/login/**", "/register", "/register/**", "/servicios", "/servicios/**", "/turnos", "/turnos/**", "/mis-turnos", "/mis-turnos/**", "/perfil", "/perfil/**", "/reservar", "/reservar/**", "/admin", "/admin/**").permitAll()
                         // El catálogo puede consultarse sin iniciar sesión.
                         .requestMatchers(HttpMethod.GET, "/api/servicios/**", "/api/comercios/**",
                                 "/api/horarios/**", "/api/resenias/**").permitAll()
