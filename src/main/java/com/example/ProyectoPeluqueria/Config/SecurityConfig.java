@@ -92,22 +92,23 @@ private final JwtAuthenticationFilter jwtAuthFilter;
                 .csrf(AbstractHttpConfigurer::disable)
                 // 3. Configuramos las rutas
                 .authorizeHttpRequests(auth -> auth
-                        // Recursos estáticos
-                        .requestMatchers(PathRequest.toStaticResourcesAtCommonLocations()).permitAll()
-                        // Rutas públicas (No piden Token)
-                        .requestMatchers("/", "/index.html", "/error", "/*.js", "/*.mjs", "/*.css", "/*.html", "/*.ico", "/*.png", "/*.jpg", "/*.jpeg", "/*.svg", "/*.gif", "/*.woff", "/*.woff2", "/*.ttf", "/*.map", "/*.json").permitAll()
-                        .requestMatchers("/assets/**").permitAll()
+                        // Recursos estáticos del frontend
+                        .requestMatchers("/", "/index.html", "/error").permitAll()
+                        .requestMatchers("/*.js", "/*.mjs", "/*.css", "/*.html", "/*.json", "/*.map").permitAll()
+                        .requestMatchers("/*.ico", "/*.png", "/*.jpg", "/*.jpeg", "/*.svg", "/*.gif").permitAll()
+                        .requestMatchers("/*.woff", "/*.woff2", "/*.ttf", "/*.eot").permitAll()
+                        .requestMatchers("/assets/**", "/media/**", "/**/*.js", "/**/*.css", "/**/*.png", "/**/*.jpg", "/**/*.jpeg", "/**/*.svg", "/**/*.ico", "/**/*.woff", "/**/*.woff2").permitAll()
+                        // Rutas públicas API
                         .requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers("/api/webhooks/whatsapp/**").permitAll()
                         .dispatcherTypeMatchers(DispatcherType.ERROR).permitAll()
                         .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-                        // Permitir rutas del frontend (SPA) sin autenticación
-                        .requestMatchers("/login", "/login/**", "/register", "/register/**", "/servicios", "/servicios/**", "/turnos", "/turnos/**", "/mis-turnos", "/mis-turnos/**", "/perfil", "/perfil/**", "/reservar", "/reservar/**", "/admin", "/admin/**").permitAll()
-                        // El catálogo puede consultarse sin iniciar sesión.
+                        // Catálogo público
                         .requestMatchers(HttpMethod.GET, "/api/servicios/**", "/api/comercios/**",
                                 "/api/horarios/**", "/api/resenias/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/turnos/disponibilidad").permitAll()
+                        // Rutas protegidas API
                         .requestMatchers(HttpMethod.POST, "/api/turnos/*/recordatorio-prueba")
                                 .hasAuthority("ADMIN")
                         .requestMatchers(HttpMethod.POST, "/api/turnos").hasAnyAuthority("CLIENTE", "ADMIN")
@@ -131,8 +132,8 @@ private final JwtAuthenticationFilter jwtAuthFilter;
                                 "/api/comercios/**").hasAuthority("ADMIN")
                         .requestMatchers(HttpMethod.PUT, "/api/usuarios/**").hasAnyAuthority("CLIENTE", "ADMIN")
                         .requestMatchers("/api/usuarios/**").hasAuthority("ADMIN")
-                        // Todo lo que NO sea /api/** se deja pasar al frontend (SPA)
-                        .anyRequest().permitAll()
+                        // Cualquier otra ruta NO /api -> pasar al frontend SPA
+                        .requestMatchers("/**").permitAll()
                 )
                 // 4. Política Stateless
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
