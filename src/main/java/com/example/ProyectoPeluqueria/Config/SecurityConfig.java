@@ -128,7 +128,8 @@ private final JwtAuthenticationFilter jwtAuthFilter;
                                 "/api/comercios/**").hasAuthority("ADMIN")
                         .requestMatchers(HttpMethod.PUT, "/api/usuarios/**").hasAnyAuthority("CLIENTE", "ADMIN")
                         .requestMatchers("/api/usuarios/**").hasAuthority("ADMIN")
-                        .anyRequest().authenticated()
+                        // Todo lo que NO sea /api/** se deja pasar al frontend (SPA)
+                        .anyRequest().permitAll()
                 )
                 // 4. Política Stateless
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
