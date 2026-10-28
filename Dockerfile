@@ -14,8 +14,10 @@ RUN mvn dependency:go-offline -B
 COPY src ./src
 # Copiar el build de Angular a los recursos estáticos
 RUN mkdir -p /app/src/main/resources/static
-COPY --from=frontend-build /app/frontend/dist/peluqueria-frontend/browser/ /app/src/main/resources/static/
-RUN ls -la /app/src/main/resources/static/ | head -25
+COPY --from=frontend-build /app/frontend/dist/peluqueria-frontend/ /tmp/ngbuild/
+RUN find /tmp/ngbuild -name 'index.html' | head -5
+RUN if [ -f /tmp/ngbuild/browser/index.html ]; then cp -r /tmp/ngbuild/browser/* /app/src/main/resources/static/; elif [ -f /tmp/ngbuild/index.html ]; then cp -r /tmp/ngbuild/* /app/src/main/resources/static/; else find /tmp/ngbuild -maxdepth 3 -type f \( -name '*.js' -o -name '*.css' -o -name 'index.html' \) -exec sh -c 'd=$(dirname {}); cp {} /app/src/main/resources/static/ 2>/dev/null; cp $d/*.js $d/*.css /app/src/main/resources/static/ 2>/dev/null' \;; fi
+RUN ls -la /app/src/main/resources/static/ | head -30
 RUN mvn clean package -DskipTests
 
 # Stage 3: Run
