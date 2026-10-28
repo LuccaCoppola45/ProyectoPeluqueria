@@ -19,7 +19,7 @@ import jakarta.servlet.DispatcherType;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
-import org.springframework.boot.autoconfigure.security.servlet.PathRequest;
+import org.springframework.security.config.annotation.web.configuration.WebSecurityCustomizer;
 
 import java.util.Arrays;
 
@@ -84,6 +84,48 @@ private final JwtAuthenticationFilter jwtAuthFilter;
     private final AuthenticationProvider authenticationProvider;
 
     @Bean
+    public WebSecurityCustomizer webSecurityCustomizer() {
+        return (web) -> web.ignoring().requestMatchers(
+                "/",
+                "/index.html",
+                "/favicon.ico",
+                "/*.js",
+                "/*.mjs",
+                "/*.css",
+                "/*.html",
+                "/*.json",
+                "/*.map",
+                "/*.ico",
+                "/*.png",
+                "/*.jpg",
+                "/*.jpeg",
+                "/*.svg",
+                "/*.gif",
+                "/*.woff",
+                "/*.woff2",
+                "/*.ttf",
+                "/*.eot",
+                "/assets/**",
+                "/media/**",
+                "/**/*.js",
+                "/**/*.mjs",
+                "/**/*.css",
+                "/**/*.html",
+                "/**/*.json",
+                "/**/*.map",
+                "/**/*.ico",
+                "/**/*.png",
+                "/**/*.jpg",
+                "/**/*.jpeg",
+                "/**/*.svg",
+                "/**/*.gif",
+                "/**/*.woff",
+                "/**/*.woff2",
+                "/**/*.ttf"
+        );
+    }
+
+    @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
                 // 1. Agregamos TU configuración de CORS
@@ -92,12 +134,6 @@ private final JwtAuthenticationFilter jwtAuthFilter;
                 .csrf(AbstractHttpConfigurer::disable)
                 // 3. Configuramos las rutas
                 .authorizeHttpRequests(auth -> auth
-                        // Recursos estáticos del frontend
-                        .requestMatchers("/", "/index.html", "/error").permitAll()
-                        .requestMatchers("/*.js", "/*.mjs", "/*.css", "/*.html", "/*.json", "/*.map").permitAll()
-                        .requestMatchers("/*.ico", "/*.png", "/*.jpg", "/*.jpeg", "/*.svg", "/*.gif").permitAll()
-                        .requestMatchers("/*.woff", "/*.woff2", "/*.ttf", "/*.eot").permitAll()
-                        .requestMatchers("/assets/**", "/media/**", "/**/*.js", "/**/*.css", "/**/*.png", "/**/*.jpg", "/**/*.jpeg", "/**/*.svg", "/**/*.ico", "/**/*.woff", "/**/*.woff2").permitAll()
                         // Rutas públicas API
                         .requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers("/api/webhooks/whatsapp/**").permitAll()
@@ -132,8 +168,9 @@ private final JwtAuthenticationFilter jwtAuthFilter;
                                 "/api/comercios/**").hasAuthority("ADMIN")
                         .requestMatchers(HttpMethod.PUT, "/api/usuarios/**").hasAnyAuthority("CLIENTE", "ADMIN")
                         .requestMatchers("/api/usuarios/**").hasAuthority("ADMIN")
-                        // Cualquier otra ruta NO /api -> pasar al frontend SPA
-                        .requestMatchers("/**").permitAll()
+                        // Rutas del frontend SPA
+                        .requestMatchers("/", "/index.html", "/login", "/login/**", "/register", "/register/**", "/servicios", "/servicios/**", "/turnos", "/turnos/**", "/mis-turnos", "/mis-turnos/**", "/reservar", "/reservar/**", "/perfil", "/perfil/**", "/admin", "/admin/**").permitAll()
+                        .anyRequest().authenticated()
                 )
                 // 4. Política Stateless
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
