@@ -25,5 +25,6 @@ FROM eclipse-temurin:21-jre
 WORKDIR /app
 ENV SPRING_PROFILES_ACTIVE=prod
 COPY --from=backend-build /app/target/*.jar app.jar
+ENV SPRING_PROFILES_ACTIVE=prod
 EXPOSE 8080
-ENTRYPOINT ["java", "-jar", "app.jar"]
+ENTRYPOINT ["java", "-XX:MaxRAMPercentage=75", "-jar", "app.jar"]
