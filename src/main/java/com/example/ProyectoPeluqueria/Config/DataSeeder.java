@@ -16,7 +16,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalTime;
 import java.util.List;
@@ -65,17 +64,30 @@ public class DataSeeder implements CommandLineRunner {
     @Value("${seed.admin.telefono:}")
     private String adminTelefono;
 
+    // Cada paso va por separado y nunca tira abajo la app: si algo falla (por ejemplo, una tabla
+    // que no existe en la base), se registra en el log y la app arranca igual.
     @Override
-    @Transactional
     public void run(String... args) {
-        ComercioEntity comercio = crearComercio();
+        ComercioEntity comercio = intentar("crear el comercio", this::crearComercio);
         if (comercio != null) {
-            crearHorarios(comercio);
-            crearServicio(comercio, "Corte de cabello", 30);
-            crearServicio(comercio, "Color", 60);
-            crearServicio(comercio, "Reflejos / Balayage", 45);
+            intentar("crear los horarios de atención", () -> { crearHorarios(comercio); return null; });
+            intentar("crear los servicios", () -> {
+                crearServicio(comercio, "Corte de cabello", 30);
+                crearServicio(comercio, "Color", 60);
+                crearServicio(comercio, "Reflejos / Balayage", 45);
+                return null;
+            });
         }
-        crearAdmin();
+        intentar("crear el usuario admin", () -> { crearAdmin(); return null; });
+    }
+
+    private <T> T intentar(String paso, java.util.function.Supplier<T> accion) {
+        try {
+            return accion.get();
+        } catch (RuntimeException e) {
+            log.error("Seed: no se pudo {}: {}", paso, e.toString());
+            return null;
+        }
     }
 
     private ComercioEntity crearComercio() {
