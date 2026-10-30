@@ -81,8 +81,32 @@ public class DataSeeder implements CommandLineRunner {
             return;
         }
         String email = adminEmail.trim().toLowerCase();
-        if (usuarioRepository.existsByEmail(email)) {
+        String dni = vacio(adminDni) ? null : adminDni.trim();
+
+        // Si el admin ya existe, solo se completa el DNI (el login es por DNI) y se asegura el rol
+        UsuarioEntity existente = usuarioRepository.findByEmail(email).orElse(null);
+        if (existente != null) {
+            boolean cambio = false;
+            if (dni != null && !dni.equals(existente.getDni())) {
+                if (usuarioRepository.existsByDni(dni)) {
+                    log.warn("Seed: el DNI {} ya lo usa otro usuario, no se asigna al admin", dni);
+                } else {
+                    existente.setDni(dni);
+                    cambio = true;
+                }
+            }
+            if (existente.getRol() != Rol.ADMIN) {
+                existente.setRol(Rol.ADMIN);
+                cambio = true;
+            }
+            if (cambio) {
+                usuarioRepository.save(existente);
+                log.info("Seed: usuario admin '{}' actualizado", email);
+            }
             return;
+        }
+        if (dni == null) {
+            log.warn("Seed: falta SEED_ADMIN_DNI; el admin se crea pero no va a poder iniciar sesión (el login es por DNI)");
         }
         UsuarioEntity admin = new UsuarioEntity();
         admin.setNombre(adminNombre);
@@ -90,7 +114,7 @@ public class DataSeeder implements CommandLineRunner {
         admin.setEmail(email);
         admin.setPassword(passwordEncoder.encode(adminPassword));
         admin.setRol(Rol.ADMIN);
-        if (!vacio(adminDni)) admin.setDni(adminDni);
+        if (dni != null) admin.setDni(dni);
         if (!vacio(adminTelefono)) admin.setTelefono(adminTelefono);
         usuarioRepository.save(admin);
         log.info("Seed: usuario admin '{}' creado", email);
