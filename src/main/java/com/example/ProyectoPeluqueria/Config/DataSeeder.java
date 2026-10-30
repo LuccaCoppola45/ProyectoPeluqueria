@@ -2,7 +2,12 @@ package com.example.ProyectoPeluqueria.Config;
 
 import com.example.ProyectoPeluqueria.Features.Comercio.ComercioEntity;
 import com.example.ProyectoPeluqueria.Features.Comercio.ComercioRepository;
+import com.example.ProyectoPeluqueria.Features.Enums.DiaSemana;
 import com.example.ProyectoPeluqueria.Features.Enums.Rol;
+import com.example.ProyectoPeluqueria.Features.HorarioDeAtencion.HorarioDeAtencionEntity;
+import com.example.ProyectoPeluqueria.Features.HorarioDeAtencion.HorarioDeAtencionRepository;
+import com.example.ProyectoPeluqueria.Features.Servicio.ServicioEntity;
+import com.example.ProyectoPeluqueria.Features.Servicio.ServicioRepository;
 import com.example.ProyectoPeluqueria.Features.Usuario.UsuarioEntity;
 import com.example.ProyectoPeluqueria.Features.Usuario.UsuarioRepository;
 import lombok.RequiredArgsConstructor;
@@ -12,6 +17,9 @@ import org.springframework.boot.CommandLineRunner;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.time.LocalTime;
+import java.util.List;
 
 /**
  * Crea el comercio y el usuario administrador al arrancar la app, si todavía no existen.
@@ -26,6 +34,14 @@ public class DataSeeder implements CommandLineRunner {
     private final ComercioRepository comercioRepository;
     private final UsuarioRepository usuarioRepository;
     private final PasswordEncoder passwordEncoder;
+    private final ServicioRepository servicioRepository;
+    private final HorarioDeAtencionRepository horarioRepository;
+
+    // Días y horario de atención: martes a sábado de 9 a 17 hs
+    private static final List<DiaSemana> DIAS_ATENCION = List.of(
+            DiaSemana.MARTES, DiaSemana.MIERCOLES, DiaSemana.JUEVES, DiaSemana.VIERNES, DiaSemana.SABADO);
+    private static final LocalTime APERTURA = LocalTime.of(9, 0);
+    private static final LocalTime CIERRE = LocalTime.of(17, 0);
 
     @Value("${seed.comercio.nombre:}")
     private String comercioNombre;
@@ -52,27 +68,68 @@ public class DataSeeder implements CommandLineRunner {
     @Override
     @Transactional
     public void run(String... args) {
-        crearComercio();
+        ComercioEntity comercio = crearComercio();
+        if (comercio != null) {
+            crearHorarios(comercio);
+            crearServicio(comercio, "Corte de cabello", 30);
+            crearServicio(comercio, "Color", 60);
+            crearServicio(comercio, "Reflejos / Balayage", 45);
+        }
         crearAdmin();
     }
 
-    private void crearComercio() {
+    private ComercioEntity crearComercio() {
         if (vacio(comercioNombre) || vacio(comercioDireccion)
                 || vacio(comercioTelefono) || vacio(comercioDescripcion)) {
             log.info("Seed: faltan variables SEED_COMERCIO_*, no se crea el comercio");
-            return;
+            return null;
         }
-        if (comercioRepository.findByNombreIgnoreCaseAndDireccionIgnoreCase(
-                comercioNombre, comercioDireccion).isPresent()) {
-            return;
+        ComercioEntity existente = comercioRepository
+                .findByNombreIgnoreCaseAndDireccionIgnoreCase(comercioNombre, comercioDireccion)
+                .orElse(null);
+        if (existente != null) {
+            return existente;
         }
         ComercioEntity comercio = new ComercioEntity();
         comercio.setNombre(comercioNombre);
         comercio.setDireccion(comercioDireccion);
         comercio.setTelefono(comercioTelefono);
         comercio.setDescripcion(comercioDescripcion);
-        comercioRepository.save(comercio);
+        comercio = comercioRepository.save(comercio);
         log.info("Seed: comercio '{}' creado", comercioNombre);
+        return comercio;
+    }
+
+    private void crearHorarios(ComercioEntity comercio) {
+        for (DiaSemana dia : DIAS_ATENCION) {
+            if (!horarioRepository.findByComercio_IdComercioAndDiaSemana(comercio.getIdComercio(), dia).isEmpty()) {
+                continue;
+            }
+            HorarioDeAtencionEntity horario = new HorarioDeAtencionEntity();
+            horario.setComercio(comercio);
+            horario.setDiaSemana(dia);
+            horario.setHoraApertura(APERTURA);
+            horario.setHoraCierre(CIERRE);
+            horarioRepository.save(horario);
+            log.info("Seed: horario {} {}-{} creado", dia, APERTURA, CIERRE);
+        }
+    }
+
+    // Crea el servicio solo si no existe. El precio arranca en 0 y lo carga el admin desde el panel;
+    // nunca se pisa en deploys posteriores.
+    private void crearServicio(ComercioEntity comercio, String nombre, int minutos) {
+        boolean existe = servicioRepository.findByComercio_IdComercio(comercio.getIdComercio()).stream()
+                .anyMatch(sv -> nombre.equalsIgnoreCase(sv.getNombre()));
+        if (existe) {
+            return;
+        }
+        ServicioEntity servicio = new ServicioEntity();
+        servicio.setNombre(nombre);
+        servicio.setDuracionDelServicio(minutos);
+        servicio.setPrecio(0.0);
+        servicio.setComercio(comercio);
+        servicioRepository.save(servicio);
+        log.info("Seed: servicio '{}' ({} min) creado", nombre, minutos);
     }
 
     private void crearAdmin() {

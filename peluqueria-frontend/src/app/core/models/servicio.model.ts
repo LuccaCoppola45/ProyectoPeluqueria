@@ -6,3 +6,10 @@ export interface ServicioResponse {
   descripcion?: string;
   idComercio: number;
 }
+
+export interface ServicioRequest {
+  nombreServicio: string;
+  precio: number;
+  duracionDelServicio: number; // minutos
+  idComercio: number;
+}

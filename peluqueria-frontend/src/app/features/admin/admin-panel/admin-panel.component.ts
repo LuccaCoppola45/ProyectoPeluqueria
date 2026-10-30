@@ -35,6 +35,7 @@ export class AdminPanelComponent implements OnInit {
   readonly mensaje = signal<string | null>(null);
   readonly errorMsg = signal<string | null>(null);
   readonly mostrarHistorial = signal(false);
+  readonly guardandoServicioId = signal<number | null>(null);
   readonly turnosActivos = computed(() =>
     this.turnos().filter((turno) => turno.estado !== 'CANCELADO' && !this.turnoVencido(turno))
   );
@@ -292,6 +293,45 @@ export class AdminPanelComponent implements OnInit {
   /** "MIERCOLES" -> "Miércoles" (el backend no pone tildes). */
   diaLegible(dia: string): string {
     return formatearDiaSemana(dia);
+  }
+
+  guardarServicio(servicio: ServicioResponse): void {
+    this.limpiarMensajes();
+    const precio = Number(servicio.precio);
+    const duracion = Number(servicio.duracionDelServicio);
+    if (!Number.isFinite(precio) || precio <= 0) {
+      this.errorMsg.set(`Ingresá un precio mayor a 0 para ${servicio.nombreServicio}.`);
+      return;
+    }
+    if (!Number.isInteger(duracion) || duracion < 1) {
+      this.errorMsg.set(`Ingresá una duración válida (en minutos) para ${servicio.nombreServicio}.`);
+      return;
+    }
+    const idComercio = servicio.idComercio ?? this.reserva.idComercio;
+    if (!idComercio) {
+      this.errorMsg.set('No se encontró el comercio del servicio.');
+      return;
+    }
+
+    this.guardandoServicioId.set(servicio.idServicio);
+    this.servicioService.actualizar(servicio.idServicio, {
+      nombreServicio: servicio.nombreServicio,
+      precio,
+      duracionDelServicio: duracion,
+      idComercio
+    }).subscribe({
+      next: (actualizado) => {
+        this.servicios.update((lista) =>
+          lista.map((item) => (item.idServicio === actualizado.idServicio ? actualizado : item))
+        );
+        this.guardandoServicioId.set(null);
+        this.mensaje.set(`${actualizado.nombreServicio} actualizado.`);
+      },
+      error: () => {
+        this.guardandoServicioId.set(null);
+        this.errorMsg.set(`No se pudo actualizar ${servicio.nombreServicio}.`);
+      }
+    });
   }
 
   guardarHorario(horario: HorarioDeAtencionResponse): void {
