@@ -43,14 +43,6 @@ public class DataSeeder implements CommandLineRunner {
     private static final LocalTime APERTURA = LocalTime.of(9, 0);
     private static final LocalTime CIERRE = LocalTime.of(17, 0);
 
-    // Precios opcionales (si no se cargan quedan en 0 y se pueden completar después)
-    @Value("${SEED_PRECIO_CORTE:}")
-    private String precioCorte;
-    @Value("${SEED_PRECIO_COLOR:}")
-    private String precioColor;
-    @Value("${SEED_PRECIO_BALAYAGE:}")
-    private String precioBalayage;
-
     @Value("${seed.comercio.nombre:}")
     private String comercioNombre;
     @Value("${seed.comercio.direccion:}")
@@ -79,9 +71,9 @@ public class DataSeeder implements CommandLineRunner {
         ComercioEntity comercio = crearComercio();
         if (comercio != null) {
             crearHorarios(comercio);
-            crearServicio(comercio, "Corte de cabello", 30, precioCorte);
-            crearServicio(comercio, "Color", 60, precioColor);
-            crearServicio(comercio, "Reflejos / Balayage", 45, precioBalayage);
+            crearServicio(comercio, "Corte de cabello", 30);
+            crearServicio(comercio, "Color", 60);
+            crearServicio(comercio, "Reflejos / Balayage", 45);
         }
         crearAdmin();
     }
@@ -123,38 +115,21 @@ public class DataSeeder implements CommandLineRunner {
         }
     }
 
-    private void crearServicio(ComercioEntity comercio, String nombre, int minutos, String precioTexto) {
-        Double precio = parsearPrecio(precioTexto);
-        ServicioEntity existente = servicioRepository.findByComercio_IdComercio(comercio.getIdComercio()).stream()
-                .filter(sv -> nombre.equalsIgnoreCase(sv.getNombre()))
-                .findFirst()
-                .orElse(null);
-        if (existente != null) {
-            // Si se cargó un precio nuevo en las variables, se actualiza
-            if (precio != null && !precio.equals(existente.getPrecio())) {
-                existente.setPrecio(precio);
-                servicioRepository.save(existente);
-                log.info("Seed: precio de '{}' actualizado a {}", nombre, precio);
-            }
+    // Crea el servicio solo si no existe. El precio arranca en 0 y lo carga el admin desde el panel;
+    // nunca se pisa en deploys posteriores.
+    private void crearServicio(ComercioEntity comercio, String nombre, int minutos) {
+        boolean existe = servicioRepository.findByComercio_IdComercio(comercio.getIdComercio()).stream()
+                .anyMatch(sv -> nombre.equalsIgnoreCase(sv.getNombre()));
+        if (existe) {
             return;
         }
         ServicioEntity servicio = new ServicioEntity();
         servicio.setNombre(nombre);
         servicio.setDuracionDelServicio(minutos);
-        servicio.setPrecio(precio != null ? precio : 0.0);
+        servicio.setPrecio(0.0);
         servicio.setComercio(comercio);
         servicioRepository.save(servicio);
         log.info("Seed: servicio '{}' ({} min) creado", nombre, minutos);
-    }
-
-    private static Double parsearPrecio(String texto) {
-        if (vacio(texto)) return null;
-        try {
-            return Double.parseDouble(texto.trim().replace("$", "").replace(".", "").replace(",", "."));
-        } catch (NumberFormatException e) {
-            log.warn("Seed: precio inválido '{}', se ignora", texto);
-            return null;
-        }
     }
 
     private void crearAdmin() {

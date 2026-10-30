@@ -119,6 +119,46 @@
         </details>
   </section>
 
+  <section class="booking-panel admin-panel" *ngIf="!cargando()">
+        <div class="admin-panel-heading">
+          <p class="eyebrow">Configuración</p>
+          <h2>Servicios y precios</h2>
+          <p class="helper-text">Actualizá el precio o la duración de cada servicio y guardá el cambio.</p>
+        </div>
+        <p *ngIf="servicios().length === 0" class="helper-text">Todavía no hay servicios cargados.</p>
+        <div class="admin-horario admin-servicio" *ngFor="let servicio of servicios()">
+          <strong>{{ servicio.nombreServicio }}</strong>
+
+          <label class="admin-servicio-campo">Precio ($)
+            <input
+              type="number"
+              min="1"
+              step="100"
+              inputmode="numeric"
+              [(ngModel)]="servicio.precio"
+              [attr.aria-label]="'Precio de ' + servicio.nombreServicio" />
+          </label>
+
+          <label class="admin-servicio-campo">Duración (min)
+            <input
+              type="number"
+              min="5"
+              step="5"
+              inputmode="numeric"
+              [(ngModel)]="servicio.duracionDelServicio"
+              [attr.aria-label]="'Duración en minutos de ' + servicio.nombreServicio" />
+          </label>
+
+          <button
+            class="secondary"
+            type="button"
+            [disabled]="guardandoServicioId() === servicio.idServicio"
+            (click)="guardarServicio(servicio)">
+            {{ guardandoServicioId() === servicio.idServicio ? 'Guardando...' : 'Guardar' }}
+          </button>
+        </div>
+  </section>
+
   <section class="booking-panel admin-panel">
         <div class="admin-panel-heading">
           <p class="eyebrow">Configuración</p>

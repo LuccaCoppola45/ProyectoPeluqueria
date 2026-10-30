@@ -175,6 +175,28 @@ button.small {
   margin: 0;
 }
 
+.admin-servicio {
+  flex-wrap: wrap;
+}
+
+.admin-servicio strong {
+  flex: 1 1 160px;
+}
+
+.admin-servicio-campo {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 0.85rem;
+  color: var(--texto-gris);
+}
+
+.admin-servicio-campo input {
+  width: 130px;
+  min-width: 0;
+  margin: 0;
+}
+
 .days-strip {
   display: flex;
   gap: 12px;
