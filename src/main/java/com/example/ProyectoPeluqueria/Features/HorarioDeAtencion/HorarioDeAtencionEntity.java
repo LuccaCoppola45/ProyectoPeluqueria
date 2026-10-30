@@ -28,10 +28,10 @@ public class HorarioDeAtencionEntity
     @Column(name = "dia_semana", nullable = false)
     private DiaSemana diaSemana;
 
-    @Column(name = "hora_apertura", nullable = false)
+    @Column(name = "hora_apertura", nullable = false, columnDefinition = "TIME")
     private LocalTime horaApertura;
 
-    @Column(name = "hora_cierre", nullable = false)
+    @Column(name = "hora_cierre", nullable = false, columnDefinition = "TIME")
     private LocalTime horaCierre;
 
 

@@ -32,10 +32,10 @@ public class TurnoEntity
     private LocalDate fecha;
 
 
-    @Column(nullable = false)
+    @Column(nullable = false, columnDefinition = "TIME")
     private LocalTime horaInicio;
 
-    @Column(nullable = false)
+    @Column(nullable = false, columnDefinition = "TIME")
     private LocalTime horaFin;
 
     @Enumerated(EnumType.STRING)
@@ -45,6 +45,7 @@ public class TurnoEntity
     @Column(name = "respuesta_cliente", length = 20)
     private String respuestaCliente;
 
+    @Column(name = "fecha_respuesta", columnDefinition = "DATETIME")
     private java.time.LocalDateTime fechaRespuesta;
 
 

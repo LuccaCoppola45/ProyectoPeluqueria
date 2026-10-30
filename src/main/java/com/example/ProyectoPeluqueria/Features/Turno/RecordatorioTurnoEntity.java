@@ -28,7 +28,7 @@ public class RecordatorioTurnoEntity {
     @Column(nullable = false, length = 10)
     private String tipo;
 
-    @Column(nullable = false)
+    @Column(nullable = false, columnDefinition = "DATETIME")
     private LocalDateTime fechaEnvio;
 
     @Column(nullable = false, length = 20)
