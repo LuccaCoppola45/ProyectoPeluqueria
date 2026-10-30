@@ -21,7 +21,7 @@ public class CancelacionEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "fecha_cancelacion", nullable = false, updatable = false)
+    @Column(name = "fecha_cancelacion", nullable = false, updatable = false, columnDefinition = "DATETIME")
     private LocalDateTime fechaCancelacion;
 
     @Column(name = "motivo", length = 500, nullable = false, updatable = false)

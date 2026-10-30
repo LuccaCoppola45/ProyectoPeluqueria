@@ -27,7 +27,7 @@ public class ReseniaEntity {
     @Column(length = 1000)
     private String comentario;
 
-    @Column(nullable = false, updatable = false)
+    @Column(nullable = false, updatable = false, columnDefinition = "DATETIME")
     private LocalDateTime fechaCreacion;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
