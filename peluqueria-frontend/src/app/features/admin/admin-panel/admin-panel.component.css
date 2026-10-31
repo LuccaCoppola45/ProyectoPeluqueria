@@ -210,6 +210,32 @@ button.small {
   overflow-wrap: anywhere;
 }
 
+.admin-cliente-selector {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.admin-cliente-selector label {
+  margin: 0;
+}
+
+.admin-clientes-cuerpo {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 14px 16px;
+}
+
+.admin-clientes-cuerpo input {
+  margin: 0;
+}
+
+.admin-clientes-lista {
+  max-height: 420px;
+  overflow-y: auto;
+}
+
 .days-strip {
   display: flex;
   gap: 12px;
