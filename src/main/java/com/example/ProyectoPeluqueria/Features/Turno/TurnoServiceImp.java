@@ -69,6 +69,7 @@ public class TurnoServiceImp implements TurnoService {
                 horaInicio,
                 horaFinCalculada);
         validarSuperposicionUsuario(usuario.getIdUsuario(), dto.getFecha(), horaInicio, horaFinCalculada);
+        validarCupoColor(servicio, dto.getFecha(), horaInicio, null);
 
         TurnoEntity turno = turnoMapper.toEntity(dto);
         turno.setUsuario(usuario);
@@ -173,6 +174,7 @@ public class TurnoServiceImp implements TurnoService {
                 horaFinCalculada);
         validarSuperposicionUsuarioExcluyendoActual(turno.getIdTurno(),
                 turno.getUsuario().getIdUsuario(), dto.getFecha(), horaInicio, horaFinCalculada);
+        validarCupoColor(servicio, dto.getFecha(), horaInicio, turno.getIdTurno());
 
         turno.setFecha(dto.getFecha());
         turno.setHoraInicio(horaInicio);
@@ -240,13 +242,21 @@ public class TurnoServiceImp implements TurnoService {
                 .stream()
                 .filter(t -> t.getEstado() != EstadoTurno.CANCELADO)
                 .toList();
+        // Color: como máximo uno a la mañana (antes de las 13) y uno a la tarde
+        boolean esColor = esServicioDeColor(servicio);
+        boolean colorManianaOcupado = esColor && ocupados.stream()
+                .anyMatch(t -> esServicioDeColor(t.getServicio()) && esManiana(t.getHoraInicio()));
+        boolean colorTardeOcupado = esColor && ocupados.stream()
+                .anyMatch(t -> esServicioDeColor(t.getServicio()) && !esManiana(t.getHoraInicio()));
         List<LocalTime> disponibles = new ArrayList<>();
         LocalTime inicio = horario.getHoraApertura();
         while (!inicio.plusMinutes(servicio.getDuracionDelServicio()).isAfter(horario.getHoraCierre())) {
             LocalTime inicioCandidato = inicio;
             LocalTime finCandidato = inicioCandidato.plusMinutes(servicio.getDuracionDelServicio());
             boolean noPaso = !fecha.equals(LocalDate.now()) || !inicioCandidato.isBefore(LocalTime.now());
-            if (noPaso && ocupados.stream().noneMatch(t -> haySuperposicion(t, inicioCandidato, finCandidato))) {
+            boolean franjaColorLlena = esManiana(inicioCandidato) ? colorManianaOcupado : colorTardeOcupado;
+            if (noPaso && !franjaColorLlena
+                    && ocupados.stream().noneMatch(t -> haySuperposicion(t, inicioCandidato, finCandidato))) {
                 disponibles.add(inicioCandidato);
             }
             inicio = inicio.plusMinutes(15);
@@ -337,6 +347,37 @@ public class TurnoServiceImp implements TurnoService {
 
         if (existeSuperposicion) {
             throw new TurnoDuplicadoException("El usuario ya posee un turno en ese horario");
+        }
+    }
+
+    // ----- Cupo de color: 1 turno de color de 9 a 13 y 1 de 13 a 17 (según la hora de inicio) -----
+    private static final LocalTime CORTE_MEDIODIA = LocalTime.of(13, 0);
+
+    private boolean esServicioDeColor(ServicioEntity servicio) {
+        return servicio != null && servicio.getNombre() != null
+                && servicio.getNombre().toLowerCase().contains("color");
+    }
+
+    private boolean esManiana(LocalTime hora) {
+        return hora.isBefore(CORTE_MEDIODIA);
+    }
+
+    private void validarCupoColor(ServicioEntity servicio, LocalDate fecha, LocalTime horaInicio, Long idTurnoExcluido) {
+        if (!esServicioDeColor(servicio) || servicio.getComercio() == null) {
+            return;
+        }
+        boolean maniana = esManiana(horaInicio);
+        boolean franjaOcupada = turnoRepository
+                .findByComercio_IdComercioAndFecha(servicio.getComercio().getIdComercio(), fecha)
+                .stream()
+                .filter(t -> idTurnoExcluido == null || !t.getIdTurno().equals(idTurnoExcluido))
+                .filter(t -> t.getEstado() != EstadoTurno.CANCELADO)
+                .filter(t -> esServicioDeColor(t.getServicio()))
+                .anyMatch(t -> esManiana(t.getHoraInicio()) == maniana);
+        if (franjaOcupada) {
+            throw new TurnoDuplicadoException(maniana
+                    ? "Ya hay un turno de color a la mañana ese día. Probá a la tarde (desde las 13) u otro día."
+                    : "Ya hay un turno de color a la tarde ese día. Probá a la mañana (antes de las 13) u otro día.");
         }
     }
 
