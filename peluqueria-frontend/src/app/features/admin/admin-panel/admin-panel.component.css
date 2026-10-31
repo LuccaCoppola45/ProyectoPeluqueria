@@ -240,6 +240,48 @@ button.small {
   overflow-y: auto;
 }
 
+.bloqueo-rango {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.bloqueo-rango h3,
+.bloqueo-rango h4,
+.bloqueo-dias-titulo {
+  margin: 0;
+}
+
+.bloqueo-rango-campos {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 12px;
+}
+
+.bloqueo-rango-campos label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 0;
+}
+
+.bloqueo-rango-campos input {
+  margin: 0;
+  min-width: 160px;
+}
+
+.bloqueo-periodos {
+  border: 1px solid var(--g-900);
+  border-radius: 10px;
+  padding: 12px 0 0;
+}
+
+.bloqueo-periodos h4 {
+  padding: 0 16px 8px;
+}
+
 .days-strip {
   display: flex;
   gap: 12px;

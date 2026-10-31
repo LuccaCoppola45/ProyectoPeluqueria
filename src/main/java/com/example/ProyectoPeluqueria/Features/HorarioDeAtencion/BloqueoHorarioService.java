@@ -2,6 +2,7 @@ package com.example.ProyectoPeluqueria.Features.HorarioDeAtencion;
 
 import com.example.ProyectoPeluqueria.Features.HorarioDeAtencion.dtos.BloqueoHorarioResponse;
 
+import com.example.ProyectoPeluqueria.Features.HorarioDeAtencion.dtos.BloqueoRangoResponse;
 import java.time.LocalDate;
 import java.util.List;
 
@@ -14,4 +15,8 @@ public interface BloqueoHorarioService {
     void desbloquear(Long comercioId, LocalDate fecha);
 
     boolean estaBloqueado(Long comercioId, LocalDate fecha);
+
+    BloqueoRangoResponse bloquearRango(Long comercioId, LocalDate desde, LocalDate hasta);
+
+    BloqueoRangoResponse desbloquearRango(Long comercioId, LocalDate desde, LocalDate hasta);
 }

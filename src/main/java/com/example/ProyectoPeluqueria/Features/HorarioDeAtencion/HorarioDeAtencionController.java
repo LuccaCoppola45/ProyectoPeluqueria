@@ -11,6 +11,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import com.example.ProyectoPeluqueria.Features.HorarioDeAtencion.dtos.BloqueoRangoRequest;
+import com.example.ProyectoPeluqueria.Features.HorarioDeAtencion.dtos.BloqueoRangoResponse;
 import java.time.LocalDate;
 import org.springframework.format.annotation.DateTimeFormat;
 
@@ -35,6 +37,22 @@ public class HorarioDeAtencionController {
             @Valid @RequestBody BloqueoHorarioRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(bloqueoService.bloquear(request.getComercioId(), request.getFecha()));
+    }
+
+    // Bloquea todos los días entre "desde" y "hasta" (inclusive), por ejemplo vacaciones
+    @PostMapping("/bloqueos/rango")
+    public ResponseEntity<BloqueoRangoResponse> bloquearRango(
+            @Valid @RequestBody BloqueoRangoRequest request) {
+        return ResponseEntity.ok(bloqueoService.bloquearRango(
+                request.getComercioId(), request.getDesde(), request.getHasta()));
+    }
+
+    @DeleteMapping("/bloqueos/rango")
+    public ResponseEntity<BloqueoRangoResponse> desbloquearRango(
+            @RequestParam Long comercioId,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate desde,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate hasta) {
+        return ResponseEntity.ok(bloqueoService.desbloquearRango(comercioId, desde, hasta));
     }
 
     @DeleteMapping("/bloqueos/{fecha}")

@@ -30,6 +30,11 @@ export class AdminPanelComponent implements OnInit {
   readonly horariosDisponibles = signal<string[]>([]);
   readonly dias = signal<string[]>([]);
   readonly diasBloqueados = signal<string[]>([]);
+  /** Días bloqueados agrupados en períodos seguidos (ej: vacaciones). */
+  readonly periodosBloqueados = computed(() => this.agruparPeriodos(this.diasBloqueados()));
+  readonly procesandoRango = signal(false);
+  rangoDesde = '';
+  rangoHasta = '';
   readonly cargando = signal(true);
   readonly buscandoHorarios = signal(false);
   readonly mensaje = signal<string | null>(null);
@@ -98,11 +103,7 @@ export class AdminPanelComponent implements OnInit {
         this.horarios.set(comercio.horarios ?? []);
         this.cargando.set(false);
 
-        const dias = this.dias();
-        this.horarioService.listarBloqueos(comercio.idComercio, dias[0], dias[dias.length - 1]).subscribe({
-          next: (bloqueos) => this.diasBloqueados.set(bloqueos.map((bloqueo) => bloqueo.fecha)),
-          error: () => this.errorMsg.set('No se pudieron cargar los días bloqueados.')
-        });
+        this.cargarBloqueos(comercio.idComercio);
       },
       error: () => {
         this.errorMsg.set('No se pudieron cargar los horarios del comercio.');
@@ -401,6 +402,113 @@ export class AdminPanelComponent implements OnInit {
 
     const nuevaHora = `${String(fecha.getHours()).padStart(2, '0')}:${String(fecha.getMinutes()).padStart(2, '0')}`;
     horario[campo] = nuevaHora;
+  }
+
+  /** Trae los bloqueos de hoy a un año, así se ven también las vacaciones lejanas. */
+  cargarBloqueos(comercioId: number): void {
+    const hoy = new Date();
+    const enUnAnio = new Date(hoy);
+    enUnAnio.setFullYear(hoy.getFullYear() + 1);
+    this.horarioService
+      .listarBloqueos(comercioId, this.formatearFecha(hoy), this.formatearFecha(enUnAnio))
+      .subscribe({
+        next: (bloqueos) => this.diasBloqueados.set(bloqueos.map((bloqueo) => bloqueo.fecha).sort()),
+        error: () => this.errorMsg.set('No se pudieron cargar los días bloqueados.')
+      });
+  }
+
+  bloquearPeriodo(): void {
+    this.limpiarMensajes();
+    const comercioId = this.reserva.idComercio;
+    const desde = this.rangoDesde;
+    const hasta = this.rangoHasta || this.rangoDesde;
+
+    if (!comercioId) {
+      this.errorMsg.set('No se pudo identificar el comercio.');
+      return;
+    }
+    if (!desde) {
+      this.errorMsg.set('Elegí la fecha desde la que no vas a atender.');
+      return;
+    }
+    if (hasta < desde) {
+      this.errorMsg.set('La fecha "hasta" no puede ser anterior a "desde".');
+      return;
+    }
+
+    this.procesandoRango.set(true);
+    this.horarioService.bloquearRango(comercioId, desde, hasta).subscribe({
+      next: (resultado) => {
+        this.procesandoRango.set(false);
+        this.rangoDesde = '';
+        this.rangoHasta = '';
+        this.cargarBloqueos(comercioId);
+        this.limpiarHorarioSiQuedoBloqueado(desde, hasta);
+        const dias = resultado.dias === 1 ? '1 día' : `${resultado.dias} días`;
+        let texto = `Listo: ${dias} sin atención (${this.fechaVisible(desde)} al ${this.fechaVisible(hasta)}). Ya nadie puede sacar turno esos días.`;
+        if (resultado.turnosExistentes > 0) {
+          texto += ` Ojo: hay ${resultado.turnosExistentes} turno(s) que ya estaban reservados en esas fechas. ` +
+            'Siguen activos: revisalos en la agenda y cancelalos o avisale a esos clientes.';
+        }
+        this.mensaje.set(texto);
+      },
+      error: (error) => {
+        this.procesandoRango.set(false);
+        this.errorMsg.set(error?.error?.message || 'No se pudo bloquear ese período.');
+      }
+    });
+  }
+
+  desbloquearPeriodo(desde: string, hasta: string): void {
+    this.limpiarMensajes();
+    const comercioId = this.reserva.idComercio;
+    if (!comercioId) {
+      this.errorMsg.set('No se pudo identificar el comercio.');
+      return;
+    }
+    if (!window.confirm(`¿Volver a atender del ${this.fechaVisible(desde)} al ${this.fechaVisible(hasta)}?`)) {
+      return;
+    }
+    this.procesandoRango.set(true);
+    this.horarioService.desbloquearRango(comercioId, desde, hasta).subscribe({
+      next: () => {
+        this.procesandoRango.set(false);
+        this.cargarBloqueos(comercioId);
+        this.mensaje.set(`Período habilitado: del ${this.fechaVisible(desde)} al ${this.fechaVisible(hasta)} se pueden volver a sacar turnos.`);
+      },
+      error: () => {
+        this.procesandoRango.set(false);
+        this.errorMsg.set('No se pudo habilitar ese período.');
+      }
+    });
+  }
+
+  cantidadDias(desde: string, hasta: string): number {
+    const inicio = new Date(`${desde}T12:00:00`).getTime();
+    const fin = new Date(`${hasta}T12:00:00`).getTime();
+    return Math.round((fin - inicio) / 86400000) + 1;
+  }
+
+  private limpiarHorarioSiQuedoBloqueado(desde: string, hasta: string): void {
+    if (this.reserva.fecha && this.reserva.fecha >= desde && this.reserva.fecha <= hasta) {
+      this.reserva.horaInicio = '';
+      this.horariosDisponibles.set([]);
+    }
+  }
+
+  /** ['2026-12-30','2026-12-31','2027-01-01','2027-01-10'] -> [30/12 al 01/01, 10/01] */
+  private agruparPeriodos(fechas: string[]): { desde: string; hasta: string }[] {
+    const ordenadas = [...fechas].sort();
+    const periodos: { desde: string; hasta: string }[] = [];
+    for (const fecha of ordenadas) {
+      const ultimo = periodos[periodos.length - 1];
+      if (ultimo && this.cantidadDias(ultimo.hasta, fecha) === 2) {
+        ultimo.hasta = fecha;
+      } else {
+        periodos.push({ desde: fecha, hasta: fecha });
+      }
+    }
+    return periodos;
   }
 
   limpiarMensajes(): void {

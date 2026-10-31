@@ -3,7 +3,7 @@ import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { HorarioDeAtencionResponse } from '../models/horario.model';
-import { BloqueoHorarioResponse } from '../models/bloqueo-horario.model';
+import { BloqueoHorarioResponse, BloqueoRangoResponse } from '../models/bloqueo-horario.model';
 
 @Injectable({ providedIn: 'root' })
 export class HorarioService {
@@ -35,6 +35,17 @@ export class HorarioService {
   desbloquearDia(comercioId: number, fecha: string): Observable<void> {
     return this.http.delete<void>(`${this.url}/bloqueos/${fecha}`, {
       params: { comercioId }
+    });
+  }
+
+  /** Bloquea todos los días entre desde y hasta (inclusive). Fechas en formato AAAA-MM-DD. */
+  bloquearRango(comercioId: number, desde: string, hasta: string): Observable<BloqueoRangoResponse> {
+    return this.http.post<BloqueoRangoResponse>(`${this.url}/bloqueos/rango`, { comercioId, desde, hasta });
+  }
+
+  desbloquearRango(comercioId: number, desde: string, hasta: string): Observable<BloqueoRangoResponse> {
+    return this.http.delete<BloqueoRangoResponse>(`${this.url}/bloqueos/rango`, {
+      params: { comercioId, desde, hasta }
     });
   }
 }

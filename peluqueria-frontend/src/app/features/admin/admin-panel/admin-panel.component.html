@@ -294,8 +294,49 @@
         <div class="admin-panel-heading">
           <p class="eyebrow">Calendario</p>
           <h2>Días sin atención</h2>
-          <p class="helper-text">Deslizá para ver los próximos días y tocá uno para bloquearlo.</p>
+          <p class="helper-text">Bloqueá un período completo (vacaciones, feriados) o tocá un día suelto más abajo.</p>
         </div>
+
+        <div class="bloqueo-rango">
+          <h3>Bloquear un período</h3>
+          <div class="bloqueo-rango-campos">
+            <label>Desde
+              <input type="date" [min]="fechaMinima" [(ngModel)]="rangoDesde" name="rangoDesde" />
+            </label>
+            <label>Hasta
+              <input type="date" [min]="rangoDesde || fechaMinima" [(ngModel)]="rangoHasta" name="rangoHasta" />
+            </label>
+            <button
+              class="primary"
+              type="button"
+              [disabled]="procesandoRango() || !rangoDesde"
+              (click)="bloquearPeriodo()">
+              {{ procesandoRango() ? 'Guardando...' : 'Bloquear período' }}
+            </button>
+          </div>
+          <p class="helper-text">Si dejás "Hasta" vacío se bloquea solo el día "Desde".</p>
+
+          <div class="bloqueo-periodos" *ngIf="periodosBloqueados().length > 0">
+            <h4>Períodos sin atención</h4>
+            <div class="admin-horario bloqueo-periodo" *ngFor="let periodo of periodosBloqueados()">
+              <div class="admin-cliente-datos">
+                <strong>
+                  {{ fechaVisible(periodo.desde) }}<ng-container *ngIf="periodo.hasta !== periodo.desde"> al {{ fechaVisible(periodo.hasta) }}</ng-container>
+                </strong>
+                <span>{{ cantidadDias(periodo.desde, periodo.hasta) === 1 ? '1 día' : cantidadDias(periodo.desde, periodo.hasta) + ' días' }}</span>
+              </div>
+              <button
+                class="secondary"
+                type="button"
+                [disabled]="procesandoRango()"
+                (click)="desbloquearPeriodo(periodo.desde, periodo.hasta)">
+                Volver a atender
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <h3 class="bloqueo-dias-titulo">Próximos días</h3>
         <div class="days-strip" aria-label="Próximos días">
           <button
             *ngFor="let dia of dias()"
