@@ -197,6 +197,19 @@ button.small {
   margin: 0;
 }
 
+.admin-cliente-datos {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.admin-cliente-datos span {
+  color: var(--texto-gris);
+  font-size: 0.9rem;
+  overflow-wrap: anywhere;
+}
+
 .days-strip {
   display: flex;
   gap: 12px;

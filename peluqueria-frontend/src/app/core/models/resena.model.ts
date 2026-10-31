@@ -13,3 +13,9 @@ export interface ResenaResponse {
   nombreUsuario?: string | null;
   apellidoUsuario?: string | null;
 }
+
+export interface ResenaRequest {
+  comercioId: number;
+  valoracion: number; // 1 a 5
+  comentario: string;
+}

@@ -14,5 +14,8 @@ public interface UsuarioService {
     UsuarioResponse obtenerPorId (Long id);
     void eliminarUsuario (Long id);
 
+    // Borra el usuario junto con sus turnos, cancelaciones, recordatorios y reseñas (solo admin)
+    void eliminarUsuarioConDatos(Long id);
+
     UpdateUserResponse actualizarUsuario(Long id, UpdateUserRequestDTO dto);
 }
