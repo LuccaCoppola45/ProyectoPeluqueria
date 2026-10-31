@@ -44,9 +44,19 @@ public class JwtService {
                 .claims(extraClaims)
                 .subject(userDetails.getUsername())
                 .issuedAt(new Date())
-                .expiration(new Date(System.currentTimeMillis() + 86400000))
+                .expiration(new Date(System.currentTimeMillis() + duracionSesionMs(userDetails)))
                 .signWith(getSignInKey(), SignatureAlgorithm.HS256)
                 .compact();
+    }
+
+    // Duración de la sesión: el admin 7 días (para no loguearse a cada rato), el resto 24 horas
+    private static final long DURACION_ADMIN_MS = 7L * 24 * 60 * 60 * 1000;
+    private static final long DURACION_CLIENTE_MS = 24L * 60 * 60 * 1000;
+
+    private long duracionSesionMs(UserDetails userDetails) {
+        boolean esAdmin = userDetails.getAuthorities().stream()
+                .anyMatch(a -> "ADMIN".equals(a.getAuthority()) || "ROLE_ADMIN".equals(a.getAuthority()));
+        return esAdmin ? DURACION_ADMIN_MS : DURACION_CLIENTE_MS;
     }
 
     public boolean isTokenValid(String token, UserDetails userDetails) {
