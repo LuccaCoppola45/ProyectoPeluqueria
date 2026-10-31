@@ -210,6 +210,10 @@ button.small {
   overflow-wrap: anywhere;
 }
 
+.admin-turnos-cuerpo {
+  padding: 4px 16px 16px;
+}
+
 .admin-cliente-selector {
   display: flex;
   flex-direction: column;
