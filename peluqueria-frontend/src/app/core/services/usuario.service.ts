@@ -11,4 +11,11 @@ export class UsuarioService {
   listar(): Observable<UsuarioResponse[]> {
     return this.http.get<UsuarioResponse[]>(`${environment.apiUrl}/usuarios`);
   }
+
+  /** Borra el usuario junto con sus turnos, cancelaciones y reseñas (solo admin). */
+  eliminarConDatos(id: number): Observable<void> {
+    return this.http.delete<void>(`${environment.apiUrl}/usuarios/${id}`, {
+      params: { conDatos: 'true' }
+    });
+  }
 }

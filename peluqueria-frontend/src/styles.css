@@ -1029,3 +1029,72 @@ label {
     flex: 1 1 42%;
   }
 }
+
+/* Formulario de reseña (página de inicio). Va acá y no en el componente
+   para no pasar el límite de 16 kB de estilos por componente. */
+.review-form {
+  margin-top: 32px;
+  padding: 24px;
+  border: 1px solid var(--marca-borde);
+  border-radius: 12px;
+  background: var(--marca-tenue);
+}
+
+.review-form h3 {
+  margin: 0 0 12px;
+}
+
+.review-form form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.review-form-label {
+  margin: 0;
+  font-weight: 600;
+  color: var(--texto-label);
+}
+
+.star-picker {
+  display: flex;
+  gap: 4px;
+}
+
+.star-btn {
+  min-width: 44px;
+  min-height: 44px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: var(--marca);
+  font-size: 1.9rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.star-btn:hover:not(:disabled),
+.star-btn.activa {
+  background: transparent;
+  color: var(--marca-fuerte);
+}
+
+.star-btn:focus-visible {
+  outline: 3px solid var(--marca-fuerte);
+  outline-offset: 2px;
+}
+
+.review-form button[type="submit"] {
+  align-self: flex-start;
+}
+
+.review-login {
+  margin-top: 24px;
+  color: var(--texto-gris);
+}
+
+.review-delete {
+  margin-top: 12px;
+  font-size: 0.85rem;
+  padding: 6px 12px;
+}

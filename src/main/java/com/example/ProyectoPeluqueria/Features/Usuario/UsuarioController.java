@@ -43,9 +43,15 @@ public class UsuarioController {
         return ResponseEntity.ok(usuarioService.actualizarUsuario(id, request));
     }
 
+    // Con ?conDatos=true se borran también sus turnos, cancelaciones y reseñas (usuarios de prueba)
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> eliminar(@PathVariable Long id) {
-        usuarioService.eliminarUsuario(id);
+    public ResponseEntity<Void> eliminar(@PathVariable Long id,
+                                         @RequestParam(defaultValue = "false") boolean conDatos) {
+        if (conDatos) {
+            usuarioService.eliminarUsuarioConDatos(id);
+        } else {
+            usuarioService.eliminarUsuario(id);
+        }
         return ResponseEntity.noContent().build();
     }
 }

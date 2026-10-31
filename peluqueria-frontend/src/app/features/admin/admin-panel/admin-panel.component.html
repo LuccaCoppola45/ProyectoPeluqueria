@@ -159,6 +159,28 @@
         </div>
   </section>
 
+  <section class="booking-panel admin-panel" *ngIf="!cargando()">
+        <div class="admin-panel-heading">
+          <p class="eyebrow">Clientes</p>
+          <h2>Clientes registrados</h2>
+          <p class="helper-text">Eliminá cuentas de prueba o que ya no se usan. Se borran también sus turnos y reseñas.</p>
+        </div>
+        <p *ngIf="usuarios().length === 0" class="helper-text">No hay clientes registrados.</p>
+        <div class="admin-horario admin-cliente" *ngFor="let usuario of usuarios()">
+          <div class="admin-cliente-datos">
+            <strong>{{ usuario.nombre }} {{ usuario.apellido }}</strong>
+            <span>{{ usuario.dni ? 'DNI ' + usuario.dni : 'Sin DNI' }}<ng-container *ngIf="usuario.email"> · {{ usuario.email }}</ng-container></span>
+          </div>
+          <button
+            class="danger"
+            type="button"
+            [disabled]="eliminandoUsuarioId() === usuario.idUsuario"
+            (click)="eliminarUsuario(usuario)">
+            {{ eliminandoUsuarioId() === usuario.idUsuario ? 'Eliminando...' : 'Eliminar' }}
+          </button>
+        </div>
+  </section>
+
   <section class="booking-panel admin-panel">
         <div class="admin-panel-heading">
           <p class="eyebrow">Configuración</p>

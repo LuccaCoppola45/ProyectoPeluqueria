@@ -29,6 +29,7 @@ public class UsuarioServiceImp implements UsuarioService {
     private final UsuarioMapper usuarioMapper;
     private final TurnoRepository turnoRepository;
     private final PasswordEncoder passwordEncoder;
+    private final UsuarioLimpiezaRepository usuarioLimpiezaRepository;
 
     @Override
     @Transactional
@@ -81,6 +82,22 @@ public class UsuarioServiceImp implements UsuarioService {
 
         usuarioRepository.deleteById(id);
 
+    }
+
+    @Override
+    @Transactional
+    public void eliminarUsuarioConDatos(Long id) {
+        UsuarioEntity usuario = usuarioRepository.findById(id)
+                .orElseThrow(() -> new UserProfileNotFoundException("Usuario no encontrado"));
+        if (usuario.getRol() == com.example.ProyectoPeluqueria.Features.Enums.Rol.ADMIN) {
+            throw new UnauthorizedUserAccessException("No se puede eliminar un usuario administrador");
+        }
+        usuarioLimpiezaRepository.borrarRecordatorios(id);
+        usuarioLimpiezaRepository.borrarCancelaciones(id);
+        usuarioLimpiezaRepository.borrarTurnos(id);
+        usuarioLimpiezaRepository.borrarResenias(id);
+        usuarioLimpiezaRepository.borrarServiciosVinculados(id);
+        usuarioLimpiezaRepository.borrarUsuario(id);
     }
 
     @Override

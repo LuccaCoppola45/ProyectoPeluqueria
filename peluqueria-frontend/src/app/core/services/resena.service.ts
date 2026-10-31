@@ -2,7 +2,7 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
-import { ResenaResponse } from '../models/resena.model';
+import { ResenaRequest, ResenaResponse } from '../models/resena.model';
 
 @Injectable({ providedIn: 'root' })
 export class ResenaService {
@@ -15,7 +15,11 @@ export class ResenaService {
     return this.http.get<ResenaResponse[]>(this.url);
   }
 
-  crear(request: Partial<ResenaResponse>): Observable<ResenaResponse> {
+  crear(request: ResenaRequest): Observable<ResenaResponse> {
     return this.http.post<ResenaResponse>(this.url, request);
+  }
+
+  eliminar(id: number): Observable<void> {
+    return this.http.delete<void>(`${this.url}/${id}`);
   }
 }

@@ -203,12 +203,61 @@
           <div class="stars" [attr.aria-label]="'Puntuación: ' + resena.valoracion + ' de 5'">{{ getEstrellas(resena.valoracion) }}</div>
         </div>
         <p>{{ resena.comentario }}</p>
+        <button
+          *ngIf="authService.logueado() && authService.isAdmin()"
+          class="danger review-delete"
+          type="button"
+          (click)="eliminarResena(resena)">
+          Eliminar reseña
+        </button>
       </article>
     </div>
 
     <ng-template #sinResenas>
       <p class="empty-state">
         Todavía no hay reseñas publicadas. Si venís, a vos te encantaría contarnos cómo te fue.
+      </p>
+    </ng-template>
+
+    <div class="review-form" *ngIf="authService.logueado(); else invitarLogin">
+      <h3 id="titulo-dejar-resena">Dejá tu reseña</h3>
+      <form (ngSubmit)="enviarResena()" aria-labelledby="titulo-dejar-resena">
+        <p class="review-form-label" id="label-estrellas">¿Cuántas estrellas le das?</p>
+        <div class="star-picker" role="radiogroup" aria-labelledby="label-estrellas">
+          <button
+            *ngFor="let valor of opcionesValoracion"
+            type="button"
+            role="radio"
+            class="star-btn"
+            [class.activa]="valor <= valoracionElegida()"
+            [attr.aria-checked]="valor === valoracionElegida()"
+            [attr.aria-label]="valor + (valor === 1 ? ' estrella' : ' estrellas')"
+            (click)="elegirValoracion(valor)">
+            {{ valor <= valoracionElegida() ? '★' : '☆' }}
+          </button>
+        </div>
+
+        <label for="comentario-resena">Tu comentario</label>
+        <textarea
+          id="comentario-resena"
+          name="comentario"
+          rows="4"
+          maxlength="1000"
+          placeholder="Contanos cómo te fue en tu visita"
+          [(ngModel)]="comentario"></textarea>
+
+        <div *ngIf="resenaError()" class="error-msg" role="alert">{{ resenaError() }}</div>
+        <div *ngIf="resenaMsg()" class="success-msg" role="status">{{ resenaMsg() }}</div>
+
+        <button class="primary" type="submit" [disabled]="enviandoResena()">
+          {{ enviandoResena() ? 'Publicando...' : 'Publicar reseña' }}
+        </button>
+      </form>
+    </div>
+
+    <ng-template #invitarLogin>
+      <p class="review-login">
+        ¿Ya viniste? <a routerLink="/login" [queryParams]="{ regreso: '/' }">Iniciá sesión</a> para dejar tu reseña.
       </p>
     </ng-template>
   </section>

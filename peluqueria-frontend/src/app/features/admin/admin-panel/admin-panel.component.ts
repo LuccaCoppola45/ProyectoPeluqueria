@@ -36,6 +36,7 @@ export class AdminPanelComponent implements OnInit {
   readonly errorMsg = signal<string | null>(null);
   readonly mostrarHistorial = signal(false);
   readonly guardandoServicioId = signal<number | null>(null);
+  readonly eliminandoUsuarioId = signal<number | null>(null);
   readonly turnosActivos = computed(() =>
     this.turnos().filter((turno) => turno.estado !== 'CANCELADO' && !this.turnoVencido(turno))
   );
@@ -293,6 +294,38 @@ export class AdminPanelComponent implements OnInit {
   /** "MIERCOLES" -> "Miércoles" (el backend no pone tildes). */
   diaLegible(dia: string): string {
     return formatearDiaSemana(dia);
+  }
+
+  eliminarUsuario(usuario: UsuarioResponse): void {
+    this.limpiarMensajes();
+    const nombre = `${usuario.nombre} ${usuario.apellido}`.trim();
+    const confirmado = window.confirm(
+      `¿Eliminar a ${nombre}? También se borran sus turnos, cancelaciones y reseñas. Esta acción no se puede deshacer.`
+    );
+    if (!confirmado) {
+      return;
+    }
+
+    this.eliminandoUsuarioId.set(usuario.idUsuario);
+    this.usuarioService.eliminarConDatos(usuario.idUsuario).subscribe({
+      next: () => {
+        this.eliminandoUsuarioId.set(null);
+        this.usuarios.update((lista) => lista.filter((item) => item.idUsuario !== usuario.idUsuario));
+        if (this.reserva.usuarioId === usuario.idUsuario) {
+          this.reserva.usuarioId = null;
+        }
+        // Sus turnos ya no existen: se recarga la lista de turnos
+        this.turnoService.listar().subscribe({
+          next: (turnos) => this.turnos.set(turnos),
+          error: () => this.errorMsg.set('No se pudieron recargar los turnos.')
+        });
+        this.mensaje.set(`${nombre} fue eliminado.`);
+      },
+      error: () => {
+        this.eliminandoUsuarioId.set(null);
+        this.errorMsg.set(`No se pudo eliminar a ${nombre}.`);
+      }
+    });
   }
 
   guardarServicio(servicio: ServicioResponse): void {

@@ -1,6 +1,8 @@
 import { CommonModule } from '@angular/common';
 import { Component, OnInit, signal } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
+import { FormsModule } from '@angular/forms';
+import { AuthService } from '../../../core/services/auth.service';
 import { ServicioService } from '../../../core/services/servicio.service';
 import { ResenaService } from '../../../core/services/resena.service';
 import { ComercioService } from '../../../core/services/comercio.service';
@@ -12,7 +14,7 @@ import { formatearPrecio, formatearDuracion, formatearFechaLarga, formatearDiaSe
 @Component({
   selector: 'app-servicios-list',
   standalone: true,
-  imports: [CommonModule, RouterLink],
+  imports: [CommonModule, RouterLink, FormsModule],
   templateUrl: './servicios-list.component.html',
   styleUrls: ['./servicios-list.component.css']
 })
@@ -23,6 +25,14 @@ export class ServiciosListComponent implements OnInit {
   readonly cargando = signal(true);
   readonly errorMsg = signal<string | null>(null);
   readonly fotosEnBlancoYNegro = signal(false);
+
+  // Formulario de reseña (solo con sesión iniciada)
+  readonly valoracionElegida = signal(0);
+  readonly enviandoResena = signal(false);
+  readonly resenaMsg = signal<string | null>(null);
+  readonly resenaError = signal<string | null>(null);
+  readonly opcionesValoracion = [1, 2, 3, 4, 5];
+  comentario = '';
 
   readonly infoPuntos = [
     {
@@ -67,7 +77,8 @@ export class ServiciosListComponent implements OnInit {
     private servicioService: ServicioService,
     private resenaService: ResenaService,
     private comercioService: ComercioService,
-    private router: Router
+    private router: Router,
+    readonly authService: AuthService
   ) {}
 
   ngOnInit(): void {
@@ -151,6 +162,64 @@ export class ServiciosListComponent implements OnInit {
 
   alternarTratamientoFotos(): void {
     this.fotosEnBlancoYNegro.update((actual) => !actual);
+  }
+
+  elegirValoracion(valor: number): void {
+    this.valoracionElegida.set(valor);
+    this.resenaError.set(null);
+  }
+
+  enviarResena(): void {
+    this.resenaMsg.set(null);
+    this.resenaError.set(null);
+
+    const comercio = this.comercio();
+    const valoracion = this.valoracionElegida();
+    const comentario = this.comentario.trim();
+
+    if (!comercio) {
+      this.resenaError.set('No se pudo cargar la información del salón. Recargá la página e intentá de nuevo.');
+      return;
+    }
+    if (valoracion < 1 || valoracion > 5) {
+      this.resenaError.set('Elegí de 1 a 5 estrellas.');
+      return;
+    }
+    if (comentario.length < 3) {
+      this.resenaError.set('Escribí un comentario corto sobre tu experiencia.');
+      return;
+    }
+
+    this.enviandoResena.set(true);
+    this.resenaService.crear({ comercioId: comercio.idComercio, valoracion, comentario }).subscribe({
+      next: (nueva) => {
+        this.resenas.update((lista) => [nueva, ...lista]);
+        this.valoracionElegida.set(0);
+        this.comentario = '';
+        this.enviandoResena.set(false);
+        this.resenaMsg.set('¡Gracias! Tu reseña ya está publicada.');
+      },
+      error: (err) => {
+        this.enviandoResena.set(false);
+        if (err.status === 401 || err.status === 403) {
+          // El token venció: se cierra la sesión para que vuelva a entrar
+          this.authService.logout();
+          this.resenaError.set('Tu sesión venció. Iniciá sesión de nuevo para dejar tu reseña.');
+        } else {
+          this.resenaError.set('No se pudo publicar la reseña. Intentá de nuevo en un rato.');
+        }
+      }
+    });
+  }
+
+  eliminarResena(resena: ResenaResponse): void {
+    if (!window.confirm('¿Eliminar esta reseña?')) {
+      return;
+    }
+    this.resenaService.eliminar(resena.id).subscribe({
+      next: () => this.resenas.update((lista) => lista.filter((item) => item.id !== resena.id)),
+      error: () => this.resenaError.set('No se pudo eliminar la reseña.')
+    });
   }
 
   getEstrellas(puntuacion: number): string {
