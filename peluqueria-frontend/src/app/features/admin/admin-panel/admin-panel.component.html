@@ -100,11 +100,23 @@
           </button>
         </div>
 
+        <details class="turnos-group admin-turnos-panel">
+          <summary class="turnos-group-header">
+            <strong>{{ mostrarHistorial() ? 'Ver historial' : 'Ver turnos' }}</strong>
+            <span>
+              {{ mostrarHistorial() ? turnosHistoricos().length : turnosActivos().length }}
+              {{ (mostrarHistorial() ? turnosHistoricos().length : turnosActivos().length) === 1 ? 'turno' : 'turnos' }}
+            </span>
+          </summary>
+          <div class="admin-turnos-cuerpo">
         <p *ngIf="(mostrarHistorial() ? turnosHistoricosAgrupados() : turnosAgrupados()).length === 0">
           {{ mostrarHistorial() ? 'Todavía no hay turnos anteriores.' : 'No hay turnos activos para mostrar.' }}
         </p>
 
-        <details class="turnos-group" *ngFor="let grupo of (mostrarHistorial() ? turnosHistoricosAgrupados() : turnosAgrupados())" open>
+        <details
+          class="turnos-group"
+          *ngFor="let grupo of (mostrarHistorial() ? turnosHistoricosAgrupados() : turnosAgrupados()); let primero = first"
+          [open]="primero">
           <summary class="turnos-group-header">
             <strong>{{ grupo.etiqueta }}</strong>
             <span>{{ grupo.turnos.length }} turno(s)</span>
@@ -129,6 +141,8 @@
               (click)="cancelarTurno(turno)">
               Cancelar
             </button>
+          </div>
+        </details>
           </div>
         </details>
   </section>
