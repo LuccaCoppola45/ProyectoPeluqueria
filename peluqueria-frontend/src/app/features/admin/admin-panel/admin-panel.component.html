@@ -24,14 +24,28 @@
         <p class="helper-text">Elegí el cliente, el servicio y la fecha para consultar los horarios disponibles.</p>
       </div>
       <div class="admin-form-grid">
-        <label>Cliente
-          <select [(ngModel)]="reserva.usuarioId" (ngModelChange)="limpiarMensajes()">
-            <option [ngValue]="null">Seleccionar cliente</option>
-            <option *ngFor="let usuario of usuarios()" [ngValue]="usuario.idUsuario">
+        <div class="admin-cliente-selector">
+          <label>Cliente
+            <input
+              type="search"
+              placeholder="Buscar por nombre, apellido o DNI"
+              autocomplete="off"
+              [ngModel]="busquedaReserva()"
+              (ngModelChange)="busquedaReserva.set($event)"
+              aria-label="Buscar cliente para el turno" />
+          </label>
+          <select
+            [(ngModel)]="reserva.usuarioId"
+            (ngModelChange)="limpiarMensajes()"
+            aria-label="Cliente del turno">
+            <option [ngValue]="null">
+              {{ busquedaReserva() ? clientesParaReserva().length + ' resultado(s): elegí uno' : 'Seleccionar cliente' }}
+            </option>
+            <option *ngFor="let usuario of clientesParaReserva()" [ngValue]="usuario.idUsuario">
               {{ nombreParaSeleccionar(usuario) }}
             </option>
           </select>
-        </label>
+        </div>
         <label>Servicio
           <select [(ngModel)]="reserva.servicioId" (ngModelChange)="buscarHorarios()">
             <option [ngValue]="null">Seleccionar servicio</option>
@@ -165,20 +179,40 @@
           <h2>Clientes registrados</h2>
           <p class="helper-text">Eliminá cuentas de prueba o que ya no se usan. Se borran también sus turnos y reseñas.</p>
         </div>
-        <p *ngIf="usuarios().length === 0" class="helper-text">No hay clientes registrados.</p>
-        <div class="admin-horario admin-cliente" *ngFor="let usuario of usuarios()">
-          <div class="admin-cliente-datos">
-            <strong>{{ usuario.nombre }} {{ usuario.apellido }}</strong>
-            <span>{{ usuario.dni ? 'DNI ' + usuario.dni : 'Sin DNI' }}<ng-container *ngIf="usuario.email"> · {{ usuario.email }}</ng-container></span>
+        <details class="turnos-group admin-clientes">
+          <summary class="turnos-group-header">
+            <strong>Ver clientes</strong>
+            <span>{{ usuarios().length }} {{ usuarios().length === 1 ? 'cliente' : 'clientes' }}</span>
+          </summary>
+          <div class="admin-clientes-cuerpo">
+            <input
+              type="search"
+              placeholder="Buscar por nombre, apellido, DNI o email"
+              autocomplete="off"
+              [ngModel]="busquedaClientes()"
+              (ngModelChange)="busquedaClientes.set($event)"
+              aria-label="Buscar en clientes registrados" />
+            <p *ngIf="usuarios().length === 0" class="helper-text">No hay clientes registrados.</p>
+            <p *ngIf="usuarios().length > 0 && clientesFiltrados().length === 0" class="helper-text">
+              Ningún cliente coincide con la búsqueda.
+            </p>
+            <div class="admin-clientes-lista">
+              <div class="admin-horario admin-cliente" *ngFor="let usuario of clientesFiltrados()">
+                <div class="admin-cliente-datos">
+                  <strong>{{ usuario.nombre }} {{ usuario.apellido }}</strong>
+                  <span>{{ usuario.dni ? 'DNI ' + usuario.dni : 'Sin DNI' }}<ng-container *ngIf="usuario.email"> · {{ usuario.email }}</ng-container></span>
+                </div>
+                <button
+                  class="danger"
+                  type="button"
+                  [disabled]="eliminandoUsuarioId() === usuario.idUsuario"
+                  (click)="eliminarUsuario(usuario)">
+                  {{ eliminandoUsuarioId() === usuario.idUsuario ? 'Eliminando...' : 'Eliminar' }}
+                </button>
+              </div>
+            </div>
           </div>
-          <button
-            class="danger"
-            type="button"
-            [disabled]="eliminandoUsuarioId() === usuario.idUsuario"
-            (click)="eliminarUsuario(usuario)">
-            {{ eliminandoUsuarioId() === usuario.idUsuario ? 'Eliminando...' : 'Eliminar' }}
-          </button>
-        </div>
+        </details>
   </section>
 
   <section class="booking-panel admin-panel">

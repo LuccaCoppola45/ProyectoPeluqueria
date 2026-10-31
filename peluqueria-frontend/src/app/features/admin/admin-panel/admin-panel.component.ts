@@ -37,6 +37,11 @@ export class AdminPanelComponent implements OnInit {
   readonly mostrarHistorial = signal(false);
   readonly guardandoServicioId = signal<number | null>(null);
   readonly eliminandoUsuarioId = signal<number | null>(null);
+  readonly busquedaClientes = signal('');
+  readonly busquedaReserva = signal('');
+  readonly clientesFiltrados = computed(() =>
+    this.usuarios().filter((usuario) => this.coincideBusqueda(usuario, this.busquedaClientes()))
+  );
   readonly turnosActivos = computed(() =>
     this.turnos().filter((turno) => turno.estado !== 'CANCELADO' && !this.turnoVencido(turno))
   );
@@ -428,6 +433,34 @@ export class AdminPanelComponent implements OnInit {
   nombreDelServicio(turno: TurnoResponse): string {
     const servicio = this.servicios().find((item) => item.idServicio === turno.servicioId);
     return servicio?.nombreServicio ?? 'Servicio no disponible';
+  }
+
+  /** Clientes para el turno: los que coinciden con la búsqueda, sin perder el ya elegido. */
+  clientesParaReserva(): UsuarioResponse[] {
+    const texto = this.busquedaReserva();
+    return this.usuarios().filter(
+      (usuario) => usuario.idUsuario === this.reserva.usuarioId || this.coincideBusqueda(usuario, texto)
+    );
+  }
+
+  /** Busca sin importar mayúsculas ni tildes, en nombre, apellido, DNI y email. */
+  private coincideBusqueda(usuario: UsuarioResponse, texto: string): boolean {
+    const termino = this.normalizar(texto);
+    if (!termino) {
+      return true;
+    }
+    const campos = this.normalizar(
+      [usuario.nombre, usuario.apellido, usuario.dni ?? '', usuario.email ?? ''].join(' ')
+    );
+    return termino.split(/\s+/).every((parte) => campos.includes(parte));
+  }
+
+  private normalizar(texto: string): string {
+    return (texto ?? '')
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .trim();
   }
 
   nombreParaSeleccionar(usuario: UsuarioResponse): string {
