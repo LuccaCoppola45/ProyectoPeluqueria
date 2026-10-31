@@ -156,7 +156,7 @@ private final JwtAuthenticationFilter jwtAuthFilter;
                                 .hasAnyAuthority("CLIENTE", "ADMIN")
                         .requestMatchers(HttpMethod.DELETE, "/api/resenias/**")
                                 .hasAnyAuthority("CLIENTE", "ADMIN")
-                        .requestMatchers(HttpMethod.POST, "/api/horarios/bloqueos")
+                        .requestMatchers(HttpMethod.POST, "/api/horarios/bloqueos", "/api/horarios/bloqueos/**")
                                 .hasAuthority("ADMIN")
                         .requestMatchers(HttpMethod.DELETE, "/api/horarios/bloqueos/**")
                                 .hasAuthority("ADMIN")
