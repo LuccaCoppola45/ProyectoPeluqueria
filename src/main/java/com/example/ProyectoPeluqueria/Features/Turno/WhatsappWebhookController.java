@@ -48,7 +48,12 @@ public class WhatsappWebhookController {
             return ResponseEntity.ok().build();
         }
 
-        UsuarioEntity usuario = usuarioRepository.findByTelefono(telefono).orElse(null);
+        String telefonoNormalizado = TelefonoWhatsapp.normalizar(telefono);
+        UsuarioEntity usuario = usuarioRepository.findAll().stream()
+                .filter(u -> u.getTelefono() != null
+                        && telefonoNormalizado.equals(TelefonoWhatsapp.normalizar(u.getTelefono())))
+                .findFirst()
+                .orElse(null);
         if (usuario == null) {
             return ResponseEntity.ok().build();
         }
@@ -56,6 +61,7 @@ public class WhatsappWebhookController {
         turnoRepository.findByUsuario_IdUsuarioAndEstadoOrderByFechaAscHoraInicioAsc(
                         usuario.getIdUsuario(), EstadoTurno.PENDIENTE)
                 .stream()
+                .filter(t -> !t.getFecha().isBefore(java.time.LocalDate.now()))
                 .findFirst()
                 .ifPresent(turno -> {
                     String valor = Normalizer.normalize(respuesta, Normalizer.Form.NFD)
@@ -82,6 +88,14 @@ public class WhatsappWebhookController {
             String text = buscarTexto(map.get("text"), "body");
             if (text != null) {
                 return text;
+            }
+            // Botón de respuesta rápida de una plantilla: {"button": {"text": "SI", "payload": "SI"}}
+            Object button = map.get("button");
+            if (button instanceof Map<?, ?> boton) {
+                Object textoBoton = boton.get("text") != null ? boton.get("text") : boton.get("payload");
+                if (textoBoton instanceof String valor) {
+                    return valor;
+                }
             }
             for (String key : new String[]{"button_reply", "list_reply"}) {
                 Object reply = map.get(key);

@@ -27,4 +27,4 @@ ENV SPRING_PROFILES_ACTIVE=prod
 COPY --from=backend-build /app/target/*.jar app.jar
 ENV SPRING_PROFILES_ACTIVE=prod
 EXPOSE 8080
-ENTRYPOINT ["java", "-XX:MaxRAMPercentage=75", "-jar", "app.jar"]
+ENTRYPOINT ["java", "-XX:MaxRAMPercentage=75", "-Duser.timezone=America/Argentina/Buenos_Aires", "-jar", "app.jar"]

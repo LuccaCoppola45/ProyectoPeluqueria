@@ -214,6 +214,13 @@ button.small {
   padding: 4px 16px 16px;
 }
 
+.admin-turno-acciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
 .admin-cliente-selector {
   display: flex;
   flex-direction: column;

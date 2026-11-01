@@ -268,7 +268,15 @@ public class TurnoServiceImp implements TurnoService {
     public void enviarRecordatorioPrueba(Long turnoId) {
         TurnoEntity turno = turnoRepository.findById(turnoId)
                 .orElseThrow(() -> new TurnoNotFoundException("Turno no encontrado"));
-        if (!whatsappService.enviarRecordatorio(turno)) {
+        boolean enviado;
+        try {
+            enviado = whatsappService.enviarRecordatorio(turno);
+        } catch (org.springframework.web.client.RestClientResponseException ex) {
+            throw new IllegalStateException("Meta rechazó el mensaje: " + ex.getResponseBodyAsString());
+        } catch (org.springframework.web.client.RestClientException ex) {
+            throw new IllegalStateException("No se pudo conectar con WhatsApp: " + ex.getMessage());
+        }
+        if (!enviado) {
             throw new IllegalStateException(
                     "WhatsApp está desactivado. Configurá WHATSAPP_ENABLED=true para probar el envío.");
         }
