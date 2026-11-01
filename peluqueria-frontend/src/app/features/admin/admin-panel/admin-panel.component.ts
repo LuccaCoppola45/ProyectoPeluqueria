@@ -42,6 +42,7 @@ export class AdminPanelComponent implements OnInit {
   readonly mostrarHistorial = signal(false);
   readonly guardandoServicioId = signal<number | null>(null);
   readonly eliminandoUsuarioId = signal<number | null>(null);
+  readonly probandoWhatsappId = signal<number | null>(null);
   readonly busquedaClientes = signal('');
   readonly busquedaReserva = signal('');
   readonly clientesFiltrados = computed(() =>
@@ -280,6 +281,25 @@ export class AdminPanelComponent implements OnInit {
     this.horariosDisponibles.set([]);
     this.buscandoHorarios.set(false);
     this.errorMsg.set(null);
+  }
+
+  probarWhatsapp(turno: TurnoResponse): void {
+    this.limpiarMensajes();
+    const nombre = this.nombreDelUsuario(turno);
+    if (!confirm(`¿Mandarle ahora el recordatorio de WhatsApp a ${nombre}?`)) {
+      return;
+    }
+    this.probandoWhatsappId.set(turno.idTurno);
+    this.turnoService.probarRecordatorio(turno.idTurno).subscribe({
+      next: () => {
+        this.probandoWhatsappId.set(null);
+        this.mensaje.set(`Meta aceptó el recordatorio para ${nombre}. Tendría que llegarle en unos segundos.`);
+      },
+      error: (error) => {
+        this.probandoWhatsappId.set(null);
+        this.errorMsg.set(error?.error?.message || 'No se pudo enviar el recordatorio de WhatsApp.');
+      }
+    });
   }
 
   cancelarTurno(turno: TurnoResponse): void {

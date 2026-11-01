@@ -20,9 +20,17 @@ public class ConfirmacionTurnoListener {
     private final TurnoRepository turnoRepository;
     private final WhatsappService whatsappService;
 
+    @org.springframework.beans.factory.annotation.Value("${WHATSAPP_CONFIRMAR_AL_RESERVAR:false}")
+    private boolean confirmarAlReservar;
+
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     @Transactional(propagation = Propagation.REQUIRES_NEW, readOnly = true)
     public void enviarConfirmacion(TurnoCreadoEvent event) {
+        // La plantilla es el recordatorio que pregunta si viene: mandarla al reservar confunde
+        // y cuesta un mensaje extra. Se activa solo con WHATSAPP_CONFIRMAR_AL_RESERVAR=true.
+        if (!confirmarAlReservar) {
+            return;
+        }
         TurnoEntity turno = turnoRepository.findById(event.turnoId())
                 .orElseThrow(() -> new TurnoNotFoundException("Turno no encontrado"));
         try {

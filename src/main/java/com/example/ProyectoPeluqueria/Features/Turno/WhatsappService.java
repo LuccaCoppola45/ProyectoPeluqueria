@@ -13,6 +13,12 @@ import java.util.List;
 @Service
 public class WhatsappService {
 
+    // "jueves 5/11" y "10:30" para que el mensaje se lea bien
+    private static final java.time.format.DateTimeFormatter FORMATO_FECHA =
+            java.time.format.DateTimeFormatter.ofPattern("EEEE d/M", java.util.Locale.of("es", "AR"));
+    private static final java.time.format.DateTimeFormatter FORMATO_HORA =
+            java.time.format.DateTimeFormatter.ofPattern("HH:mm");
+
     private final WhatsappProperties properties;
     private final RestClient restClient;
 
@@ -62,7 +68,7 @@ public class WhatsappService {
                 + "/" + properties.phoneNumberId() + "/messages";
         Map<String, Object> body = Map.of(
                 "messaging_product", "whatsapp",
-                "to", turno.getUsuario().getTelefono(),
+                "to", TelefonoWhatsapp.normalizar(turno.getUsuario().getTelefono()),
                 "type", "template",
                 "template", Map.of(
                         "name", properties.reminderTemplate(),
@@ -70,8 +76,8 @@ public class WhatsappService {
                         "components", new Object[] {
                                 Map.of("type", "body", "parameters", new Object[] {
                                         Map.of("type", "text", "text", turno.getUsuario().getNombre()),
-                                        Map.of("type", "text", "text", turno.getFecha().toString()),
-                                        Map.of("type", "text", "text", turno.getHoraInicio().toString())
+                                        Map.of("type", "text", "text", FORMATO_FECHA.format(turno.getFecha())),
+                                        Map.of("type", "text", "text", FORMATO_HORA.format(turno.getHoraInicio()))
                                 })
                         }));
 

@@ -134,13 +134,21 @@
                 </span>
               </span>
             </div>
-            <button
-              class="secondary"
-              type="button"
-              *ngIf="!mostrarHistorial() && turno.estado !== 'CANCELADO' && turno.estado !== 'FINALIZADO'"
-              (click)="cancelarTurno(turno)">
-              Cancelar
-            </button>
+            <div class="admin-turno-acciones" *ngIf="!mostrarHistorial() && turno.estado !== 'CANCELADO' && turno.estado !== 'FINALIZADO'">
+              <button
+                class="secondary"
+                type="button"
+                [disabled]="probandoWhatsappId() === turno.idTurno"
+                (click)="probarWhatsapp(turno)">
+                {{ probandoWhatsappId() === turno.idTurno ? 'Enviando...' : 'Probar WhatsApp' }}
+              </button>
+              <button
+                class="secondary"
+                type="button"
+                (click)="cancelarTurno(turno)">
+                Cancelar
+              </button>
+            </div>
           </div>
         </details>
           </div>

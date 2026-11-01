@@ -42,9 +42,8 @@ public class RecordatorioTurnoScheduler {
 
         for (TurnoEntity turno : turnos) {
             LocalDateTime inicio = LocalDateTime.of(turno.getFecha(), turno.getHoraInicio());
+            // Un solo recordatorio, 24 hs antes, preguntando si viene (SI / NO)
             enviarSiCorresponde(turno, inicio, ahora, "24H", 23, 25);
-            enviarSiCorresponde(turno, inicio, ahora, "12H", 11, 13);
-            enviarSiCorresponde(turno, inicio, ahora, "6H", 5, 7);
         }
     }
 

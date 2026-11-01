@@ -30,4 +30,9 @@ export class TurnoService {
   eliminar(id: number): Observable<void> {
     return this.http.delete<void>(`${this.url}/${id}`);
   }
+
+  /** Manda ya mismo el recordatorio de WhatsApp de este turno (para probar la configuración). */
+  probarRecordatorio(id: number): Observable<void> {
+    return this.http.post<void>(`${this.url}/${id}/recordatorio-prueba`, {});
+  }
 }
