@@ -48,10 +48,6 @@ public class TurnoEntity
     @Column(name = "fecha_respuesta", columnDefinition = "DATETIME")
     private java.time.LocalDateTime fechaRespuesta;
 
-    // true si lo atiende la ayudante (color en paralelo); null/false si lo atiende el titular
-    @Column(name = "con_ayudante")
-    private Boolean conAyudante;
-
 
 
     // RELACIÓN: Muchos turnos pueden ser de un Usuario

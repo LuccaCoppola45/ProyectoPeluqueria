@@ -75,6 +75,7 @@ public class DataSeeder implements CommandLineRunner {
                 crearServicio(comercio, "Corte de cabello", 30);
                 crearServicio(comercio, "Color", 60);
                 crearServicio(comercio, "Reflejos / Balayage", 45);
+                crearServicioDeAyudante(comercio, "Color con segunda peluquera", 60);
                 return null;
             });
         }
@@ -142,6 +143,23 @@ public class DataSeeder implements CommandLineRunner {
         servicio.setComercio(comercio);
         servicioRepository.save(servicio);
         log.info("Seed: servicio '{}' ({} min) creado", nombre, minutos);
+    }
+
+    // Se busca por la marca y no por el nombre, así el admin lo puede renombrar sin que se cree otro.
+    private void crearServicioDeAyudante(ComercioEntity comercio, String nombre, int minutos) {
+        boolean existe = servicioRepository.findByComercio_IdComercio(comercio.getIdComercio()).stream()
+                .anyMatch(sv -> Boolean.TRUE.equals(sv.getDeAyudante()));
+        if (existe) {
+            return;
+        }
+        ServicioEntity servicio = new ServicioEntity();
+        servicio.setNombre(nombre);
+        servicio.setDuracionDelServicio(minutos);
+        servicio.setPrecio(0.0);
+        servicio.setDeAyudante(true);
+        servicio.setComercio(comercio);
+        servicioRepository.save(servicio);
+        log.info("Seed: servicio de la segunda peluquera '{}' ({} min) creado", nombre, minutos);
     }
 
     private void crearAdmin() {

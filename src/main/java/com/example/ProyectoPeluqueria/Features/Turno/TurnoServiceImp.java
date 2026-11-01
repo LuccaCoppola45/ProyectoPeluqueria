@@ -28,7 +28,6 @@ import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 
 @Service
 @Transactional
@@ -65,12 +64,11 @@ public class TurnoServiceImp implements TurnoService {
         validarHorarioAtencion(servicio.getComercio(), dto.getFecha(), horaInicio, horaFinCalculada);
 
         validarSuperposicionUsuario(usuario.getIdUsuario(), dto.getFecha(), horaInicio, horaFinCalculada);
-        boolean conAyudante = asignarProfesional(servicio, dto.getFecha(), horaInicio, horaFinCalculada, null);
+        validarAgendaLibre(servicio, dto.getFecha(), horaInicio, horaFinCalculada, null);
 
         TurnoEntity turno = turnoMapper.toEntity(dto);
         turno.setUsuario(usuario);
         turno.setServicio(servicio);
-        turno.setConAyudante(conAyudante);
         turno.setHoraFin(horaFinCalculada);
         turno.setComercio(servicio.getComercio());
         turno.setEstado(EstadoTurno.PENDIENTE);
@@ -166,8 +164,7 @@ public class TurnoServiceImp implements TurnoService {
 
         validarSuperposicionUsuarioExcluyendoActual(turno.getIdTurno(),
                 turno.getUsuario().getIdUsuario(), dto.getFecha(), horaInicio, horaFinCalculada);
-        turno.setConAyudante(asignarProfesional(
-                servicio, dto.getFecha(), horaInicio, horaFinCalculada, turno.getIdTurno()));
+        validarAgendaLibre(servicio, dto.getFecha(), horaInicio, horaFinCalculada, turno.getIdTurno());
 
         turno.setFecha(dto.getFecha());
         turno.setHoraInicio(horaInicio);
@@ -237,8 +234,8 @@ public class TurnoServiceImp implements TurnoService {
             LocalTime finCandidato = inicioCandidato.plusMinutes(servicio.getDuracionDelServicio());
             boolean noPaso = !fecha.equals(LocalDate.now()) || !inicioCandidato.isBefore(LocalTime.now());
             boolean horaPermitida = !esServicioDeReflejos(servicio) || HORARIOS_REFLEJOS.contains(inicioCandidato);
-            if (noPaso && horaPermitida && elegirProfesional(
-                    servicio, fecha, inicioCandidato, finCandidato, ocupados, duracionReflejos).isPresent()) {
+            if (noPaso && horaPermitida && puedeAtenderAyudanteSiCorresponde(servicio, fecha, finCandidato)
+                    && agendaLibre(servicio, inicioCandidato, finCandidato, ocupados, duracionReflejos)) {
                 disponibles.add(inicioCandidato);
             }
             inicio = inicio.plusMinutes(INTERVALO_TURNOS_MINUTOS);
@@ -309,17 +306,17 @@ public class TurnoServiceImp implements TurnoService {
     }
 
     // ----- Agenda -----
-    // Turnos cada 30 minutos. Reflejos solo a las 9 y a las 14, y esos horarios quedan reservados en la agenda
-    // del titular. La ayudante solo hace color, en paralelo: martes a viernes hasta las 13 y sábados todo el día.
+    // Turnos cada 30 minutos. Reflejos solo a las 9 y a las 14, y esos horarios no se ofrecen para ningún
+    // otro servicio del titular. La segunda peluquera tiene su propio servicio de color y su propia agenda:
+    // atiende martes a viernes hasta las 13 y sábados todo el día.
     private static final int INTERVALO_TURNOS_MINUTOS = 30;
     private static final List<LocalTime> HORARIOS_REFLEJOS = List.of(LocalTime.of(9, 0), LocalTime.of(14, 0));
     private static final LocalTime FIN_AYUDANTE_ENTRE_SEMANA = LocalTime.of(13, 0);
     private static final List<DiaSemana> DIAS_AYUDANTE_MANIANA = List.of(
             DiaSemana.MARTES, DiaSemana.MIERCOLES, DiaSemana.JUEVES, DiaSemana.VIERNES);
 
-    private boolean esServicioDeColor(ServicioEntity servicio) {
-        return servicio != null && servicio.getNombre() != null
-                && servicio.getNombre().toLowerCase().contains("color");
+    private boolean esDeAyudante(ServicioEntity servicio) {
+        return servicio != null && Boolean.TRUE.equals(servicio.getDeAyudante());
     }
 
     private boolean esServicioDeReflejos(ServicioEntity servicio) {
@@ -345,42 +342,38 @@ public class TurnoServiceImp implements TurnoService {
         return resto == 0 ? sinSegundos : sinSegundos.plusMinutes(INTERVALO_TURNOS_MINUTOS - resto);
     }
 
-    // Devuelve true si el turno queda con la ayudante y false si queda con el titular.
-    private boolean asignarProfesional(ServicioEntity servicio, LocalDate fecha, LocalTime horaInicio,
-                                       LocalTime horaFin, Long idTurnoExcluido) {
-        Long comercioId = servicio.getComercio().getIdComercio();
-        return elegirProfesional(servicio, fecha, horaInicio, horaFin,
-                turnosActivosDelDia(comercioId, fecha, idTurnoExcluido), duracionDeReflejos(comercioId))
-                .orElseThrow(() -> new TurnoDuplicadoException("El horario seleccionado ya está ocupado"));
-    }
-
-    // Prefiere a la ayudante para el color así el titular queda libre para otros servicios.
-    private Optional<Boolean> elegirProfesional(ServicioEntity servicio, LocalDate fecha, LocalTime horaInicio,
-                                                LocalTime horaFin, List<TurnoEntity> ocupados,
-                                                Integer duracionReflejos) {
-        boolean ayudanteLibre = puedeAtenderAyudante(servicio, fecha, horaFin)
-                && agendaLibre(ocupados, true, horaInicio, horaFin);
-        if (ayudanteLibre) {
-            return Optional.of(true);
+    private void validarAgendaLibre(ServicioEntity servicio, LocalDate fecha, LocalTime horaInicio,
+                                    LocalTime horaFin, Long idTurnoExcluido) {
+        if (!puedeAtenderAyudanteSiCorresponde(servicio, fecha, horaFin)) {
+            throw new HorarioFueraDeAtencionException(
+                    "La segunda peluquera atiende de martes a viernes hasta las 13 y los sábados todo el día");
         }
-        boolean titularLibre = agendaLibre(ocupados, false, horaInicio, horaFin)
-                && (esServicioDeReflejos(servicio) || !invadeHorarioDeReflejos(horaInicio, horaFin, duracionReflejos));
-        return titularLibre ? Optional.of(false) : Optional.empty();
+        Long comercioId = servicio.getComercio().getIdComercio();
+        if (!agendaLibre(servicio, horaInicio, horaFin,
+                turnosActivosDelDia(comercioId, fecha, idTurnoExcluido), duracionDeReflejos(comercioId))) {
+            throw new TurnoDuplicadoException("El horario seleccionado ya está ocupado");
+        }
     }
 
-    private boolean puedeAtenderAyudante(ServicioEntity servicio, LocalDate fecha, LocalTime horaFin) {
-        if (!esServicioDeColor(servicio)) {
-            return false;
+    private boolean puedeAtenderAyudanteSiCorresponde(ServicioEntity servicio, LocalDate fecha, LocalTime horaFin) {
+        if (!esDeAyudante(servicio)) {
+            return true;
         }
         DiaSemana dia = mapearDiaSemana(fecha.getDayOfWeek());
         return dia == DiaSemana.SABADO
                 || (DIAS_AYUDANTE_MANIANA.contains(dia) && !horaFin.isAfter(FIN_AYUDANTE_ENTRE_SEMANA));
     }
 
-    private boolean agendaLibre(List<TurnoEntity> ocupados, boolean deAyudante, LocalTime horaInicio, LocalTime horaFin) {
-        return ocupados.stream()
-                .filter(t -> Boolean.TRUE.equals(t.getConAyudante()) == deAyudante)
+    // Cada peluquero tiene su agenda: solo se superponen turnos del mismo peluquero.
+    private boolean agendaLibre(ServicioEntity servicio, LocalTime horaInicio, LocalTime horaFin,
+                                List<TurnoEntity> ocupados, Integer duracionReflejos) {
+        boolean deAyudante = esDeAyudante(servicio);
+        boolean libre = ocupados.stream()
+                .filter(t -> esDeAyudante(t.getServicio()) == deAyudante)
                 .noneMatch(t -> haySuperposicion(t, horaInicio, horaFin));
+        boolean respetaReflejos = deAyudante || esServicioDeReflejos(servicio)
+                || !invadeHorarioDeReflejos(horaInicio, horaFin, duracionReflejos);
+        return libre && respetaReflejos;
     }
 
     private boolean invadeHorarioDeReflejos(LocalTime horaInicio, LocalTime horaFin, Integer duracionReflejos) {

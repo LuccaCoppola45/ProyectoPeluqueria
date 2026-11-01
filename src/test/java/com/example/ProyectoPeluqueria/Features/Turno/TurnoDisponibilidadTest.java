@@ -41,6 +41,7 @@ class TurnoDisponibilidadTest {
     private ServicioEntity corte;
     private ServicioEntity color;
     private ServicioEntity reflejos;
+    private ServicioEntity colorAyudante;
 
     @BeforeEach
     void setUp() {
@@ -51,11 +52,13 @@ class TurnoDisponibilidadTest {
         corte = servicio(1L, "Corte de cabello", 30, comercio);
         color = servicio(2L, "Color", 60, comercio);
         reflejos = servicio(3L, "Reflejos / Balayage", 45, comercio);
-        Map<Long, ServicioEntity> servicios = Map.of(1L, corte, 2L, color, 3L, reflejos);
+        colorAyudante = servicio(4L, "Color con segunda peluquera", 60, comercio);
+        colorAyudante.setDeAyudante(true);
+        Map<Long, ServicioEntity> servicios = Map.of(1L, corte, 2L, color, 3L, reflejos, 4L, colorAyudante);
 
         when(servicioRepository.findById(anyLong()))
                 .thenAnswer(inv -> Optional.ofNullable(servicios.get(inv.<Long>getArgument(0))));
-        when(servicioRepository.findByComercio_IdComercio(COMERCIO_ID)).thenReturn(List.of(corte, color, reflejos));
+        when(servicioRepository.findByComercio_IdComercio(COMERCIO_ID)).thenReturn(List.of(corte, color, reflejos, colorAyudante));
         when(turnoRepository.findByComercio_IdComercioAndFecha(eq(COMERCIO_ID), any()))
                 .thenAnswer(inv -> turnos.stream().filter(t -> t.getFecha().equals(inv.getArgument(1))).toList());
 
@@ -76,50 +79,47 @@ class TurnoDisponibilidadTest {
     }
 
     @Test
-    void entreSemanaLaAyudanteHaceColorHastaLasTrece() {
-        agendar(MARTES, corte, "10:00", false);
-        agendar(MARTES, corte, "15:00", false);
+    void elColorDelTitularNoUsaLosHorariosDeReflejosNiSeSuperpone() {
+        agendar(MARTES, color, "10:00");
 
         List<LocalTime> disponibles = disponibilidad(MARTES, color);
 
-        assertThat(disponibles).contains(hora("09:00"), hora("10:00"), hora("12:00"));
-        // 12:30 termina 13:30: ya no lo hace la ayudante, pero el titular está libre
-        assertThat(disponibles).contains(hora("12:30"), hora("13:00"));
-        // a la tarde solo atiende el titular: reflejos reservados de 14 a 14:45 y corte a las 15
-        assertThat(disponibles).doesNotContain(hora("14:00"), hora("14:30"), hora("15:00"));
+        assertThat(disponibles).doesNotContain(hora("09:00"), hora("09:30"), hora("10:00"), hora("10:30"),
+                hora("13:30"), hora("14:00"), hora("14:30"));
+        assertThat(disponibles).contains(hora("11:00"), hora("15:00"));
     }
 
     @Test
-    void conAmbosOcupadosNoHayLugarParaColor() {
-        agendar(MARTES, corte, "10:00", false);
-        agendar(MARTES, corte, "10:30", false);
-        agendar(MARTES, color, "10:00", true);
+    void laSegundaPeluqueraAtiendeEntreSemanaHastaLasTrece() {
+        agendar(MARTES, corte, "10:00");
 
-        assertThat(disponibilidad(MARTES, color)).doesNotContain(hora("10:00"), hora("10:30"));
-        assertThat(disponibilidad(MARTES, color)).contains(hora("11:00"));
+        assertThat(disponibilidad(MARTES, colorAyudante)).containsExactlyElementsOf(horas(
+                "09:00", "09:30", "10:00", "10:30", "11:00", "11:30", "12:00"));
     }
 
     @Test
-    void losSabadosLaAyudanteHaceColorTodoElDia() {
-        agendar(SABADO, corte, "15:00", false);
-        agendar(SABADO, corte, "15:30", false);
+    void laSegundaPeluqueraNoSeSuperponeConSusPropiosTurnos() {
+        agendar(MARTES, colorAyudante, "09:30");
 
-        assertThat(disponibilidad(SABADO, color)).contains(hora("14:00"), hora("15:00"), hora("16:00"));
-        assertThat(disponibilidad(SABADO, corte)).doesNotContain(hora("15:00"), hora("15:30"));
+        assertThat(disponibilidad(MARTES, colorAyudante)).containsExactlyElementsOf(horas(
+                "10:30", "11:00", "11:30", "12:00"));
+        // el titular sigue con su agenda
+        assertThat(disponibilidad(MARTES, color)).contains(hora("10:00"));
     }
 
     @Test
-    void laAyudanteNoHaceOtrosServicios() {
-        agendar(MARTES, corte, "11:00", false);
+    void losSabadosLaSegundaPeluqueraAtiendeTodoElDia() {
+        agendar(SABADO, corte, "15:00");
 
-        assertThat(disponibilidad(MARTES, corte)).doesNotContain(hora("11:00"));
+        assertThat(disponibilidad(SABADO, colorAyudante)).contains(hora("09:00"), hora("15:00"), hora("16:00"));
+        assertThat(disponibilidad(SABADO, corte)).doesNotContain(hora("15:00"));
     }
 
     private List<LocalTime> disponibilidad(LocalDate fecha, ServicioEntity servicio) {
         return turnoService.obtenerDisponibilidad(fecha, servicio.getIdServicio());
     }
 
-    private void agendar(LocalDate fecha, ServicioEntity servicio, String inicio, boolean conAyudante) {
+    private void agendar(LocalDate fecha, ServicioEntity servicio, String inicio) {
         TurnoEntity turno = new TurnoEntity();
         turno.setIdTurno((long) turnos.size() + 1);
         turno.setFecha(fecha);
@@ -127,7 +127,6 @@ class TurnoDisponibilidadTest {
         turno.setHoraFin(hora(inicio).plusMinutes(servicio.getDuracionDelServicio()));
         turno.setServicio(servicio);
         turno.setEstado(EstadoTurno.PENDIENTE);
-        turno.setConAyudante(conAyudante);
         turnos.add(turno);
     }
 

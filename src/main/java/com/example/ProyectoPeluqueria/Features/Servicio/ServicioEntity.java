@@ -36,6 +36,10 @@ public class ServicioEntity {
     @Column(nullable = false)
     private Double precio;
 
+    // true si lo hace la segunda peluquera (color en paralelo); null/false si lo hace el titular
+    @Column(name = "de_ayudante")
+    private Boolean deAyudante;
+
 
     // Relación con Comercio: Muchos servicios pertenecen a un Comercio
     @ManyToOne

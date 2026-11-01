@@ -129,7 +129,7 @@
                 <strong>Cliente:</strong> {{ nombreDelUsuario(turno) }}
                 · <strong>DNI:</strong> {{ dniDelUsuario(turno) || 'No disponible' }}
                 · <strong>Servicio:</strong> {{ nombreDelServicio(turno) }} ·
-                <ng-container *ngIf="turno.conAyudante"><strong>Atiende:</strong> Ayudante ·</ng-container>
+                <ng-container *ngIf="turno.conAyudante"><strong>Atiende:</strong> Segunda peluquera ·</ng-container>
                 <span class="turno-estado" [class.turno-estado--terminado]="mostrarHistorial() || turnoVencido(turno)">
                   {{ estadoTurno(turno) }}
                 </span>

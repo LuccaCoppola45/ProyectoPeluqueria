@@ -30,7 +30,8 @@ public class TurnoMapper {
         TurnoResponse dto = modelMapper.map(entity, TurnoResponse.class);
 
         dto.setIdTurno(entity.getIdTurno());
-        dto.setConAyudante(Boolean.TRUE.equals(entity.getConAyudante()));
+        dto.setConAyudante(entity.getServicio() != null
+                && Boolean.TRUE.equals(entity.getServicio().getDeAyudante()));
 
         if (entity.getUsuario() != null) {
             dto.setUsuarioId(entity.getUsuario().getIdUsuario());
