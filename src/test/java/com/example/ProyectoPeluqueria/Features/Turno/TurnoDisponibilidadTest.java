@@ -1,0 +1,160 @@
+package com.example.ProyectoPeluqueria.Features.Turno;
+
+import com.example.ProyectoPeluqueria.Features.Comercio.ComercioEntity;
+import com.example.ProyectoPeluqueria.Features.Enums.DiaSemana;
+import com.example.ProyectoPeluqueria.Features.Enums.EstadoTurno;
+import com.example.ProyectoPeluqueria.Features.HorarioDeAtencion.BloqueoHorarioService;
+import com.example.ProyectoPeluqueria.Features.HorarioDeAtencion.HorarioDeAtencionEntity;
+import com.example.ProyectoPeluqueria.Features.Servicio.ServicioEntity;
+import com.example.ProyectoPeluqueria.Features.Servicio.ServicioRepository;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
+import java.time.DayOfWeek;
+import java.time.LocalDate;
+import java.time.LocalTime;
+import java.time.temporal.TemporalAdjusters;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+
+class TurnoDisponibilidadTest {
+
+    private static final Long COMERCIO_ID = 1L;
+    private static final LocalDate MARTES = LocalDate.now().plusWeeks(1).with(TemporalAdjusters.next(DayOfWeek.TUESDAY));
+    private static final LocalDate SABADO = MARTES.with(TemporalAdjusters.next(DayOfWeek.SATURDAY));
+
+    private final TurnoRepository turnoRepository = mock(TurnoRepository.class);
+    private final ServicioRepository servicioRepository = mock(ServicioRepository.class);
+    private final BloqueoHorarioService bloqueoHorarioService = mock(BloqueoHorarioService.class);
+    private final List<TurnoEntity> turnos = new ArrayList<>();
+
+    private TurnoServiceImp turnoService;
+    private ServicioEntity corte;
+    private ServicioEntity color;
+    private ServicioEntity reflejos;
+
+    @BeforeEach
+    void setUp() {
+        ComercioEntity comercio = new ComercioEntity();
+        comercio.setIdComercio(COMERCIO_ID);
+        comercio.setHorarios(List.of(horario(comercio, DiaSemana.MARTES), horario(comercio, DiaSemana.SABADO)));
+
+        corte = servicio(1L, "Corte de cabello", 30, comercio);
+        color = servicio(2L, "Color", 60, comercio);
+        reflejos = servicio(3L, "Reflejos / Balayage", 45, comercio);
+        Map<Long, ServicioEntity> servicios = Map.of(1L, corte, 2L, color, 3L, reflejos);
+
+        when(servicioRepository.findById(anyLong()))
+                .thenAnswer(inv -> Optional.ofNullable(servicios.get(inv.<Long>getArgument(0))));
+        when(servicioRepository.findByComercio_IdComercio(COMERCIO_ID)).thenReturn(List.of(corte, color, reflejos));
+        when(turnoRepository.findByComercio_IdComercioAndFecha(eq(COMERCIO_ID), any()))
+                .thenAnswer(inv -> turnos.stream().filter(t -> t.getFecha().equals(inv.getArgument(1))).toList());
+
+        turnoService = new TurnoServiceImp(turnoRepository, null, servicioRepository, null,
+                bloqueoHorarioService, null, null);
+    }
+
+    @Test
+    void losTurnosSonCadaTreintaMinutosYRespetanElHorarioDeReflejos() {
+        assertThat(disponibilidad(MARTES, corte)).containsExactlyElementsOf(horas(
+                "10:00", "10:30", "11:00", "11:30", "12:00", "12:30", "13:00", "13:30",
+                "15:00", "15:30", "16:00", "16:30"));
+    }
+
+    @Test
+    void losReflejosSoloSePuedenSacarALasNueveYALasCatorce() {
+        assertThat(disponibilidad(MARTES, reflejos)).containsExactlyElementsOf(horas("09:00", "14:00"));
+    }
+
+    @Test
+    void entreSemanaLaAyudanteHaceColorHastaLasTrece() {
+        agendar(MARTES, corte, "10:00", false);
+        agendar(MARTES, corte, "15:00", false);
+
+        List<LocalTime> disponibles = disponibilidad(MARTES, color);
+
+        assertThat(disponibles).contains(hora("09:00"), hora("10:00"), hora("12:00"));
+        // 12:30 termina 13:30: ya no lo hace la ayudante, pero el titular está libre
+        assertThat(disponibles).contains(hora("12:30"), hora("13:00"));
+        // a la tarde solo atiende el titular: reflejos reservados de 14 a 14:45 y corte a las 15
+        assertThat(disponibles).doesNotContain(hora("14:00"), hora("14:30"), hora("15:00"));
+    }
+
+    @Test
+    void conAmbosOcupadosNoHayLugarParaColor() {
+        agendar(MARTES, corte, "10:00", false);
+        agendar(MARTES, corte, "10:30", false);
+        agendar(MARTES, color, "10:00", true);
+
+        assertThat(disponibilidad(MARTES, color)).doesNotContain(hora("10:00"), hora("10:30"));
+        assertThat(disponibilidad(MARTES, color)).contains(hora("11:00"));
+    }
+
+    @Test
+    void losSabadosLaAyudanteHaceColorTodoElDia() {
+        agendar(SABADO, corte, "15:00", false);
+        agendar(SABADO, corte, "15:30", false);
+
+        assertThat(disponibilidad(SABADO, color)).contains(hora("14:00"), hora("15:00"), hora("16:00"));
+        assertThat(disponibilidad(SABADO, corte)).doesNotContain(hora("15:00"), hora("15:30"));
+    }
+
+    @Test
+    void laAyudanteNoHaceOtrosServicios() {
+        agendar(MARTES, corte, "11:00", false);
+
+        assertThat(disponibilidad(MARTES, corte)).doesNotContain(hora("11:00"));
+    }
+
+    private List<LocalTime> disponibilidad(LocalDate fecha, ServicioEntity servicio) {
+        return turnoService.obtenerDisponibilidad(fecha, servicio.getIdServicio());
+    }
+
+    private void agendar(LocalDate fecha, ServicioEntity servicio, String inicio, boolean conAyudante) {
+        TurnoEntity turno = new TurnoEntity();
+        turno.setIdTurno((long) turnos.size() + 1);
+        turno.setFecha(fecha);
+        turno.setHoraInicio(hora(inicio));
+        turno.setHoraFin(hora(inicio).plusMinutes(servicio.getDuracionDelServicio()));
+        turno.setServicio(servicio);
+        turno.setEstado(EstadoTurno.PENDIENTE);
+        turno.setConAyudante(conAyudante);
+        turnos.add(turno);
+    }
+
+    private static HorarioDeAtencionEntity horario(ComercioEntity comercio, DiaSemana dia) {
+        HorarioDeAtencionEntity horario = new HorarioDeAtencionEntity();
+        horario.setComercio(comercio);
+        horario.setDiaSemana(dia);
+        horario.setHoraApertura(hora("09:00"));
+        horario.setHoraCierre(hora("17:00"));
+        return horario;
+    }
+
+    private static ServicioEntity servicio(Long id, String nombre, int minutos, ComercioEntity comercio) {
+        ServicioEntity servicio = new ServicioEntity();
+        servicio.setIdServicio(id);
+        servicio.setNombre(nombre);
+        servicio.setDuracionDelServicio(minutos);
+        servicio.setPrecio(0.0);
+        servicio.setComercio(comercio);
+        return servicio;
+    }
+
+    private static LocalTime hora(String texto) {
+        return LocalTime.parse(texto);
+    }
+
+    private static List<LocalTime> horas(String... textos) {
+        return java.util.Arrays.stream(textos).map(TurnoDisponibilidadTest::hora).toList();
+    }
+}

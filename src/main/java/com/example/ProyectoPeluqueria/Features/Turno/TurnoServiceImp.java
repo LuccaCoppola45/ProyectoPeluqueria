@@ -28,6 +28,7 @@ import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 @Transactional
@@ -56,24 +57,20 @@ public class TurnoServiceImp implements TurnoService {
         validarDuracion(servicio);
 
         LocalTime horaInicio = dto.getHoraInicio();
+        validarHoraDeInicio(servicio, horaInicio);
         LocalTime horaFinCalculada = horaInicio.plusMinutes(servicio.getDuracionDelServicio());
         validarRangoCalculado(horaInicio, horaFinCalculada);
 
         // Validar horario en base al comercio del servicio
         validarHorarioAtencion(servicio.getComercio(), dto.getFecha(), horaInicio, horaFinCalculada);
 
-        // Un solo profesional atiende el comercio: ningún servicio puede solaparse.
-        validarSuperposicionComercio(
-                servicio.getComercio().getIdComercio(),
-                dto.getFecha(),
-                horaInicio,
-                horaFinCalculada);
         validarSuperposicionUsuario(usuario.getIdUsuario(), dto.getFecha(), horaInicio, horaFinCalculada);
-        validarCupoColor(servicio, dto.getFecha(), horaInicio, null);
+        boolean conAyudante = asignarProfesional(servicio, dto.getFecha(), horaInicio, horaFinCalculada, null);
 
         TurnoEntity turno = turnoMapper.toEntity(dto);
         turno.setUsuario(usuario);
         turno.setServicio(servicio);
+        turno.setConAyudante(conAyudante);
         turno.setHoraFin(horaFinCalculada);
         turno.setComercio(servicio.getComercio());
         turno.setEstado(EstadoTurno.PENDIENTE);
@@ -161,20 +158,16 @@ public class TurnoServiceImp implements TurnoService {
         validarDuracion(servicio);
 
         LocalTime horaInicio = dto.getHoraInicio();
+        validarHoraDeInicio(servicio, horaInicio);
         LocalTime horaFinCalculada = horaInicio.plusMinutes(servicio.getDuracionDelServicio());
         validarRangoCalculado(horaInicio, horaFinCalculada);
 
         validarHorarioAtencion(servicio.getComercio(), dto.getFecha(), horaInicio, horaFinCalculada);
 
-        validarSuperposicionComercioExcluyendoActual(
-                turno.getIdTurno(),
-                servicio.getComercio().getIdComercio(),
-                dto.getFecha(),
-                horaInicio,
-                horaFinCalculada);
         validarSuperposicionUsuarioExcluyendoActual(turno.getIdTurno(),
                 turno.getUsuario().getIdUsuario(), dto.getFecha(), horaInicio, horaFinCalculada);
-        validarCupoColor(servicio, dto.getFecha(), horaInicio, turno.getIdTurno());
+        turno.setConAyudante(asignarProfesional(
+                servicio, dto.getFecha(), horaInicio, horaFinCalculada, turno.getIdTurno()));
 
         turno.setFecha(dto.getFecha());
         turno.setHoraInicio(horaInicio);
@@ -235,31 +228,20 @@ public class TurnoServiceImp implements TurnoService {
                 .filter(h -> h.getDiaSemana() == dia)
                 .findFirst()
                 .orElseThrow(() -> new HorarioFueraDeAtencionException("El comercio no atiende los días " + dia));
-        List<TurnoEntity> ocupados = turnoRepository
-                .findByComercio_IdComercioAndFecha(
-                        servicio.getComercio().getIdComercio(),
-                        fecha)
-                .stream()
-                .filter(t -> t.getEstado() != EstadoTurno.CANCELADO)
-                .toList();
-        // Color: como máximo uno a la mañana (antes de las 13) y uno a la tarde
-        boolean esColor = esServicioDeColor(servicio);
-        boolean colorManianaOcupado = esColor && ocupados.stream()
-                .anyMatch(t -> esServicioDeColor(t.getServicio()) && esManiana(t.getHoraInicio()));
-        boolean colorTardeOcupado = esColor && ocupados.stream()
-                .anyMatch(t -> esServicioDeColor(t.getServicio()) && !esManiana(t.getHoraInicio()));
+        List<TurnoEntity> ocupados = turnosActivosDelDia(servicio.getComercio().getIdComercio(), fecha, null);
+        Integer duracionReflejos = duracionDeReflejos(servicio.getComercio().getIdComercio());
         List<LocalTime> disponibles = new ArrayList<>();
-        LocalTime inicio = horario.getHoraApertura();
+        LocalTime inicio = redondearAlIntervalo(horario.getHoraApertura());
         while (!inicio.plusMinutes(servicio.getDuracionDelServicio()).isAfter(horario.getHoraCierre())) {
             LocalTime inicioCandidato = inicio;
             LocalTime finCandidato = inicioCandidato.plusMinutes(servicio.getDuracionDelServicio());
             boolean noPaso = !fecha.equals(LocalDate.now()) || !inicioCandidato.isBefore(LocalTime.now());
-            boolean franjaColorLlena = esManiana(inicioCandidato) ? colorManianaOcupado : colorTardeOcupado;
-            if (noPaso && !franjaColorLlena
-                    && ocupados.stream().noneMatch(t -> haySuperposicion(t, inicioCandidato, finCandidato))) {
+            boolean horaPermitida = !esServicioDeReflejos(servicio) || HORARIOS_REFLEJOS.contains(inicioCandidato);
+            if (noPaso && horaPermitida && elegirProfesional(
+                    servicio, fecha, inicioCandidato, finCandidato, ocupados, duracionReflejos).isPresent()) {
                 disponibles.add(inicioCandidato);
             }
-            inicio = inicio.plusMinutes(15);
+            inicio = inicio.plusMinutes(INTERVALO_TURNOS_MINUTOS);
         }
         return disponibles;
     }
@@ -303,21 +285,6 @@ public class TurnoServiceImp implements TurnoService {
         }
     }
 
-    private void validarSuperposicionComercio(
-            Long comercioId,
-            java.time.LocalDate fecha,
-            LocalTime horaInicio,
-            LocalTime horaFin) {
-        boolean existeSuperposicion = turnoRepository.findByComercio_IdComercioAndFecha(comercioId, fecha)
-                .stream()
-                .filter(t -> t.getEstado() != EstadoTurno.CANCELADO)
-                .anyMatch(t -> haySuperposicion(t, horaInicio, horaFin));
-
-        if (existeSuperposicion) {
-            throw new TurnoDuplicadoException("El horario seleccionado ya está ocupado");
-        }
-    }
-
     private void validarSuperposicionUsuario(Long usuarioId, java.time.LocalDate fecha, LocalTime horaInicio, LocalTime horaFin) {
         boolean existeSuperposicion = turnoRepository.findByUsuario_IdUsuarioAndFecha(usuarioId, fecha)
                 .stream()
@@ -326,23 +293,6 @@ public class TurnoServiceImp implements TurnoService {
 
         if (existeSuperposicion) {
             throw new TurnoDuplicadoException("El usuario ya posee un turno en ese horario");
-        }
-    }
-
-    private void validarSuperposicionComercioExcluyendoActual(
-            Long idTurno,
-            Long comercioId,
-            java.time.LocalDate fecha,
-            LocalTime horaInicio,
-            LocalTime horaFin) {
-        boolean existeSuperposicion = turnoRepository.findByComercio_IdComercioAndFecha(comercioId, fecha)
-                .stream()
-                .filter(t -> !t.getIdTurno().equals(idTurno))
-                .filter(t -> t.getEstado() != EstadoTurno.CANCELADO)
-                .anyMatch(t -> haySuperposicion(t, horaInicio, horaFin));
-
-        if (existeSuperposicion) {
-            throw new TurnoDuplicadoException("El horario seleccionado ya está ocupado");
         }
     }
 
@@ -358,35 +308,104 @@ public class TurnoServiceImp implements TurnoService {
         }
     }
 
-    // ----- Cupo de color: 1 turno de color de 9 a 13 y 1 de 13 a 17 (según la hora de inicio) -----
-    private static final LocalTime CORTE_MEDIODIA = LocalTime.of(13, 0);
+    // ----- Agenda -----
+    // Turnos cada 30 minutos. Reflejos solo a las 9 y a las 14, y esos horarios quedan reservados en la agenda
+    // del titular. La ayudante solo hace color, en paralelo: martes a viernes hasta las 13 y sábados todo el día.
+    private static final int INTERVALO_TURNOS_MINUTOS = 30;
+    private static final List<LocalTime> HORARIOS_REFLEJOS = List.of(LocalTime.of(9, 0), LocalTime.of(14, 0));
+    private static final LocalTime FIN_AYUDANTE_ENTRE_SEMANA = LocalTime.of(13, 0);
+    private static final List<DiaSemana> DIAS_AYUDANTE_MANIANA = List.of(
+            DiaSemana.MARTES, DiaSemana.MIERCOLES, DiaSemana.JUEVES, DiaSemana.VIERNES);
 
     private boolean esServicioDeColor(ServicioEntity servicio) {
         return servicio != null && servicio.getNombre() != null
                 && servicio.getNombre().toLowerCase().contains("color");
     }
 
-    private boolean esManiana(LocalTime hora) {
-        return hora.isBefore(CORTE_MEDIODIA);
+    private boolean esServicioDeReflejos(ServicioEntity servicio) {
+        if (servicio == null || servicio.getNombre() == null) {
+            return false;
+        }
+        String nombre = servicio.getNombre().toLowerCase();
+        return nombre.contains("reflejo") || nombre.contains("balayage");
     }
 
-    private void validarCupoColor(ServicioEntity servicio, LocalDate fecha, LocalTime horaInicio, Long idTurnoExcluido) {
-        if (!esServicioDeColor(servicio) || servicio.getComercio() == null) {
-            return;
+    private void validarHoraDeInicio(ServicioEntity servicio, LocalTime horaInicio) {
+        if (horaInicio.getMinute() % INTERVALO_TURNOS_MINUTOS != 0 || horaInicio.getSecond() != 0) {
+            throw new IllegalArgumentException("Los turnos se toman cada 30 minutos (por ejemplo 9:00 o 9:30)");
         }
-        boolean maniana = esManiana(horaInicio);
-        boolean franjaOcupada = turnoRepository
-                .findByComercio_IdComercioAndFecha(servicio.getComercio().getIdComercio(), fecha)
+        if (esServicioDeReflejos(servicio) && !HORARIOS_REFLEJOS.contains(horaInicio)) {
+            throw new IllegalArgumentException("Los reflejos solo se pueden sacar a las 9:00 o a las 14:00");
+        }
+    }
+
+    private LocalTime redondearAlIntervalo(LocalTime hora) {
+        int resto = hora.getMinute() % INTERVALO_TURNOS_MINUTOS;
+        LocalTime sinSegundos = hora.withSecond(0).withNano(0);
+        return resto == 0 ? sinSegundos : sinSegundos.plusMinutes(INTERVALO_TURNOS_MINUTOS - resto);
+    }
+
+    // Devuelve true si el turno queda con la ayudante y false si queda con el titular.
+    private boolean asignarProfesional(ServicioEntity servicio, LocalDate fecha, LocalTime horaInicio,
+                                       LocalTime horaFin, Long idTurnoExcluido) {
+        Long comercioId = servicio.getComercio().getIdComercio();
+        return elegirProfesional(servicio, fecha, horaInicio, horaFin,
+                turnosActivosDelDia(comercioId, fecha, idTurnoExcluido), duracionDeReflejos(comercioId))
+                .orElseThrow(() -> new TurnoDuplicadoException("El horario seleccionado ya está ocupado"));
+    }
+
+    // Prefiere a la ayudante para el color así el titular queda libre para otros servicios.
+    private Optional<Boolean> elegirProfesional(ServicioEntity servicio, LocalDate fecha, LocalTime horaInicio,
+                                                LocalTime horaFin, List<TurnoEntity> ocupados,
+                                                Integer duracionReflejos) {
+        boolean ayudanteLibre = puedeAtenderAyudante(servicio, fecha, horaFin)
+                && agendaLibre(ocupados, true, horaInicio, horaFin);
+        if (ayudanteLibre) {
+            return Optional.of(true);
+        }
+        boolean titularLibre = agendaLibre(ocupados, false, horaInicio, horaFin)
+                && (esServicioDeReflejos(servicio) || !invadeHorarioDeReflejos(horaInicio, horaFin, duracionReflejos));
+        return titularLibre ? Optional.of(false) : Optional.empty();
+    }
+
+    private boolean puedeAtenderAyudante(ServicioEntity servicio, LocalDate fecha, LocalTime horaFin) {
+        if (!esServicioDeColor(servicio)) {
+            return false;
+        }
+        DiaSemana dia = mapearDiaSemana(fecha.getDayOfWeek());
+        return dia == DiaSemana.SABADO
+                || (DIAS_AYUDANTE_MANIANA.contains(dia) && !horaFin.isAfter(FIN_AYUDANTE_ENTRE_SEMANA));
+    }
+
+    private boolean agendaLibre(List<TurnoEntity> ocupados, boolean deAyudante, LocalTime horaInicio, LocalTime horaFin) {
+        return ocupados.stream()
+                .filter(t -> Boolean.TRUE.equals(t.getConAyudante()) == deAyudante)
+                .noneMatch(t -> haySuperposicion(t, horaInicio, horaFin));
+    }
+
+    private boolean invadeHorarioDeReflejos(LocalTime horaInicio, LocalTime horaFin, Integer duracionReflejos) {
+        if (duracionReflejos == null) {
+            return false;
+        }
+        return HORARIOS_REFLEJOS.stream().anyMatch(inicioReflejos ->
+                horaInicio.isBefore(inicioReflejos.plusMinutes(duracionReflejos)) && horaFin.isAfter(inicioReflejos));
+    }
+
+    private Integer duracionDeReflejos(Long comercioId) {
+        return servicioRepository.findByComercio_IdComercio(comercioId).stream()
+                .filter(this::esServicioDeReflejos)
+                .map(ServicioEntity::getDuracionDelServicio)
+                .filter(duracion -> duracion != null && duracion > 0)
+                .max(Integer::compare)
+                .orElse(null);
+    }
+
+    private List<TurnoEntity> turnosActivosDelDia(Long comercioId, LocalDate fecha, Long idTurnoExcluido) {
+        return turnoRepository.findByComercio_IdComercioAndFecha(comercioId, fecha)
                 .stream()
                 .filter(t -> idTurnoExcluido == null || !t.getIdTurno().equals(idTurnoExcluido))
                 .filter(t -> t.getEstado() != EstadoTurno.CANCELADO)
-                .filter(t -> esServicioDeColor(t.getServicio()))
-                .anyMatch(t -> esManiana(t.getHoraInicio()) == maniana);
-        if (franjaOcupada) {
-            throw new TurnoDuplicadoException(maniana
-                    ? "Ya hay un turno de color a la mañana ese día. Probá a la tarde (desde las 13) u otro día."
-                    : "Ya hay un turno de color a la tarde ese día. Probá a la mañana (antes de las 13) u otro día.");
-        }
+                .toList();
     }
 
     private boolean haySuperposicion(TurnoEntity turno, LocalTime horaInicio, LocalTime horaFin) {

@@ -19,6 +19,7 @@ export interface TurnoResponse {
   servicioId: number;
   cancelacionId: number | null;
   idComercio: number;
+  conAyudante?: boolean;
   nombreUsuario?: string;
   apellidoUsuario?: string;
   nombre?: string;

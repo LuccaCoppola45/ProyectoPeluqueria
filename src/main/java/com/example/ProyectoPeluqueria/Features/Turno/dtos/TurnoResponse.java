@@ -26,6 +26,7 @@ public class TurnoResponse
     private Long servicioId;
     private Long cancelacionId;
     private Long idComercio;
+    private Boolean conAyudante;
 
 
 }
