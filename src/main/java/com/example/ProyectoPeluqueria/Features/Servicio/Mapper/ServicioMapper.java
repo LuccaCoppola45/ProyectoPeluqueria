@@ -31,6 +31,8 @@ public class ServicioMapper {
         entity.setNombre(request.getNombreServicio());
         entity.setPrecio(request.getPrecio());
         entity.setDuracionDelServicio(request.getDuracionDelServicio());
+        entity.setPrecioHasta(request.getPrecioHasta());
+        entity.setHorariosFijos(request.getHorariosFijos());
 
         return entity;
     }
@@ -47,6 +49,9 @@ public class ServicioMapper {
         response.setNombreServicio(entity.getNombre());
         response.setPrecio(entity.getPrecio());
         response.setDuracionDelServicio(entity.getDuracionDelServicio());
+        response.setPrecioHasta(entity.getPrecioHasta());
+        response.setHorariosFijos(entity.getHorariosFijos());
+        response.setDeAyudante(Boolean.TRUE.equals(entity.getDeAyudante()));
 
         // Mapeo de comercio ID
         if (entity.getComercio() != null) {

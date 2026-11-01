@@ -19,4 +19,6 @@ public class ReseniaResponse {
     private Long usuarioId;
     private String nombreUsuario;
     private String apellidoUsuario;
+    // true si la escribió quien está mirando (para no ofrecerle dejar otra)
+    private boolean propia;
 }

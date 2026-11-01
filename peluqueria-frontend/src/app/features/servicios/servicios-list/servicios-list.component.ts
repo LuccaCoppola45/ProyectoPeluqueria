@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit, signal } from '@angular/core';
+import { Component, OnInit, computed, signal } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { AuthService } from '../../../core/services/auth.service';
@@ -9,7 +9,7 @@ import { ComercioService } from '../../../core/services/comercio.service';
 import { ServicioResponse } from '../../../core/models/servicio.model';
 import { ResenaResponse } from '../../../core/models/resena.model';
 import { ComercioResponse } from '../../../core/models/comercio.model';
-import { formatearPrecio, formatearDuracion, formatearFechaLarga, formatearDiaSemana } from '../../../shared/formato-fecha';
+import { formatearRangoPrecio, formatearDuracion, formatearFechaLarga, formatearDiaSemana } from '../../../shared/formato-fecha';
 
 @Component({
   selector: 'app-servicios-list',
@@ -32,6 +32,8 @@ export class ServiciosListComponent implements OnInit {
   readonly resenaMsg = signal<string | null>(null);
   readonly resenaError = signal<string | null>(null);
   readonly opcionesValoracion = [1, 2, 3, 4, 5];
+  /** Cada persona deja una sola reseña: si ya tiene una, no se le muestra el formulario. */
+  readonly yaDejoResena = computed(() => this.resenas().some((resena) => resena.propia));
   comentario = '';
 
   readonly infoPuntos = [
@@ -109,7 +111,7 @@ export class ServiciosListComponent implements OnInit {
   }
 
   precioLegible(servicio: ServicioResponse): string {
-    return formatearPrecio(servicio.precio);
+    return formatearRangoPrecio(servicio.precio, servicio.precioHasta);
   }
 
   duracionLegible(servicio: ServicioResponse): string {
@@ -205,6 +207,8 @@ export class ServiciosListComponent implements OnInit {
           // El token venció: se cierra la sesión para que vuelva a entrar
           this.authService.logout();
           this.resenaError.set('Tu sesión venció. Iniciá sesión de nuevo para dejar tu reseña.');
+        } else if (err.status === 409) {
+          this.resenaError.set(err.error?.message || 'Ya dejaste tu reseña. Solo se puede dejar una por persona.');
         } else {
           this.resenaError.set('No se pudo publicar la reseña. Intentá de nuevo en un rato.');
         }

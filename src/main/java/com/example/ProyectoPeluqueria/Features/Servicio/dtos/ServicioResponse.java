@@ -9,6 +9,9 @@ public class ServicioResponse
     private String nombreServicio;
     private Integer duracionDelServicio;
     private double precio;
+    private Double precioHasta;
+    private String horariosFijos;
+    private boolean deAyudante;
     private Long idComercio;
 
 }

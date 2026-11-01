@@ -7,7 +7,7 @@ import { TurnoService } from '../../../core/services/turno.service';
 import { ServicioResponse } from '../../../core/models/servicio.model';
 import { DatePickerComponent } from '../../../shared/date-picker/date-picker.component';
 import { PasosReservaComponent } from '../../../shared/pasos-reserva/pasos-reserva.component';
-import { formatearFechaLarga, formatearPrecio, formatearDuracion } from '../../../shared/formato-fecha';
+import { formatearFechaLarga, formatearRangoPrecio, formatearDuracion } from '../../../shared/formato-fecha';
 
 interface FranjaHoraria {
   nombre: string;
@@ -115,7 +115,7 @@ export class ReservarTurnoComponent implements OnInit {
   }
 
   precioLegible(): string {
-    return formatearPrecio(this.servicio()?.precio);
+    return formatearRangoPrecio(this.servicio()?.precio, this.servicio()?.precioHasta);
   }
 
   duracionLegible(): string {

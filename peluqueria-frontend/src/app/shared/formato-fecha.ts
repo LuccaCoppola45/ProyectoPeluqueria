@@ -54,6 +54,21 @@ export function formatearPrecio(precio: number | null | undefined): string {
   })}`;
 }
 
+/**
+ * Los precios son aproximados: "$35.000 a $45.000" si hay máximo, "Desde $35.000" si no,
+ * y "A consultar" si todavía no se cargó.
+ */
+export function formatearRangoPrecio(precio: number | null | undefined, precioHasta?: number | null): string {
+  const desde = Number(precio ?? 0);
+  if (desde <= 0) {
+    return 'A consultar';
+  }
+  const hasta = Number(precioHasta ?? 0);
+  return hasta > desde
+    ? `${formatearPrecio(desde)} a ${formatearPrecio(hasta)}`
+    : `Desde ${formatearPrecio(desde)}`;
+}
+
 /** "30 minutos" / "1 hora 30 minutos" */
 export function formatearDuracion(minutos: number | null | undefined): string {
   const total = Math.max(0, Math.round(Number(minutos ?? 0)));

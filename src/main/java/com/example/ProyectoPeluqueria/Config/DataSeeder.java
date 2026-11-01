@@ -72,10 +72,14 @@ public class DataSeeder implements CommandLineRunner {
         if (comercio != null) {
             intentar("crear los horarios de atención", () -> { crearHorarios(comercio); return null; });
             intentar("crear los servicios", () -> {
-                crearServicio(comercio, "Corte de cabello", 30);
-                crearServicio(comercio, "Color", 60);
-                crearServicio(comercio, "Reflejos / Balayage", 45);
-                crearServicioDeAyudante(comercio, "Color con segunda peluquera", 60);
+                cargarServicio(comercio, "Corte de cabello", 30, 0, null);
+                cargarServicio(comercio, "Color", 60, 35000, null);
+                cargarServicio(comercio, "Reflejos / Balayage", 60, 95000, "09:00,14:00");
+                cargarServicio(comercio, "Brushing", 30, 20000, null);
+                cargarServicio(comercio, "Peinado de fiesta", 40, 60000, null);
+                cargarServicio(comercio, "Base permanente", 60, 95000, "11:00,16:00");
+                cargarServicio(comercio, "Hidratación", 40, 25000, null);
+                crearServicioDeAyudante(comercio, "Color con segunda peluquera", 60, 35000);
                 return null;
             });
         }
@@ -128,25 +132,34 @@ public class DataSeeder implements CommandLineRunner {
         }
     }
 
-    // Crea el servicio solo si no existe. El precio arranca en 0 y lo carga el admin desde el panel;
-    // nunca se pisa en deploys posteriores.
-    private void crearServicio(ComercioEntity comercio, String nombre, int minutos) {
-        boolean existe = servicioRepository.findByComercio_IdComercio(comercio.getIdComercio()).stream()
-                .anyMatch(sv -> nombre.equalsIgnoreCase(sv.getNombre()));
-        if (existe) {
-            return;
+    // Crea el servicio si no existe. Si ya existe, solo completa lo que el admin nunca cargó (precio en 0,
+    // horarios fijos sin definir): lo que se edita desde el panel no se pisa en deploys posteriores.
+    private void cargarServicio(ComercioEntity comercio, String nombre, int minutos, double precio,
+                                String horariosFijos) {
+        ServicioEntity servicio = servicioRepository.findByComercio_IdComercio(comercio.getIdComercio()).stream()
+                .filter(sv -> nombre.equalsIgnoreCase(sv.getNombre()))
+                .findFirst()
+                .orElse(null);
+        if (servicio == null) {
+            servicio = new ServicioEntity();
+            servicio.setNombre(nombre);
+            servicio.setPrecio(0.0);
+            servicio.setComercio(comercio);
+            log.info("Seed: servicio '{}' creado", nombre);
         }
-        ServicioEntity servicio = new ServicioEntity();
-        servicio.setNombre(nombre);
-        servicio.setDuracionDelServicio(minutos);
-        servicio.setPrecio(0.0);
-        servicio.setComercio(comercio);
+        boolean sinPrecio = servicio.getPrecio() == null || servicio.getPrecio() <= 0;
+        if (sinPrecio) {
+            servicio.setPrecio(precio);
+            servicio.setDuracionDelServicio(minutos);
+        }
+        if (servicio.getHorariosFijos() == null && horariosFijos != null) {
+            servicio.setHorariosFijos(horariosFijos);
+        }
         servicioRepository.save(servicio);
-        log.info("Seed: servicio '{}' ({} min) creado", nombre, minutos);
     }
 
     // Se busca por la marca y no por el nombre, así el admin lo puede renombrar sin que se cree otro.
-    private void crearServicioDeAyudante(ComercioEntity comercio, String nombre, int minutos) {
+    private void crearServicioDeAyudante(ComercioEntity comercio, String nombre, int minutos, double precio) {
         boolean existe = servicioRepository.findByComercio_IdComercio(comercio.getIdComercio()).stream()
                 .anyMatch(sv -> Boolean.TRUE.equals(sv.getDeAyudante()));
         if (existe) {
@@ -155,7 +168,7 @@ public class DataSeeder implements CommandLineRunner {
         ServicioEntity servicio = new ServicioEntity();
         servicio.setNombre(nombre);
         servicio.setDuracionDelServicio(minutos);
-        servicio.setPrecio(0.0);
+        servicio.setPrecio(precio);
         servicio.setDeAyudante(true);
         servicio.setComercio(comercio);
         servicioRepository.save(servicio);

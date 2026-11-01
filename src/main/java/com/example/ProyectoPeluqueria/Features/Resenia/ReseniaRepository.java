@@ -7,4 +7,6 @@ import java.util.List;
 public interface ReseniaRepository extends JpaRepository<ReseniaEntity, Long> {
 
     List<ReseniaEntity> findByComercio_IdComercioOrderByFechaCreacionDesc(Long comercioId);
+
+    boolean existsByUsuario_IdUsuarioAndComercio_IdComercio(Long usuarioId, Long comercioId);
 }

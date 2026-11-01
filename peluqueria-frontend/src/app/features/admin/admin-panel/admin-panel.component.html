@@ -160,20 +160,34 @@
         <div class="admin-panel-heading">
           <p class="eyebrow">Configuración</p>
           <h2>Servicios y precios</h2>
-          <p class="helper-text">Actualizá el precio o la duración de cada servicio y guardá el cambio.</p>
+          <p class="helper-text">
+            Los precios son aproximados: cargá desde cuánto sale y, si querés, hasta cuánto.
+            Si un servicio tiene horarios fijos (por ejemplo reflejos: 9:00, 14:00), solo se puede sacar a esas horas
+            y nadie más puede reservar en ese horario. Dejalo vacío para que se pueda sacar a cualquier hora.
+          </p>
         </div>
         <p *ngIf="servicios().length === 0" class="helper-text">Todavía no hay servicios cargados.</p>
         <div class="admin-horario admin-servicio" *ngFor="let servicio of servicios()">
           <strong>{{ servicio.nombreServicio }}</strong>
 
-          <label class="admin-servicio-campo">Precio ($)
+          <label class="admin-servicio-campo">Desde ($)
             <input
               type="number"
               min="1"
               step="100"
               inputmode="numeric"
               [(ngModel)]="servicio.precio"
-              [attr.aria-label]="'Precio de ' + servicio.nombreServicio" />
+              [attr.aria-label]="'Precio desde de ' + servicio.nombreServicio" />
+          </label>
+
+          <label class="admin-servicio-campo">Hasta ($, opcional)
+            <input
+              type="number"
+              min="1"
+              step="100"
+              inputmode="numeric"
+              [(ngModel)]="servicio.precioHasta"
+              [attr.aria-label]="'Precio hasta de ' + servicio.nombreServicio" />
           </label>
 
           <label class="admin-servicio-campo">Duración (min)
@@ -184,6 +198,15 @@
               inputmode="numeric"
               [(ngModel)]="servicio.duracionDelServicio"
               [attr.aria-label]="'Duración en minutos de ' + servicio.nombreServicio" />
+          </label>
+
+          <label class="admin-servicio-campo" *ngIf="!servicio.deAyudante">Horarios fijos
+            <input
+              type="text"
+              placeholder="Ej: 9:00, 14:00"
+              autocomplete="off"
+              [(ngModel)]="servicio.horariosFijos"
+              [attr.aria-label]="'Horarios fijos de ' + servicio.nombreServicio" />
           </label>
 
           <button

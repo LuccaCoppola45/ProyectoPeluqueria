@@ -16,6 +16,12 @@ public class ServicioRequest {
     @NotNull(message = "El precio es obligatorio")
     private double precio;
 
+    // Opcional: precio máximo aproximado (tiene que ser mayor o igual al precio)
+    private Double precioHasta;
+
+    // Opcional: horas fijas separadas por coma, ej. "09:00,14:00"
+    private String horariosFijos;
+
 
     @NotNull(message = "La duracion del servicio es obligatorio")
     @Min(value = 1, message = "La duración debe ser mayor a cero")

@@ -3,7 +3,7 @@ import { Component, OnInit, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { ServicioService } from '../../../core/services/servicio.service';
 import { ServicioResponse } from '../../../core/models/servicio.model';
-import { formatearPrecio, formatearDuracion } from '../../../shared/formato-fecha';
+import { formatearRangoPrecio, formatearDuracion } from '../../../shared/formato-fecha';
 import { PasosReservaComponent } from '../../../shared/pasos-reserva/pasos-reserva.component';
 
 /**
@@ -43,7 +43,7 @@ export class ReservarInicioComponent implements OnInit {
   }
 
   precioLegible(servicio: ServicioResponse): string {
-    return formatearPrecio(servicio.precio);
+    return formatearRangoPrecio(servicio.precio, servicio.precioHasta);
   }
 
   duracionLegible(servicio: ServicioResponse): string {

@@ -14,6 +14,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Optional;
 
 @Service
 @Transactional
@@ -37,7 +38,8 @@ public class ReseniaServiceImp implements ReseniaService {
         List<ReseniaEntity> resenias = comercioId == null
                 ? reseniaRepository.findAll()
                 : reseniaRepository.findByComercio_IdComercioOrderByFechaCreacionDesc(comercioId);
-        return resenias.stream().map(this::toResponse).toList();
+        Long usuarioActualId = obtenerUsuarioAutenticadoSiHay().map(UsuarioEntity::getIdUsuario).orElse(null);
+        return resenias.stream().map(resenia -> toResponse(resenia, usuarioActualId)).toList();
     }
 
     @Override
@@ -46,12 +48,19 @@ public class ReseniaServiceImp implements ReseniaService {
                 .orElseThrow(() -> new ComercioNotFoundException(
                         "Comercio no encontrado con ID: " + request.getComercioId()));
 
+        UsuarioEntity usuario = obtenerUsuarioAutenticado();
+        // Una sola reseña por cliente; si quiere cambiarla, borra la suya y deja otra
+        if (reseniaRepository.existsByUsuario_IdUsuarioAndComercio_IdComercio(
+                usuario.getIdUsuario(), comercio.getIdComercio())) {
+            throw new IllegalStateException("Ya dejaste tu reseña. Solo se puede dejar una por persona.");
+        }
+
         ReseniaEntity resenia = new ReseniaEntity();
         resenia.setValoracion(request.getValoracion());
         resenia.setComentario(request.getComentario());
         resenia.setComercio(comercio);
-        resenia.setUsuario(obtenerUsuarioAutenticado());
-        return toResponse(reseniaRepository.save(resenia));
+        resenia.setUsuario(usuario);
+        return toResponse(reseniaRepository.save(resenia), usuario.getIdUsuario());
     }
 
     @Override
@@ -67,17 +76,21 @@ public class ReseniaServiceImp implements ReseniaService {
     }
 
     private UsuarioEntity obtenerUsuarioAutenticado() {
+        return obtenerUsuarioAutenticadoSiHay()
+                .orElseThrow(() -> new UserProfileNotFoundException("No hay usuario autenticado"));
+    }
+
+    // Las reseñas se listan sin sesión, así que acá no tener usuario no es un error
+    private Optional<UsuarioEntity> obtenerUsuarioAutenticadoSiHay() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication == null || authentication.getName() == null
                 || "anonymousUser".equals(authentication.getName())) {
-            throw new UserProfileNotFoundException("No hay usuario autenticado");
+            return Optional.empty();
         }
-        return usuarioRepository.findByDniOrEmail(authentication.getName(), authentication.getName())
-                .orElseThrow(() -> new UserProfileNotFoundException(
-                        "Usuario autenticado no encontrado"));
+        return usuarioRepository.findByDniOrEmail(authentication.getName(), authentication.getName());
     }
 
-    private ReseniaResponse toResponse(ReseniaEntity entity) {
+    private ReseniaResponse toResponse(ReseniaEntity entity, Long usuarioActualId) {
         ReseniaResponse response = new ReseniaResponse();
         response.setId(entity.getId());
         response.setValoracion(entity.getValoracion());
@@ -87,6 +100,7 @@ public class ReseniaServiceImp implements ReseniaService {
         response.setUsuarioId(entity.getUsuario().getIdUsuario());
         response.setNombreUsuario(entity.getUsuario().getNombre());
         response.setApellidoUsuario(entity.getUsuario().getApellido());
+        response.setPropia(entity.getUsuario().getIdUsuario().equals(usuarioActualId));
         return response;
     }
 }

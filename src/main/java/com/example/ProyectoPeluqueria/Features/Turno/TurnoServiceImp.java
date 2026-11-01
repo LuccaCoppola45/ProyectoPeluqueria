@@ -10,6 +10,7 @@ import com.example.ProyectoPeluqueria.Features.Enums.EstadoTurno;
 import com.example.ProyectoPeluqueria.Features.Enums.Rol;
 import com.example.ProyectoPeluqueria.Features.HorarioDeAtencion.HorarioDeAtencionEntity;
 import com.example.ProyectoPeluqueria.Features.HorarioDeAtencion.BloqueoHorarioService;
+import com.example.ProyectoPeluqueria.Features.Servicio.HorariosFijos;
 import com.example.ProyectoPeluqueria.Features.Servicio.ServicioEntity;
 import com.example.ProyectoPeluqueria.Features.Servicio.ServicioRepository;
 import com.example.ProyectoPeluqueria.Features.Turno.Mapper.TurnoMapper;
@@ -28,6 +29,7 @@ import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @Transactional
@@ -226,16 +228,17 @@ public class TurnoServiceImp implements TurnoService {
                 .findFirst()
                 .orElseThrow(() -> new HorarioFueraDeAtencionException("El comercio no atiende los días " + dia));
         List<TurnoEntity> ocupados = turnosActivosDelDia(servicio.getComercio().getIdComercio(), fecha, null);
-        Integer duracionReflejos = duracionDeReflejos(servicio.getComercio().getIdComercio());
+        List<ServicioEntity> conHorariosFijos = serviciosConHorariosFijos(servicio.getComercio().getIdComercio());
+        List<LocalTime> horariosFijos = HorariosFijos.leer(servicio.getHorariosFijos());
         List<LocalTime> disponibles = new ArrayList<>();
         LocalTime inicio = redondearAlIntervalo(horario.getHoraApertura());
         while (!inicio.plusMinutes(servicio.getDuracionDelServicio()).isAfter(horario.getHoraCierre())) {
             LocalTime inicioCandidato = inicio;
             LocalTime finCandidato = inicioCandidato.plusMinutes(servicio.getDuracionDelServicio());
             boolean noPaso = !fecha.equals(LocalDate.now()) || !inicioCandidato.isBefore(LocalTime.now());
-            boolean horaPermitida = !esServicioDeReflejos(servicio) || HORARIOS_REFLEJOS.contains(inicioCandidato);
+            boolean horaPermitida = horariosFijos.isEmpty() || horariosFijos.contains(inicioCandidato);
             if (noPaso && horaPermitida && puedeAtenderAyudanteSiCorresponde(servicio, fecha, finCandidato)
-                    && agendaLibre(servicio, inicioCandidato, finCandidato, ocupados, duracionReflejos)) {
+                    && agendaLibre(servicio, inicioCandidato, finCandidato, ocupados, conHorariosFijos)) {
                 disponibles.add(inicioCandidato);
             }
             inicio = inicio.plusMinutes(INTERVALO_TURNOS_MINUTOS);
@@ -306,11 +309,10 @@ public class TurnoServiceImp implements TurnoService {
     }
 
     // ----- Agenda -----
-    // Turnos cada 30 minutos. Reflejos solo a las 9 y a las 14, y esos horarios no se ofrecen para ningún
-    // otro servicio del titular. La segunda peluquera tiene su propio servicio de color y su propia agenda:
-    // atiende martes a viernes hasta las 13 y sábados todo el día.
+    // Turnos cada 30 minutos. Los servicios con horarios fijos (reflejos, base permanente) solo se sacan en
+    // esas horas, y esos horarios no se ofrecen para ningún otro servicio del titular. La segunda peluquera
+    // tiene su propio servicio de color y su propia agenda: martes a viernes hasta las 13 y sábados todo el día.
     private static final int INTERVALO_TURNOS_MINUTOS = 30;
-    private static final List<LocalTime> HORARIOS_REFLEJOS = List.of(LocalTime.of(9, 0), LocalTime.of(14, 0));
     private static final LocalTime FIN_AYUDANTE_ENTRE_SEMANA = LocalTime.of(13, 0);
     private static final List<DiaSemana> DIAS_AYUDANTE_MANIANA = List.of(
             DiaSemana.MARTES, DiaSemana.MIERCOLES, DiaSemana.JUEVES, DiaSemana.VIERNES);
@@ -319,20 +321,14 @@ public class TurnoServiceImp implements TurnoService {
         return servicio != null && Boolean.TRUE.equals(servicio.getDeAyudante());
     }
 
-    private boolean esServicioDeReflejos(ServicioEntity servicio) {
-        if (servicio == null || servicio.getNombre() == null) {
-            return false;
-        }
-        String nombre = servicio.getNombre().toLowerCase();
-        return nombre.contains("reflejo") || nombre.contains("balayage");
-    }
-
     private void validarHoraDeInicio(ServicioEntity servicio, LocalTime horaInicio) {
         if (horaInicio.getMinute() % INTERVALO_TURNOS_MINUTOS != 0 || horaInicio.getSecond() != 0) {
             throw new IllegalArgumentException("Los turnos se toman cada 30 minutos (por ejemplo 9:00 o 9:30)");
         }
-        if (esServicioDeReflejos(servicio) && !HORARIOS_REFLEJOS.contains(horaInicio)) {
-            throw new IllegalArgumentException("Los reflejos solo se pueden sacar a las 9:00 o a las 14:00");
+        List<LocalTime> horariosFijos = HorariosFijos.leer(servicio.getHorariosFijos());
+        if (!horariosFijos.isEmpty() && !horariosFijos.contains(horaInicio)) {
+            String horas = horariosFijos.stream().map(LocalTime::toString).collect(Collectors.joining(" o "));
+            throw new IllegalArgumentException(servicio.getNombre() + " solo se puede sacar a las " + horas);
         }
     }
 
@@ -350,7 +346,7 @@ public class TurnoServiceImp implements TurnoService {
         }
         Long comercioId = servicio.getComercio().getIdComercio();
         if (!agendaLibre(servicio, horaInicio, horaFin,
-                turnosActivosDelDia(comercioId, fecha, idTurnoExcluido), duracionDeReflejos(comercioId))) {
+                turnosActivosDelDia(comercioId, fecha, idTurnoExcluido), serviciosConHorariosFijos(comercioId))) {
             throw new TurnoDuplicadoException("El horario seleccionado ya está ocupado");
         }
     }
@@ -366,31 +362,29 @@ public class TurnoServiceImp implements TurnoService {
 
     // Cada peluquero tiene su agenda: solo se superponen turnos del mismo peluquero.
     private boolean agendaLibre(ServicioEntity servicio, LocalTime horaInicio, LocalTime horaFin,
-                                List<TurnoEntity> ocupados, Integer duracionReflejos) {
+                                List<TurnoEntity> ocupados, List<ServicioEntity> conHorariosFijos) {
         boolean deAyudante = esDeAyudante(servicio);
         boolean libre = ocupados.stream()
                 .filter(t -> esDeAyudante(t.getServicio()) == deAyudante)
                 .noneMatch(t -> haySuperposicion(t, horaInicio, horaFin));
-        boolean respetaReflejos = deAyudante || esServicioDeReflejos(servicio)
-                || !invadeHorarioDeReflejos(horaInicio, horaFin, duracionReflejos);
-        return libre && respetaReflejos;
+        return libre && (deAyudante || !invadeHorarioFijoAjeno(servicio, horaInicio, horaFin, conHorariosFijos));
     }
 
-    private boolean invadeHorarioDeReflejos(LocalTime horaInicio, LocalTime horaFin, Integer duracionReflejos) {
-        if (duracionReflejos == null) {
-            return false;
-        }
-        return HORARIOS_REFLEJOS.stream().anyMatch(inicioReflejos ->
-                horaInicio.isBefore(inicioReflejos.plusMinutes(duracionReflejos)) && horaFin.isAfter(inicioReflejos));
+    private boolean invadeHorarioFijoAjeno(ServicioEntity servicio, LocalTime horaInicio, LocalTime horaFin,
+                                          List<ServicioEntity> conHorariosFijos) {
+        return conHorariosFijos.stream()
+                .filter(otro -> !otro.getIdServicio().equals(servicio.getIdServicio()))
+                .anyMatch(otro -> HorariosFijos.leer(otro.getHorariosFijos()).stream().anyMatch(inicioFijo ->
+                        horaInicio.isBefore(inicioFijo.plusMinutes(otro.getDuracionDelServicio()))
+                                && horaFin.isAfter(inicioFijo)));
     }
 
-    private Integer duracionDeReflejos(Long comercioId) {
+    private List<ServicioEntity> serviciosConHorariosFijos(Long comercioId) {
         return servicioRepository.findByComercio_IdComercio(comercioId).stream()
-                .filter(this::esServicioDeReflejos)
-                .map(ServicioEntity::getDuracionDelServicio)
-                .filter(duracion -> duracion != null && duracion > 0)
-                .max(Integer::compare)
-                .orElse(null);
+                .filter(sv -> !esDeAyudante(sv))
+                .filter(sv -> sv.getDuracionDelServicio() != null && sv.getDuracionDelServicio() > 0)
+                .filter(sv -> !HorariosFijos.leer(sv.getHorariosFijos()).isEmpty())
+                .toList();
     }
 
     private List<TurnoEntity> turnosActivosDelDia(Long comercioId, LocalDate fecha, Long idTurnoExcluido) {

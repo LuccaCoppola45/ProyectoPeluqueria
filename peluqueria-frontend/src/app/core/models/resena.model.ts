@@ -12,6 +12,8 @@ export interface ResenaResponse {
   usuarioId: number;
   nombreUsuario?: string | null;
   apellidoUsuario?: string | null;
+  /** true si la escribió quien está mirando. */
+  propia?: boolean;
 }
 
 export interface ResenaRequest {

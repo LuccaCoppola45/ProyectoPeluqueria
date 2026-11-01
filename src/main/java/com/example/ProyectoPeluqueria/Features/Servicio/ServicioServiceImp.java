@@ -16,6 +16,8 @@ import java.util.stream.Collectors;
 @Service
 public class ServicioServiceImp implements ServicioService{
 
+    private static final int INTERVALO_TURNOS_MINUTOS = 30;
+
 
     private final ServicioRepository servicioRepository;
     private final ServicioMapper servicioMapper;
@@ -113,6 +115,8 @@ public class ServicioServiceImp implements ServicioService{
         servicioEntity.setNombre(request.getNombreServicio());
         servicioEntity.setPrecio(request.getPrecio());
         servicioEntity.setDuracionDelServicio(request.getDuracionDelServicio());
+        servicioEntity.setPrecioHasta(request.getPrecioHasta());
+        servicioEntity.setHorariosFijos(request.getHorariosFijos());
         servicioEntity.setComercio(comercio);
         // NO asignamos horario porque ya no existe esa relación
 
@@ -134,6 +138,10 @@ public class ServicioServiceImp implements ServicioService{
         if (request.getIdComercio() == null || request.getIdComercio() <= 0) {
             throw new IllegalArgumentException("El ID del comercio debe ser positivo");
         }
+        if (request.getPrecioHasta() != null && request.getPrecioHasta() < request.getPrecio()) {
+            throw new IllegalArgumentException("El precio \"hasta\" no puede ser menor al precio \"desde\"");
+        }
         request.setNombreServicio(request.getNombreServicio().trim());
+        request.setHorariosFijos(HorariosFijos.normalizar(request.getHorariosFijos(), INTERVALO_TURNOS_MINUTOS));
     }
 }

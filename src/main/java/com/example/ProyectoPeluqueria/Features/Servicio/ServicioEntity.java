@@ -36,6 +36,14 @@ public class ServicioEntity {
     @Column(nullable = false)
     private Double precio;
 
+    // Precio máximo aproximado; null si solo se muestra "desde"
+    @Column(name = "precio_hasta")
+    private Double precioHasta;
+
+    // Únicas horas en que se puede sacar el servicio, ej. "09:00,14:00" (ver HorariosFijos)
+    @Column(name = "horarios_fijos", length = 100)
+    private String horariosFijos;
+
     // true si lo hace la segunda peluquera (color en paralelo); null/false si lo hace el titular
     @Column(name = "de_ayudante")
     private Boolean deAyudante;

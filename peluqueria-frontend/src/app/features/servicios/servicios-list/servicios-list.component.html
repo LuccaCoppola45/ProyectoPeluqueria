@@ -81,12 +81,18 @@
         alt="Cabello con volumen y textura" />
       <span>Un lugar pensado para vos</span>
     </div>
+    <!-- BORRADOR: completar lo que está entre [corchetes] con los datos del cliente antes de publicar -->
     <div class="about-copy">
       <p class="eyebrow">Sobre nosotros</p>
-      <h2>Más que un cambio de look, un momento para sentirte bien.</h2>
+      <h2>Detrás de Piazzolla hay una historia de oficio.</h2>
       <p>
-        En Piazzolla creemos que el estilo empieza por escuchar. Creamos una experiencia cercana y cuidada,
-        donde cada servicio se adapta a vos, a tu rutina y a lo que querés transmitir.
+        Soy [NOMBRE], peluquero hace más de [AÑOS] años. [CÓMO EMPEZÓ: por ejemplo, "Aprendí el oficio
+        de chico en la peluquería de mi familia"] y con el tiempo armé Piazzolla: un lugar donde cada persona
+        se sienta escuchada y salga sintiéndose ella misma.
+      </p>
+      <p>
+        Hoy trabajo junto a [NOMBRE DE ELLA], que se especializa en color. Cortes, color, reflejos, peinados y
+        tratamientos, siempre con productos de calidad y el tiempo que cada trabajo necesita.
       </p>
       <a href="#servicios" class="text-link">Conocé nuestros servicios <span aria-hidden="true">&#8594;</span></a>
     </div>
@@ -204,11 +210,11 @@
         </div>
         <p>{{ resena.comentario }}</p>
         <button
-          *ngIf="authService.logueado() && authService.isAdmin()"
+          *ngIf="authService.logueado() && (authService.isAdmin() || resena.propia)"
           class="danger review-delete"
           type="button"
           (click)="eliminarResena(resena)">
-          Eliminar reseña
+          {{ resena.propia ? 'Eliminar mi reseña' : 'Eliminar reseña' }}
         </button>
       </article>
     </div>
@@ -219,7 +225,11 @@
       </p>
     </ng-template>
 
-    <div class="review-form" *ngIf="authService.logueado(); else invitarLogin">
+    <p class="review-login" *ngIf="authService.logueado() && yaDejoResena()" role="status">
+      {{ resenaMsg() || 'Ya dejaste tu reseña. ¡Gracias!' }} Si querés cambiarla, eliminá la tuya y escribí otra.
+    </p>
+
+    <div class="review-form" *ngIf="authService.logueado() && !yaDejoResena()">
       <h3 id="titulo-dejar-resena">Dejá tu reseña</h3>
       <form (ngSubmit)="enviarResena()" aria-labelledby="titulo-dejar-resena">
         <p class="review-form-label" id="label-estrellas">¿Cuántas estrellas le das?</p>
@@ -255,10 +265,10 @@
       </form>
     </div>
 
-    <ng-template #invitarLogin>
+    <ng-container *ngIf="!authService.logueado()">
       <p class="review-login">
         ¿Ya viniste? <a routerLink="/login" [queryParams]="{ regreso: '/' }">Iniciá sesión</a> para dejar tu reseña.
       </p>
-    </ng-template>
+    </ng-container>
   </section>
 </section>

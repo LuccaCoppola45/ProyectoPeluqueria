@@ -366,6 +366,12 @@ export class AdminPanelComponent implements OnInit {
       this.errorMsg.set(`Ingresá una duración válida (en minutos) para ${servicio.nombreServicio}.`);
       return;
     }
+    // El input numérico vacío llega como null o ''
+    const precioHasta = servicio.precioHasta ? Number(servicio.precioHasta) : null;
+    if (precioHasta !== null && (!Number.isFinite(precioHasta) || precioHasta < precio)) {
+      this.errorMsg.set(`El precio "hasta" de ${servicio.nombreServicio} tiene que ser mayor al "desde".`);
+      return;
+    }
     const idComercio = servicio.idComercio ?? this.reserva.idComercio;
     if (!idComercio) {
       this.errorMsg.set('No se encontró el comercio del servicio.');
@@ -376,6 +382,8 @@ export class AdminPanelComponent implements OnInit {
     this.servicioService.actualizar(servicio.idServicio, {
       nombreServicio: servicio.nombreServicio,
       precio,
+      precioHasta,
+      horariosFijos: servicio.horariosFijos ?? '',
       duracionDelServicio: duracion,
       idComercio
     }).subscribe({
@@ -386,9 +394,9 @@ export class AdminPanelComponent implements OnInit {
         this.guardandoServicioId.set(null);
         this.mensaje.set(`${actualizado.nombreServicio} actualizado.`);
       },
-      error: () => {
+      error: (err) => {
         this.guardandoServicioId.set(null);
-        this.errorMsg.set(`No se pudo actualizar ${servicio.nombreServicio}.`);
+        this.errorMsg.set(err.error?.message || `No se pudo actualizar ${servicio.nombreServicio}.`);
       }
     });
   }
