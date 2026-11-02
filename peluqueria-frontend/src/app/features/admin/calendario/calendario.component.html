@@ -1,0 +1,92 @@
+<section class="container admin-container calendario">
+  <header class="admin-hero">
+    <div class="admin-heading">
+      <p class="eyebrow">Piazzolla · Calendario</p>
+      <h1>{{ esHoy() ? 'Turnos de hoy' : 'Turnos del día' }}</h1>
+      <p class="calendario-fecha">{{ fechaVisible() }}</p>
+    </div>
+    <div class="admin-hero-stat" aria-label="Turnos que quedan en el día">
+      <span>{{ esHoy() ? 'Quedan hoy' : 'Turnos' }}</span>
+      <strong>{{ esHoy() ? quedan() : turnosDelDia().length }}</strong>
+    </div>
+  </header>
+
+  <nav class="calendario-navegacion" aria-label="Elegir día">
+    <button class="secondary" type="button" (click)="moverDia(-1)">
+      <span aria-hidden="true">&#8592;</span> Día anterior
+    </button>
+    <button class="secondary" type="button" [disabled]="esHoy()" (click)="irAHoy()">Hoy</button>
+    <button class="secondary" type="button" (click)="moverDia(1)">
+      Día siguiente <span aria-hidden="true">&#8594;</span>
+    </button>
+    <label class="calendario-elegir-fecha">
+      <span class="visually-hidden">Ir a una fecha</span>
+      <input type="date" [ngModel]="fecha()" (ngModelChange)="elegirFecha($event)" />
+    </label>
+    <button class="secondary calendario-actualizar" type="button" (click)="cargar()">Actualizar</button>
+  </nav>
+
+  <div *ngIf="errorMsg()" class="error-msg admin-alert" role="alert">{{ errorMsg() }}</div>
+
+  <div *ngIf="cargando()" class="booking-panel admin-panel admin-loading" aria-live="polite">
+    Cargando turnos...
+  </div>
+
+  <ng-container *ngIf="!cargando()">
+    <!-- Lo que importa mientras se atiende: quién está ahora y a quién le toca después -->
+    <section
+      class="calendario-ahora"
+      *ngIf="esHoy() && destacados().length > 0"
+      aria-label="Ahora y siguiente">
+      <article
+        *ngFor="let item of destacados()"
+        class="calendario-destacado"
+        [class.calendario-destacado--ahora]="item.momento === 'en-curso'">
+        <p class="calendario-destacado-etiqueta">
+          {{ item.momento === 'en-curso' ? 'Ahora' : 'Sigue ' + faltaPara(item.turno) }}
+          <ng-container *ngIf="item.turno.conAyudante"> · Segunda peluquera</ng-container>
+        </p>
+        <h2>{{ nombreCliente(item.turno) }}</h2>
+        <p *ngIf="item.momento === 'en-curso'">{{ nombreServicio(item.turno) }} · hasta las {{ hora(item.turno.horaFin) }}</p>
+        <p *ngIf="item.momento !== 'en-curso'">{{ hora(item.turno.horaInicio) }} · {{ nombreServicio(item.turno) }}</p>
+      </article>
+    </section>
+
+    <section class="booking-panel admin-panel" aria-labelledby="titulo-agenda">
+      <div class="admin-panel-heading">
+        <p class="eyebrow">Agenda</p>
+        <h2 id="titulo-agenda">Todos los turnos del día</h2>
+        <p class="helper-text" *ngIf="ultimaActualizacion() as actualizado">
+          Se actualiza sola cada 2 minutos · última vez a las {{ actualizado | date: 'HH:mm' }}
+        </p>
+      </div>
+
+      <p *ngIf="turnosDelDia().length === 0" class="helper-text calendario-vacio">
+        No hay turnos para este día.
+      </p>
+
+      <ol class="calendario-lista" *ngIf="turnosDelDia().length > 0">
+        <li
+          *ngFor="let item of turnosDelDia()"
+          class="calendario-turno"
+          [class.calendario-turno--terminado]="item.momento === 'terminado'"
+          [class.calendario-turno--ahora]="item.momento === 'en-curso'"
+          [class.calendario-turno--sigue]="item.momento === 'siguiente'">
+          <div class="calendario-hora">
+            <strong>{{ hora(item.turno.horaInicio) }}</strong>
+            <span>a {{ hora(item.turno.horaFin) }}</span>
+          </div>
+          <div class="calendario-detalle">
+            <strong class="calendario-cliente">{{ nombreCliente(item.turno) }}</strong>
+            <span>
+              {{ nombreServicio(item.turno) }}
+              <ng-container *ngIf="dniCliente(item.turno) as dni"> · DNI {{ dni }}</ng-container>
+            </span>
+            <span class="calendario-ayudante" *ngIf="item.turno.conAyudante">Atiende: Segunda peluquera</span>
+          </div>
+          <span class="calendario-momento" *ngIf="etiquetaMomento(item.momento) as etiqueta">{{ etiqueta }}</span>
+        </li>
+      </ol>
+    </section>
+  </ng-container>
+</section>

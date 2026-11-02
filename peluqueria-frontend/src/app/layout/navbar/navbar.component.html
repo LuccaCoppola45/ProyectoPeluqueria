@@ -28,7 +28,12 @@
       </div>
 
       <div *ngIf="authService.logueado() && authService.isAdmin()" class="navbar-actions">
-        <a routerLink="/admin" class="admin-nav-button" routerLinkActive="admin-nav-button--active">Administrar turnos</a>
+        <a routerLink="/admin/calendario" class="navbar-link" routerLinkActive="navbar-link--active">Calendario</a>
+        <a
+          routerLink="/admin"
+          class="admin-nav-button"
+          routerLinkActive="admin-nav-button--active"
+          [routerLinkActiveOptions]="{ exact: true }">Administrar turnos</a>
         <button class="secondary navbar-salir" type="button" (click)="logout()">Cerrar sesión</button>
       </div>
 

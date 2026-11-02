@@ -60,5 +60,14 @@ export const routes: Routes = [
         (m) => m.AdminPanelComponent
       )
   },
+  {
+    // Agenda del día para tener abierta mientras se atiende
+    path: 'admin/calendario',
+    canActivate: [adminGuard],
+    loadComponent: () =>
+      import('./features/admin/calendario/calendario.component').then(
+        (m) => m.CalendarioComponent
+      )
+  },
   { path: '**', redirectTo: '' }
 ];
