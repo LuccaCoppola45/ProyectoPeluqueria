@@ -42,6 +42,11 @@ public class DataSeeder implements CommandLineRunner {
     private static final LocalTime APERTURA = LocalTime.of(9, 0);
     private static final LocalTime CIERRE = LocalTime.of(17, 0);
 
+    // Reflejos y base permanente comparten estos horarios. Los valores anteriores por defecto se reemplazan
+    // solos; si el admin puso otros horarios desde el panel, se respetan.
+    private static final String HORARIOS_REFLEJOS_Y_BASE = "09:00,13:00";
+    private static final List<String> HORARIOS_FIJOS_ANTERIORES = List.of("09:00,14:00", "11:00,16:00");
+
     @Value("${seed.comercio.nombre:}")
     private String comercioNombre;
     @Value("${seed.comercio.direccion:}")
@@ -74,10 +79,10 @@ public class DataSeeder implements CommandLineRunner {
             intentar("crear los servicios", () -> {
                 cargarServicio(comercio, "Corte de cabello", 30, 0, null);
                 cargarServicio(comercio, "Color", 60, 35000, null);
-                cargarServicio(comercio, "Reflejos / Balayage", 60, 95000, "09:00,14:00");
+                cargarServicio(comercio, "Reflejos / Balayage", 60, 95000, HORARIOS_REFLEJOS_Y_BASE);
                 cargarServicio(comercio, "Brushing", 30, 20000, null);
                 cargarServicio(comercio, "Peinado de fiesta", 40, 60000, null);
-                cargarServicio(comercio, "Base permanente", 60, 95000, "11:00,16:00");
+                cargarServicio(comercio, "Base permanente", 60, 95000, HORARIOS_REFLEJOS_Y_BASE);
                 cargarServicio(comercio, "Hidratación", 40, 25000, null);
                 crearServicioDeAyudante(comercio, "Color con segunda peluquera", 60, 35000);
                 return null;
@@ -152,7 +157,9 @@ public class DataSeeder implements CommandLineRunner {
             servicio.setPrecio(precio);
             servicio.setDuracionDelServicio(minutos);
         }
-        if (servicio.getHorariosFijos() == null && horariosFijos != null) {
+        boolean horariosSinTocar = servicio.getHorariosFijos() == null
+                || HORARIOS_FIJOS_ANTERIORES.contains(servicio.getHorariosFijos());
+        if (horariosSinTocar && horariosFijos != null) {
             servicio.setHorariosFijos(horariosFijos);
         }
         servicioRepository.save(servicio);

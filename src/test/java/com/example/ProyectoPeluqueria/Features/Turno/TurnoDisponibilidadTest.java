@@ -53,9 +53,9 @@ class TurnoDisponibilidadTest {
         corte = servicio(1L, "Corte de cabello", 30, comercio);
         color = servicio(2L, "Color", 60, comercio);
         reflejos = servicio(3L, "Reflejos / Balayage", 45, comercio);
-        reflejos.setHorariosFijos("09:00,14:00");
+        reflejos.setHorariosFijos("09:00,13:00");
         basePermanente = servicio(5L, "Base permanente", 60, comercio);
-        basePermanente.setHorariosFijos("11:00,16:00");
+        basePermanente.setHorariosFijos("09:00,13:00");
         colorAyudante = servicio(4L, "Color con segunda peluquera", 60, comercio);
         colorAyudante.setDeAyudante(true);
         Map<Long, ServicioEntity> servicios = Map.of(1L, corte, 2L, color, 3L, reflejos, 4L, colorAyudante, 5L, basePermanente);
@@ -73,22 +73,22 @@ class TurnoDisponibilidadTest {
     @Test
     void losTurnosSonCadaTreintaMinutosYRespetanElHorarioDeReflejos() {
         assertThat(disponibilidad(MARTES, corte)).containsExactlyElementsOf(horas(
-                "10:00", "10:30", "12:00", "12:30", "13:00", "13:30", "15:00", "15:30"));
+                "10:00", "10:30", "11:00", "11:30", "12:00", "12:30", "14:00", "14:30", "15:00", "15:30",
+                "16:00", "16:30"));
     }
 
     @Test
-    void losReflejosSoloSePuedenSacarALasNueveYALasCatorce() {
-        assertThat(disponibilidad(MARTES, reflejos)).containsExactlyElementsOf(horas("09:00", "14:00"));
+    void losReflejosYLaBaseSoloSePuedenSacarALasNueveYALasTrece() {
+        assertThat(disponibilidad(MARTES, reflejos)).containsExactlyElementsOf(horas("09:00", "13:00"));
+        assertThat(disponibilidad(MARTES, basePermanente)).containsExactlyElementsOf(horas("09:00", "13:00"));
     }
 
     @Test
-    void laBasePermanenteSoloSeSacaEnSusHorariosYNoPisaLosDeReflejos() {
-        assertThat(disponibilidad(MARTES, basePermanente)).containsExactlyElementsOf(horas("11:00", "16:00"));
+    void siSeOcupaUnHorarioCompartidoNoLoPuedeSacarElOtroServicio() {
+        agendar(MARTES, basePermanente, "09:00");
 
-        agendar(MARTES, basePermanente, "11:00");
-
-        assertThat(disponibilidad(MARTES, basePermanente)).containsExactlyElementsOf(horas("16:00"));
-        assertThat(disponibilidad(MARTES, reflejos)).containsExactlyElementsOf(horas("09:00", "14:00"));
+        assertThat(disponibilidad(MARTES, basePermanente)).containsExactlyElementsOf(horas("13:00"));
+        assertThat(disponibilidad(MARTES, reflejos)).containsExactlyElementsOf(horas("13:00"));
     }
 
     @Test
@@ -98,9 +98,8 @@ class TurnoDisponibilidadTest {
         List<LocalTime> disponibles = disponibilidad(MARTES, color);
 
         assertThat(disponibles).doesNotContain(hora("09:00"), hora("09:30"), hora("10:00"), hora("10:30"),
-                hora("13:30"), hora("14:00"), hora("14:30"));
-        assertThat(disponibles).doesNotContain(hora("11:00"), hora("16:00"));
-        assertThat(disponibles).contains(hora("12:00"), hora("15:00"));
+                hora("12:30"), hora("13:00"), hora("13:30"));
+        assertThat(disponibles).contains(hora("11:00"), hora("14:00"), hora("16:00"));
     }
 
     @Test

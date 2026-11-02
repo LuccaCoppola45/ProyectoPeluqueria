@@ -370,12 +370,16 @@ public class TurnoServiceImp implements TurnoService {
         return libre && (deAyudante || !invadeHorarioFijoAjeno(servicio, horaInicio, horaFin, conHorariosFijos));
     }
 
+    // Dos servicios pueden compartir un horario fijo (reflejos y base permanente a las 9 y a las 13):
+    // en ese horario entra cualquiera de los dos, y quién lo ocupa primero lo decide la agenda.
     private boolean invadeHorarioFijoAjeno(ServicioEntity servicio, LocalTime horaInicio, LocalTime horaFin,
                                           List<ServicioEntity> conHorariosFijos) {
+        boolean empiezaEnHorarioPropio = HorariosFijos.leer(servicio.getHorariosFijos()).contains(horaInicio);
         return conHorariosFijos.stream()
                 .filter(otro -> !otro.getIdServicio().equals(servicio.getIdServicio()))
-                .anyMatch(otro -> HorariosFijos.leer(otro.getHorariosFijos()).stream().anyMatch(inicioFijo ->
-                        horaInicio.isBefore(inicioFijo.plusMinutes(otro.getDuracionDelServicio()))
+                .anyMatch(otro -> HorariosFijos.leer(otro.getHorariosFijos()).stream()
+                        .filter(inicioFijo -> !(empiezaEnHorarioPropio && inicioFijo.equals(horaInicio)))
+                        .anyMatch(inicioFijo -> horaInicio.isBefore(inicioFijo.plusMinutes(otro.getDuracionDelServicio()))
                                 && horaFin.isAfter(inicioFijo)));
     }
 
