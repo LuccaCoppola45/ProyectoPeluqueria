@@ -8,7 +8,7 @@ import java.util.stream.Collectors;
 
 /**
  * Horarios fijos de un servicio guardados como texto ("09:00,14:00"). Un servicio con horarios fijos
- * (reflejos, base permanente) solo se puede sacar en esas horas, y nadie más ocupa esos horarios.
+ * (reflejos, base permanente) solo se puede sacar en esas horas; los demás servicios pueden usarlas si están libres.
  */
 public final class HorariosFijos {
 

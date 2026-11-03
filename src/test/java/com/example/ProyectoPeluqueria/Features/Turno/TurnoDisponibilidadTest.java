@@ -75,10 +75,10 @@ class TurnoDisponibilidadTest {
     }
 
     @Test
-    void losTurnosSonCadaTreintaMinutosYRespetanElHorarioDeReflejos() {
+    void losTurnosSonCadaTreintaMinutosYIncluyenLosHorariosDeReflejosSiEstanLibres() {
         assertThat(disponibilidad(MARTES, corte)).containsExactlyElementsOf(horas(
-                "10:00", "10:30", "11:00", "11:30", "12:00", "12:30", "14:00", "14:30", "15:00", "15:30",
-                "16:00", "16:30"));
+                "09:00", "09:30", "10:00", "10:30", "11:00", "11:30", "12:00", "12:30", "13:00", "13:30",
+                "14:00", "14:30", "15:00", "15:30", "16:00", "16:30"));
     }
 
     @Test
@@ -96,14 +96,21 @@ class TurnoDisponibilidadTest {
     }
 
     @Test
-    void elColorDelTitularNoUsaLosHorariosDeReflejosNiSeSuperpone() {
+    void siOtroServicioOcupaElHorarioDeReflejosEseDiaYaNoHayReflejosAEsaHora() {
+        agendar(MARTES, corte, "09:30");
+
+        assertThat(disponibilidad(MARTES, reflejos)).containsExactlyElementsOf(horas("13:00"));
+        assertThat(disponibilidad(MARTES, basePermanente)).containsExactlyElementsOf(horas("13:00"));
+    }
+
+    @Test
+    void elColorDelTitularNoSeSuperponeConOtroColor() {
         agendar(MARTES, color, "10:00");
 
         List<LocalTime> disponibles = disponibilidad(MARTES, color);
 
-        assertThat(disponibles).doesNotContain(hora("09:00"), hora("09:30"), hora("10:00"), hora("10:30"),
-                hora("12:30"), hora("13:00"), hora("13:30"));
-        assertThat(disponibles).contains(hora("11:00"), hora("14:00"), hora("16:00"));
+        assertThat(disponibles).doesNotContain(hora("09:30"), hora("10:00"), hora("10:30"));
+        assertThat(disponibles).contains(hora("09:00"), hora("11:00"), hora("13:00"), hora("16:00"));
     }
 
     @Test
