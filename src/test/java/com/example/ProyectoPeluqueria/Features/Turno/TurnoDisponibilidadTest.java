@@ -3,7 +3,9 @@ package com.example.ProyectoPeluqueria.Features.Turno;
 import com.example.ProyectoPeluqueria.Features.Comercio.ComercioEntity;
 import com.example.ProyectoPeluqueria.Features.Enums.DiaSemana;
 import com.example.ProyectoPeluqueria.Features.Enums.EstadoTurno;
+import com.example.ProyectoPeluqueria.Exceptions.horarioAtencion.HorarioFueraDeAtencionException;
 import com.example.ProyectoPeluqueria.Features.HorarioDeAtencion.BloqueoHorarioService;
+import com.example.ProyectoPeluqueria.Features.HorarioDeAtencion.dtos.BloqueoHorarioResponse;
 import com.example.ProyectoPeluqueria.Features.HorarioDeAtencion.HorarioDeAtencionEntity;
 import com.example.ProyectoPeluqueria.Features.Servicio.ServicioEntity;
 import com.example.ProyectoPeluqueria.Features.Servicio.ServicioRepository;
@@ -13,6 +15,7 @@ import org.junit.jupiter.api.Test;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
 import java.time.temporal.TemporalAdjusters;
 import java.util.ArrayList;
 import java.util.List;
@@ -20,6 +23,7 @@ import java.util.Map;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
@@ -130,11 +134,48 @@ class TurnoDisponibilidadTest {
     }
 
     @Test
+    void unDiaQueNoAbreAvisaQueDiasAtiende() {
+        assertThatThrownBy(() -> disponibilidad(MARTES.minusDays(1), corte))
+                .isInstanceOf(HorarioFueraDeAtencionException.class)
+                .hasMessage("El negocio no atiende los lunes. Podés sacar turno los martes y sábados.");
+    }
+
+    @Test
+    void unDiaBloqueadoSueltoAvisaQueEseDiaEstaCerrado() {
+        bloquear(MARTES);
+
+        assertThatThrownBy(() -> disponibilidad(MARTES, corte))
+                .hasMessage("El negocio está cerrado el martes " + diaMes(MARTES) + " y no toma turnos ese día. Elegí otra fecha.");
+    }
+
+    @Test
+    void variosDiasBloqueadosSeAvisanComoUnPeriodo() {
+        // Entre el martes y el sábado el negocio no abre, así que no cortan el período
+        bloquear(MARTES, SABADO, SABADO.plusDays(3));
+
+        assertThatThrownBy(() -> disponibilidad(SABADO, corte))
+                .hasMessage("El negocio está cerrado del " + diaMes(MARTES) + " al " + diaMes(SABADO.plusDays(3))
+                        + " y no toma turnos en esas fechas. Elegí otra fecha.");
+    }
+
+    @Test
     void losSabadosLaSegundaPeluqueraAtiendeTodoElDia() {
         agendar(SABADO, corte, "15:00");
 
         assertThat(disponibilidad(SABADO, colorAyudante)).contains(hora("09:00"), hora("11:00"), hora("16:00"));
         assertThat(disponibilidad(SABADO, corte)).doesNotContain(hora("15:00"));
+    }
+
+    private void bloquear(LocalDate... fechas) {
+        List<LocalDate> bloqueadas = List.of(fechas);
+        when(bloqueoHorarioService.estaBloqueado(eq(COMERCIO_ID), any()))
+                .thenAnswer(inv -> bloqueadas.contains(inv.<LocalDate>getArgument(1)));
+        when(bloqueoHorarioService.listar(eq(COMERCIO_ID), any(), any())).thenReturn(
+                bloqueadas.stream().map(f -> new BloqueoHorarioResponse(null, f, COMERCIO_ID)).toList());
+    }
+
+    private static String diaMes(LocalDate fecha) {
+        return fecha.format(DateTimeFormatter.ofPattern("d/M"));
     }
 
     private List<LocalTime> disponibilidad(LocalDate fecha, ServicioEntity servicio) {

@@ -171,10 +171,13 @@ export class ReservarTurnoComponent implements OnInit {
       },
       error: (err) => {
         this.buscandoHorarios.set(false);
+        // 400: día que el negocio no abre o que está cerrado (vacaciones); el backend explica cuál
         this.errorMsg.set(
           err.status === 401
             ? 'Tu sesión venció. Volvé a iniciar sesión para consultar los horarios.'
-            : 'No se pudo consultar la disponibilidad. Revisá la conexión e intentá de nuevo.'
+            : err.status === 400 && err.error?.message
+              ? err.error.message
+              : 'No se pudo consultar la disponibilidad. Revisá la conexión e intentá de nuevo.'
         );
       }
     });

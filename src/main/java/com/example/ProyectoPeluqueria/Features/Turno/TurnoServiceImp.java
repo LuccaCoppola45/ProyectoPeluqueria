@@ -10,6 +10,7 @@ import com.example.ProyectoPeluqueria.Features.Enums.EstadoTurno;
 import com.example.ProyectoPeluqueria.Features.Enums.Rol;
 import com.example.ProyectoPeluqueria.Features.HorarioDeAtencion.HorarioDeAtencionEntity;
 import com.example.ProyectoPeluqueria.Features.HorarioDeAtencion.BloqueoHorarioService;
+import com.example.ProyectoPeluqueria.Features.HorarioDeAtencion.dtos.BloqueoHorarioResponse;
 import com.example.ProyectoPeluqueria.Features.Servicio.HorariosFijos;
 import com.example.ProyectoPeluqueria.Features.Servicio.ServicioEntity;
 import com.example.ProyectoPeluqueria.Features.Servicio.ServicioRepository;
@@ -27,8 +28,11 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
@@ -53,7 +57,7 @@ public class TurnoServiceImp implements TurnoService {
 
         ServicioEntity servicio = servicioRepository.findById(dto.getServicioId())
                 .orElseThrow(() -> new ServicioNotFoundException("Servicio no encontrado"));
-        validarDiaNoBloqueado(servicio.getComercio().getIdComercio(), dto.getFecha());
+        validarDiaNoBloqueado(servicio.getComercio(), dto.getFecha());
         validarComercio(dto, servicio);
         validarDuracion(servicio);
 
@@ -153,7 +157,7 @@ public class TurnoServiceImp implements TurnoService {
 
         ServicioEntity servicio = servicioRepository.findById(dto.getServicioId())
                 .orElseThrow(() -> new ServicioNotFoundException("Servicio no encontrado"));
-        validarDiaNoBloqueado(servicio.getComercio().getIdComercio(), dto.getFecha());
+        validarDiaNoBloqueado(servicio.getComercio(), dto.getFecha());
         validarComercio(dto, servicio);
         validarDuracion(servicio);
 
@@ -213,20 +217,12 @@ public class TurnoServiceImp implements TurnoService {
         }
         ServicioEntity servicio = servicioRepository.findById(servicioId)
                 .orElseThrow(() -> new ServicioNotFoundException("Servicio no encontrado"));
-        if (servicio.getComercio() != null
-                && bloqueoHorarioService.estaBloqueado(
-                servicio.getComercio().getIdComercio(), fecha)) {
-            return List.of();
-        }
-        validarDuracion(servicio);
-        DiaSemana dia = mapearDiaSemana(fecha.getDayOfWeek());
         if (servicio.getComercio() == null || servicio.getComercio().getHorarios() == null) {
             throw new HorarioFueraDeAtencionException("El comercio no tiene horarios configurados");
         }
-        HorarioDeAtencionEntity horario = servicio.getComercio().getHorarios().stream()
-                .filter(h -> h.getDiaSemana() == dia)
-                .findFirst()
-                .orElseThrow(() -> new HorarioFueraDeAtencionException("El comercio no atiende los días " + dia));
+        validarDiaNoBloqueado(servicio.getComercio(), fecha);
+        validarDuracion(servicio);
+        HorarioDeAtencionEntity horario = horarioDelDia(servicio.getComercio(), fecha);
         List<TurnoEntity> ocupados = turnosActivosDelDia(servicio.getComercio().getIdComercio(), fecha, null);
         List<ServicioEntity> conHorariosFijos = serviciosConHorariosFijos(servicio.getComercio().getIdComercio());
         List<LocalTime> horariosFijos = HorariosFijos.leer(servicio.getHorariosFijos());
@@ -264,11 +260,88 @@ public class TurnoServiceImp implements TurnoService {
         }
     }
 
-    private void validarDiaNoBloqueado(Long comercioId, LocalDate fecha) {
-        if (bloqueoHorarioService.estaBloqueado(comercioId, fecha)) {
-            throw new HorarioFueraDeAtencionException(
-                    "El comercio está cerrado el día seleccionado");
+    private void validarDiaNoBloqueado(ComercioEntity comercio, LocalDate fecha) {
+        if (bloqueoHorarioService.estaBloqueado(comercio.getIdComercio(), fecha)) {
+            throw new HorarioFueraDeAtencionException(mensajeDeCierre(comercio, fecha));
         }
+    }
+
+    // ===== Días cerrados =====
+
+    private static final Map<DiaSemana, String> NOMBRES_DIAS = Map.of(
+            DiaSemana.LUNES, "lunes", DiaSemana.MARTES, "martes", DiaSemana.MIERCOLES, "miércoles",
+            DiaSemana.JUEVES, "jueves", DiaSemana.VIERNES, "viernes", DiaSemana.SABADO, "sábado",
+            DiaSemana.DOMINGO, "domingo");
+    private static final DateTimeFormatter FORMATO_DIA = DateTimeFormatter.ofPattern("d/M");
+    /** Hasta dónde se mira para armar el período cerrado (vacaciones, licencias). */
+    private static final int DIAS_MAXIMOS_DE_CIERRE = 120;
+
+    private HorarioDeAtencionEntity horarioDelDia(ComercioEntity comercio, LocalDate fecha) {
+        DiaSemana dia = mapearDiaSemana(fecha.getDayOfWeek());
+        return comercio.getHorarios().stream()
+                .filter(h -> h.getDiaSemana() == dia)
+                .findFirst()
+                .orElseThrow(() -> new HorarioFueraDeAtencionException(
+                        "El negocio no atiende los " + plural(dia) + ". Podés sacar turno " + diasDeAtencion(comercio) + "."));
+    }
+
+    // Un bloqueo suelto se informa como día cerrado; varios seguidos (vacaciones) como un período, con fecha de
+    // inicio y fin. Los días que el negocio no abre igual (domingo y lunes) no cortan el período.
+    private String mensajeDeCierre(ComercioEntity comercio, LocalDate fecha) {
+        Set<LocalDate> bloqueados = bloqueoHorarioService.listar(comercio.getIdComercio(),
+                        fecha.minusDays(DIAS_MAXIMOS_DE_CIERRE), fecha.plusDays(DIAS_MAXIMOS_DE_CIERRE)).stream()
+                .map(BloqueoHorarioResponse::getFecha)
+                .collect(Collectors.toSet());
+        Set<DiaSemana> diasQueAbre = comercio.getHorarios().stream()
+                .map(HorarioDeAtencionEntity::getDiaSemana)
+                .collect(Collectors.toSet());
+        LocalDate desde = extremoDelCierre(fecha, -1, bloqueados, diasQueAbre);
+        LocalDate hasta = extremoDelCierre(fecha, 1, bloqueados, diasQueAbre);
+        if (desde.equals(hasta)) {
+            return "El negocio está cerrado el " + NOMBRES_DIAS.get(mapearDiaSemana(fecha.getDayOfWeek())) + " "
+                    + fecha.format(FORMATO_DIA) + " y no toma turnos ese día. Elegí otra fecha.";
+        }
+        return "El negocio está cerrado del " + desde.format(FORMATO_DIA) + " al " + hasta.format(FORMATO_DIA)
+                + " y no toma turnos en esas fechas. Elegí otra fecha.";
+    }
+
+    private LocalDate extremoDelCierre(LocalDate fecha, int paso, Set<LocalDate> bloqueados, Set<DiaSemana> diasQueAbre) {
+        LocalDate extremo = fecha;
+        LocalDate dia = fecha.plusDays(paso);
+        for (int i = 0; i < DIAS_MAXIMOS_DE_CIERRE; i++, dia = dia.plusDays(paso)) {
+            if (bloqueados.contains(dia)) {
+                extremo = dia;
+            } else if (diasQueAbre.contains(mapearDiaSemana(dia.getDayOfWeek()))) {
+                break;
+            }
+        }
+        return extremo;
+    }
+
+    // "de martes a sábado" si son seguidos; si no, "los martes, jueves y sábados"
+    private String diasDeAtencion(ComercioEntity comercio) {
+        List<DiaSemana> dias = comercio.getHorarios().stream()
+                .map(HorarioDeAtencionEntity::getDiaSemana)
+                .distinct()
+                .sorted()
+                .toList();
+        if (dias.isEmpty()) {
+            return "otro día";
+        }
+        boolean seguidos = dias.get(dias.size() - 1).ordinal() - dias.get(0).ordinal() == dias.size() - 1;
+        if (dias.size() > 2 && seguidos) {
+            return "de " + NOMBRES_DIAS.get(dias.get(0)) + " a " + NOMBRES_DIAS.get(dias.get(dias.size() - 1));
+        }
+        List<String> nombres = dias.stream().map(this::plural).toList();
+        String lista = nombres.size() == 1 ? nombres.get(0)
+                : String.join(", ", nombres.subList(0, nombres.size() - 1)) + " y " + nombres.get(nombres.size() - 1);
+        return "los " + lista;
+    }
+
+    // "sábado" -> "sábados", "domingo" -> "domingos"; los demás no cambian ("los lunes")
+    private String plural(DiaSemana dia) {
+        String nombre = NOMBRES_DIAS.get(dia);
+        return nombre.endsWith("s") ? nombre : nombre + "s";
     }
 
     private void validarFechaYHora(TurnoRequest dto) {
@@ -409,11 +482,7 @@ public class TurnoServiceImp implements TurnoService {
         if (comercio == null || comercio.getHorarios() == null) {
             throw new HorarioFueraDeAtencionException("El comercio no tiene horarios configurados");
         }
-        DiaSemana diaTurno = mapearDiaSemana(fecha.getDayOfWeek());
-        HorarioDeAtencionEntity horario = comercio.getHorarios().stream()
-                .filter(h -> h.getDiaSemana() == diaTurno)
-                .findFirst()
-                .orElseThrow(() -> new HorarioFueraDeAtencionException("El comercio no atiende los días " + diaTurno));
+        HorarioDeAtencionEntity horario = horarioDelDia(comercio, fecha);
 
         if (horaInicio.isBefore(horario.getHoraApertura())) {
             throw new HorarioFueraDeAtencionException("El horario seleccionado es anterior a la apertura del comercio");

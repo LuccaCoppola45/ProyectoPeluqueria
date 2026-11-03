@@ -237,7 +237,9 @@ export class AdminPanelComponent implements OnInit {
         this.errorMsg.set(
           error.status === 401
             ? 'Tu sesión venció. Volvé a iniciar sesión.'
-            : 'No se pudieron consultar los horarios disponibles.'
+            : error.status === 400 && error.error?.message
+              ? error.error.message
+              : 'No se pudieron consultar los horarios disponibles.'
         );
       }
     });
