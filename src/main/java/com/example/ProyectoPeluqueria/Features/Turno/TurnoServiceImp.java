@@ -292,7 +292,7 @@ public class TurnoServiceImp implements TurnoService {
                 .anyMatch(t -> haySuperposicion(t, horaInicio, horaFin));
 
         if (existeSuperposicion) {
-            throw new TurnoDuplicadoException("El usuario ya posee un turno en ese horario");
+            throw new TurnoDuplicadoException("Ya tenés un turno en este horario. No es posible tener 2 turnos al mismo tiempo");
         }
     }
 
@@ -304,7 +304,7 @@ public class TurnoServiceImp implements TurnoService {
                 .anyMatch(t -> haySuperposicion(t, horaInicio, horaFin));
 
         if (existeSuperposicion) {
-            throw new TurnoDuplicadoException("El usuario ya posee un turno en ese horario");
+            throw new TurnoDuplicadoException("Ya tenés un turno en este horario. No es posible tener 2 turnos al mismo tiempo");
         }
     }
 

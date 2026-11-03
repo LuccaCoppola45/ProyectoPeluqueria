@@ -121,6 +121,15 @@ class TurnoDisponibilidadTest {
     }
 
     @Test
+    void losDosColoresNoSeQuitanHorariosEntreSi() {
+        agendar(MARTES, color, "10:00");
+        assertThat(disponibilidad(MARTES, colorAyudante)).contains(hora("10:00"));
+
+        agendar(MARTES, colorAyudante, "11:00");
+        assertThat(disponibilidad(MARTES, color)).contains(hora("11:00"));
+    }
+
+    @Test
     void losSabadosLaSegundaPeluqueraAtiendeTodoElDia() {
         agendar(SABADO, corte, "15:00");
 

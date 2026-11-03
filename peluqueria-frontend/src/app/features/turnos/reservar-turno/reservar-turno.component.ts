@@ -210,9 +210,14 @@ export class ReservarTurnoComponent implements OnInit {
           this.turnoConfirmado.set(true);
           setTimeout(() => this.router.navigate(['/turnos/mis-turnos']), 2000);
         },
-        error: () => {
+        error: (err) => {
           this.confirmando.set(false);
-          this.errorMsg.set('No se pudo reservar el turno. Probá con otro horario.');
+          // Los rechazos del backend (horario ocupado, turno superpuesto) traen un mensaje para la persona
+          this.errorMsg.set(
+            err.status === 409 || err.status === 400
+              ? `Error: ${err.error?.message ?? 'No se pudo reservar el turno.'}`
+              : 'No se pudo reservar el turno. Probá con otro horario.'
+          );
         }
       });
   }

@@ -266,7 +266,7 @@ export class AdminPanelComponent implements OnInit {
         this.resetSeleccionTurno();
         this.cargarDatos();
       },
-      error: () => this.errorMsg.set('No se pudo agendar el turno para ese usuario.')
+      error: (err) => this.errorMsg.set(err.error?.message ?? 'No se pudo agendar el turno para ese usuario.')
     });
   }
 
