@@ -34,6 +34,28 @@ export class AuthService {
       );
   }
 
+  /**
+   * Pide un token nuevo con el que ya hay, así la sesión no se vence mientras se siga entrando.
+   * Si el token ya no sirve (401) se cierra la sesión; si el servidor no responde, se deja como está.
+   */
+  renovarSesion(): void {
+    if (!this.hayToken()) {
+      return;
+    }
+    this.http.post<LoginResponse>(`${this.url}/renovar`, {}).subscribe({
+      next: (res) => {
+        if (res.token) {
+          localStorage.setItem(TOKEN_KEY, res.token);
+        }
+      },
+      error: (err) => {
+        if (err.status === 401) {
+          this.logout();
+        }
+      }
+    });
+  }
+
   logout(): void {
     localStorage.removeItem(TOKEN_KEY);
     this.logueado.set(false);

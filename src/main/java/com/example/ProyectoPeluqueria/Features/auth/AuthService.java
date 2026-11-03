@@ -48,6 +48,16 @@ public class AuthService {
     }
 
     // 2. Lógica de Inicio de Sesión (Login)
+    public LoginResponseDTO renovar(UserDetails userDetails) {
+        UsuarioEntity usuario = usuarioRepository.findByDniOrEmail(userDetails.getUsername(), userDetails.getUsername())
+                .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
+        return new LoginResponseDTO(
+                true,
+                "Sesión renovada",
+                jwtService.generateToken(userDetails),
+                usuario.getRol().name());
+    }
+
     public LoginResponseDTO login(LoginResquestDTO request) {
         String identifier = request.getDni() != null && !request.getDni().isBlank()
                 ? request.getDni().trim()

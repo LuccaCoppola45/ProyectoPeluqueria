@@ -1,4 +1,5 @@
 import { Component, isDevMode } from '@angular/core';
+import { AuthService } from './core/services/auth.service';
 import { RouterOutlet } from '@angular/router';
 import { NavbarComponent } from './layout/navbar/navbar.component';
 import { FooterComponent } from './layout/footer/footer.component';
@@ -24,4 +25,8 @@ import { SwitchPaletaComponent } from './shared/switch-paleta/switch-paleta.comp
 export class AppComponent {
   /** El selector de paleta solo se muestra en desarrollo. */
   readonly soloDesarrollo = isDevMode();
+
+  constructor(authService: AuthService) {
+    authService.renovarSesion();
+  }
 }

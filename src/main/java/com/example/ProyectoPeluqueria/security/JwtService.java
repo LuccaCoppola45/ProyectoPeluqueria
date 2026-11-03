@@ -49,9 +49,10 @@ public class JwtService {
                 .compact();
     }
 
-    // Duración de la sesión: el admin 7 días (para no loguearse a cada rato), el resto 24 horas
-    private static final long DURACION_ADMIN_MS = 7L * 24 * 60 * 60 * 1000;
-    private static final long DURACION_CLIENTE_MS = 24L * 60 * 60 * 1000;
+    // Duración de la sesión. Además, cada vez que se abre la página el frontend la renueva
+    // (/api/auth/renovar), así que solo se vence si no se entra en todo ese tiempo.
+    private static final long DURACION_ADMIN_MS = 90L * 24 * 60 * 60 * 1000;
+    private static final long DURACION_CLIENTE_MS = 30L * 24 * 60 * 60 * 1000;
 
     private long duracionSesionMs(UserDetails userDetails) {
         boolean esAdmin = userDetails.getAuthorities().stream()
