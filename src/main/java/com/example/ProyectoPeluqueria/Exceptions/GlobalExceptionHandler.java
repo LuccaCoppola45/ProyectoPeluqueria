@@ -16,11 +16,13 @@ import com.example.ProyectoPeluqueria.Exceptions.user.UserHasAssociatedTurnosExc
 import com.example.ProyectoPeluqueria.Exceptions.user.UserWithoutChangesException;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.NonNull;
+import lombok.extern.slf4j.Slf4j;
 import jakarta.validation.ConstraintViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.authentication.InternalAuthenticationServiceException;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -32,6 +34,7 @@ import java.time.LocalDateTime;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+@Slf4j
 @RestControllerAdvice
 public class GlobalExceptionHandler
 {
@@ -69,6 +72,16 @@ public class GlobalExceptionHandler
             MethodArgumentTypeMismatchException ex, HttpServletRequest request) {
         return buildErrorResponse("El parámetro '" + ex.getName() + "' no tiene un formato válido",
                 request, HttpStatus.BAD_REQUEST);
+    }
+
+    // Si falla la base de datos al buscar el usuario, Spring lo envuelve en esta excepción.
+    // No es una contraseña incorrecta, así que no se responde 401.
+    @ExceptionHandler(InternalAuthenticationServiceException.class)
+    public ResponseEntity<@NonNull ErrorResponse> handleInternalAuthentication(
+            InternalAuthenticationServiceException ex, HttpServletRequest request) {
+        log.error("No se pudo verificar el login (¿base de datos caída?)", ex);
+        return buildErrorResponse("El servidor no pudo verificar los datos. Intentá de nuevo en unos minutos.",
+                request, HttpStatus.SERVICE_UNAVAILABLE);
     }
 
     @ExceptionHandler(AuthenticationException.class)

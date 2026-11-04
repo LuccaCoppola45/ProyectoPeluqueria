@@ -68,7 +68,9 @@ export class LoginComponent {
             ? 'No se pudo conectar con el servidor. Verificá que el backend esté iniciado e intentá de nuevo.'
             : err.status === 401
               ? 'El DNI o la contraseña no son correctos. Revisá los datos e intentá de nuevo.'
-              : 'No se pudo iniciar sesión. Intentá de nuevo.'
+              : err.status === 503
+                ? 'El servidor no pudo verificar tus datos en este momento. Intentá de nuevo en unos minutos.'
+                : 'No se pudo iniciar sesión. Intentá de nuevo.'
         );
       }
     });
