@@ -70,6 +70,17 @@ class WhatsappWebhookControllerTest {
         assertEquals(EstadoTurno.CONFIRMADO, turnoDe1330.getEstado());
     }
 
+    @Test
+    void unAvisoDeEntregaNoCambiaNingunTurno() {
+        Map<String, Object> value = Map.of("statuses", List.of(Map.of(
+                "id", "wamid.1330", "status", "failed", "recipient_id", "542235964948",
+                "errors", List.of(Map.of("code", 131049, "title", "No entregado")))));
+        controller.recibir(Map.of("entry", List.of(Map.of("changes", List.of(Map.of("value", value))))));
+
+        assertEquals(EstadoTurno.PENDIENTE, turnoDe1230.getEstado());
+        assertEquals(EstadoTurno.PENDIENTE, turnoDe1330.getEstado());
+    }
+
     private static TurnoEntity turno(Long id, UsuarioEntity usuario, LocalDate fecha, LocalTime hora) {
         TurnoEntity turno = new TurnoEntity();
         turno.setIdTurno(id);

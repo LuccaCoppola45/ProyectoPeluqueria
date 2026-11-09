@@ -48,6 +48,7 @@ public class WhatsappWebhookController {
 
     @PostMapping
     public ResponseEntity<Void> recibir(@RequestBody Map<String, Object> payload) {
+        registrarEstadosDeEntrega(payload);
         String telefono = buscarTexto(payload, "wa_id");
         final String respuesta = buscarRespuesta(payload);
         if (telefono == null || respuesta == null) {
@@ -123,6 +124,32 @@ public class WhatsappWebhookController {
                 .filter(t -> recordatorioRepository.existsByTurno_IdTurno(t.getIdTurno()))
                 .findFirst()
                 .orElse(pendientes.isEmpty() ? null : pendientes.getFirst());
+    }
+
+    /**
+     * Meta avisa si cada mensaje se envió, entregó, leyó o falló ("statuses"). Que Meta acepte el
+     * envío no garantiza que llegue: si falla, el motivo solo viene acá.
+     */
+    private void registrarEstadosDeEntrega(Object value) {
+        if (value instanceof Map<?, ?> map) {
+            if (map.get("statuses") instanceof List<?> estados) {
+                for (Object e : estados) {
+                    if (e instanceof Map<?, ?> estado) {
+                        if ("failed".equals(estado.get("status"))) {
+                            log.warn("WhatsApp: Meta NO pudo entregar el mensaje {} a {}: {}",
+                                    estado.get("id"), estado.get("recipient_id"), estado.get("errors"));
+                        } else {
+                            log.info("WhatsApp: mensaje {} a {} quedó {}",
+                                    estado.get("id"), estado.get("recipient_id"), estado.get("status"));
+                        }
+                    }
+                }
+                return;
+            }
+            map.values().forEach(this::registrarEstadosDeEntrega);
+        } else if (value instanceof Iterable<?> iterable) {
+            iterable.forEach(this::registrarEstadosDeEntrega);
+        }
     }
 
     private Map<?, ?> buscarMapa(Object value, String key) {
