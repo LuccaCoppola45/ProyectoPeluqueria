@@ -19,12 +19,13 @@ public class ConfirmacionTurnoListener {
 
     private final TurnoRepository turnoRepository;
     private final WhatsappService whatsappService;
+    private final RecordatorioTurnoRepository recordatorioRepository;
 
     @org.springframework.beans.factory.annotation.Value("${WHATSAPP_CONFIRMAR_AL_RESERVAR:false}")
     private boolean confirmarAlReservar;
 
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
-    @Transactional(propagation = Propagation.REQUIRES_NEW, readOnly = true)
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void enviarConfirmacion(TurnoCreadoEvent event) {
         // La plantilla es el recordatorio que pregunta si viene: mandarla al reservar confunde
         // y cuesta un mensaje extra. Se activa solo con WHATSAPP_CONFIRMAR_AL_RESERVAR=true.
@@ -34,7 +35,16 @@ public class ConfirmacionTurnoListener {
         TurnoEntity turno = turnoRepository.findById(event.turnoId())
                 .orElseThrow(() -> new TurnoNotFoundException("Turno no encontrado"));
         try {
-            if (whatsappService.enviarConfirmacionTurno(turno).isPresent()) {
+            java.util.Optional<String> enviado = whatsappService.enviarConfirmacionTurno(turno);
+            if (enviado.isPresent()) {
+                // Se guarda el id del mensaje para que el botón de la respuesta cambie este turno
+                RecordatorioTurnoEntity registro = new RecordatorioTurnoEntity();
+                registro.setTurno(turno);
+                registro.setTipo("RESERVA");
+                registro.setFechaEnvio(java.time.LocalDateTime.now());
+                registro.setEstado("ACEPTADO_META");
+                registro.setMensajeId(enviado.get().isBlank() ? null : enviado.get());
+                recordatorioRepository.save(registro);
                 log.info("Meta aceptó el mensaje de confirmación para el turno {}", turno.getIdTurno());
             }
         } catch (IllegalStateException | RestClientException ex) {
