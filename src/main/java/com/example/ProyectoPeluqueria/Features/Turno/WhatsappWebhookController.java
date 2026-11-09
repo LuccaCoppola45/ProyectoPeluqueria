@@ -3,15 +3,18 @@ package com.example.ProyectoPeluqueria.Features.Turno;
 import com.example.ProyectoPeluqueria.Features.Enums.EstadoTurno;
 import com.example.ProyectoPeluqueria.Features.Usuario.UsuarioEntity;
 import com.example.ProyectoPeluqueria.Features.Usuario.UsuarioRepository;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.text.Normalizer;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
+@Slf4j
 @RestController
 @RequestMapping("/api/webhooks/whatsapp")
 public class WhatsappWebhookController {
@@ -19,14 +22,17 @@ public class WhatsappWebhookController {
     private final String verifyToken;
     private final UsuarioRepository usuarioRepository;
     private final TurnoRepository turnoRepository;
+    private final RecordatorioTurnoRepository recordatorioRepository;
 
     public WhatsappWebhookController(
             @Value("${whatsapp.verify-token:}") String verifyToken,
             UsuarioRepository usuarioRepository,
-            TurnoRepository turnoRepository) {
+            TurnoRepository turnoRepository,
+            RecordatorioTurnoRepository recordatorioRepository) {
         this.verifyToken = verifyToken;
         this.usuarioRepository = usuarioRepository;
         this.turnoRepository = turnoRepository;
+        this.recordatorioRepository = recordatorioRepository;
     }
 
     @GetMapping
@@ -45,8 +51,10 @@ public class WhatsappWebhookController {
         String telefono = buscarTexto(payload, "wa_id");
         final String respuesta = buscarRespuesta(payload);
         if (telefono == null || respuesta == null) {
+            // Meta también avisa cuando un mensaje se entregó o se leyó: eso no es una respuesta
             return ResponseEntity.ok().build();
         }
+        log.info("WhatsApp: llegó la respuesta \"{}\" de {}", respuesta, telefono);
 
         String telefonoNormalizado = TelefonoWhatsapp.normalizar(telefono);
         UsuarioEntity usuario = usuarioRepository.findAll().stream()
@@ -55,31 +63,43 @@ public class WhatsappWebhookController {
                 .findFirst()
                 .orElse(null);
         if (usuario == null) {
+            log.warn("WhatsApp: ningún usuario tiene el teléfono {}", telefonoNormalizado);
             return ResponseEntity.ok().build();
         }
 
-        turnoRepository.findByUsuario_IdUsuarioAndEstadoOrderByFechaAscHoraInicioAsc(
+        List<TurnoEntity> pendientes = turnoRepository.findByUsuario_IdUsuarioAndEstadoOrderByFechaAscHoraInicioAsc(
                         usuario.getIdUsuario(), EstadoTurno.PENDIENTE)
                 .stream()
                 .filter(t -> !t.getFecha().isBefore(java.time.LocalDate.now()))
+                .toList();
+        // La respuesta es para el turno al que se le mandó el recordatorio; si hay varios pendientes,
+        // no se toca otro turno solo por ser el más próximo
+        TurnoEntity turno = pendientes.stream()
+                .filter(t -> recordatorioRepository.existsByTurno_IdTurno(t.getIdTurno()))
                 .findFirst()
-                .ifPresent(turno -> {
-                    String valor = Normalizer.normalize(respuesta, Normalizer.Form.NFD)
-                            .replaceAll("\\p{M}+", "")
-                            .toUpperCase(Locale.ROOT)
-                            .trim();
-                    if (valor.contains("CONFIRM") || valor.matches("^(SI|SÍ)(\\b.*)?$")) {
-                        turno.setEstado(EstadoTurno.CONFIRMADO);
-                        turno.setRespuestaCliente("CONFIRMADO");
-                    } else if (valor.contains("CANCEL") || valor.matches("^NO(\\b.*)?$")) {
-                        turno.setEstado(EstadoTurno.CANCELADO);
-                        turno.setRespuestaCliente("CANCELADO");
-                    } else {
-                        return;
-                    }
-                    turno.setFechaRespuesta(LocalDateTime.now());
-                    turnoRepository.save(turno);
-                });
+                .orElse(pendientes.isEmpty() ? null : pendientes.getFirst());
+        if (turno == null) {
+            log.warn("WhatsApp: el usuario {} no tiene turnos pendientes para responder", usuario.getIdUsuario());
+            return ResponseEntity.ok().build();
+        }
+
+        String valor = Normalizer.normalize(respuesta, Normalizer.Form.NFD)
+                .replaceAll("\\p{M}+", "")
+                .toUpperCase(Locale.ROOT)
+                .trim();
+        if (valor.contains("CONFIRM") || valor.matches("^(SI|SÍ)(\\b.*)?$")) {
+            turno.setEstado(EstadoTurno.CONFIRMADO);
+            turno.setRespuestaCliente("CONFIRMADO");
+        } else if (valor.contains("CANCEL") || valor.matches("^NO(\\b.*)?$")) {
+            turno.setEstado(EstadoTurno.CANCELADO);
+            turno.setRespuestaCliente("CANCELADO");
+        } else {
+            log.info("WhatsApp: la respuesta \"{}\" no es SÍ ni NO, no se cambia el turno", respuesta);
+            return ResponseEntity.ok().build();
+        }
+        turno.setFechaRespuesta(LocalDateTime.now());
+        turnoRepository.save(turno);
+        log.info("WhatsApp: turno {} quedó {}", turno.getIdTurno(), turno.getEstado());
         return ResponseEntity.ok().build();
     }
 
