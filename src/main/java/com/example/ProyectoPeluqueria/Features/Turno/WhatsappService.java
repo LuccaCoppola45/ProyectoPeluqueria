@@ -2,16 +2,21 @@ package com.example.ProyectoPeluqueria.Features.Turno;
 
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.util.StringUtils;
-import org.springframework.web.client.RestClientException;
+import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestClient;
 
 import java.util.Map;
 import java.util.ArrayList;
 import java.util.List;
 
+@Slf4j
 @Service
 public class WhatsappService {
+
+    // Meta responde este código cuando el número no está en la lista de destinatarios del número de prueba
+    private static final String ERROR_NUMERO_NO_PERMITIDO = "131030";
 
     // "jueves 5/11" y "10:30" para que el mensaje se lea bien
     private static final java.time.format.DateTimeFormatter FORMATO_FECHA =
@@ -66,9 +71,26 @@ public class WhatsappService {
 
         String url = properties.graphUrl().replaceAll("/+$", "")
                 + "/" + properties.phoneNumberId() + "/messages";
-        Map<String, Object> body = Map.of(
+        String telefono = TelefonoWhatsapp.normalizar(turno.getUsuario().getTelefono());
+        try {
+            enviar(url, armarMensaje(telefono, turno));
+        } catch (HttpClientErrorException ex) {
+            // El número de prueba de Meta guarda los celulares de Argentina sin el 9 (54 + área + número),
+            // así que si lo rechaza se reintenta en ese formato. Con un número real se usa el 549.
+            String sinNueve = TelefonoWhatsapp.sinNueve(telefono);
+            if (sinNueve.equals(telefono) || !ex.getResponseBodyAsString().contains(ERROR_NUMERO_NO_PERMITIDO)) {
+                throw ex;
+            }
+            log.info("Meta rechazó {}, se reintenta sin el 9", telefono);
+            enviar(url, armarMensaje(sinNueve, turno));
+        }
+        return true;
+    }
+
+    private Map<String, Object> armarMensaje(String telefono, TurnoEntity turno) {
+        return Map.of(
                 "messaging_product", "whatsapp",
-                "to", TelefonoWhatsapp.normalizar(turno.getUsuario().getTelefono()),
+                "to", telefono,
                 "type", "template",
                 "template", Map.of(
                         "name", properties.reminderTemplate(),
@@ -80,7 +102,9 @@ public class WhatsappService {
                                         Map.of("type", "text", "text", FORMATO_HORA.format(turno.getHoraInicio()))
                                 })
                         }));
+    }
 
+    private void enviar(String url, Map<String, Object> body) {
         restClient.post()
                 .uri(url)
                 .contentType(MediaType.APPLICATION_JSON)
@@ -88,6 +112,5 @@ public class WhatsappService {
                 .body(body)
                 .retrieve()
                 .toBodilessEntity();
-        return true;
     }
 }

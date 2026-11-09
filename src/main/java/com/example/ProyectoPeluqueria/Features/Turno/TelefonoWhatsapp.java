@@ -43,4 +43,16 @@ public final class TelefonoWhatsapp {
         }
         return "549" + digitos;
     }
+
+    /**
+     * Saca el 9 de un celular de Argentina ya normalizado: "5492235964948" -> "542235964948".
+     * Si no tiene ese formato, lo devuelve igual.
+     */
+    public static String sinNueve(String telefonoNormalizado) {
+        if (telefonoNormalizado != null && telefonoNormalizado.startsWith("549")
+                && telefonoNormalizado.length() == 13) {
+            return "54" + telefonoNormalizado.substring(3);
+        }
+        return telefonoNormalizado;
+    }
 }
