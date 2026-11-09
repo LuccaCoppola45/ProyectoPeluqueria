@@ -34,7 +34,7 @@ public class ConfirmacionTurnoListener {
         TurnoEntity turno = turnoRepository.findById(event.turnoId())
                 .orElseThrow(() -> new TurnoNotFoundException("Turno no encontrado"));
         try {
-            if (whatsappService.enviarConfirmacionTurno(turno)) {
+            if (whatsappService.enviarConfirmacionTurno(turno).isPresent()) {
                 log.info("Meta aceptó el mensaje de confirmación para el turno {}", turno.getIdTurno());
             }
         } catch (IllegalStateException | RestClientException ex) {

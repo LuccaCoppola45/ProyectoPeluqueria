@@ -247,7 +247,7 @@ public class TurnoServiceImp implements TurnoService {
                 .orElseThrow(() -> new TurnoNotFoundException("Turno no encontrado"));
         boolean enviado;
         try {
-            enviado = whatsappService.enviarRecordatorio(turno);
+            enviado = whatsappService.enviarRecordatorio(turno).isPresent();
         } catch (org.springframework.web.client.RestClientResponseException ex) {
             throw new IllegalStateException("Meta rechazó el mensaje: " + ex.getResponseBodyAsString());
         } catch (org.springframework.web.client.RestClientException ex) {

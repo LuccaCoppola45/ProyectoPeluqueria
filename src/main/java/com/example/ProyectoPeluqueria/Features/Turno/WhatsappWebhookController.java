@@ -67,17 +67,7 @@ public class WhatsappWebhookController {
             return ResponseEntity.ok().build();
         }
 
-        List<TurnoEntity> pendientes = turnoRepository.findByUsuario_IdUsuarioAndEstadoOrderByFechaAscHoraInicioAsc(
-                        usuario.getIdUsuario(), EstadoTurno.PENDIENTE)
-                .stream()
-                .filter(t -> !t.getFecha().isBefore(java.time.LocalDate.now()))
-                .toList();
-        // La respuesta es para el turno al que se le mandó el recordatorio; si hay varios pendientes,
-        // no se toca otro turno solo por ser el más próximo
-        TurnoEntity turno = pendientes.stream()
-                .filter(t -> recordatorioRepository.existsByTurno_IdTurno(t.getIdTurno()))
-                .findFirst()
-                .orElse(pendientes.isEmpty() ? null : pendientes.getFirst());
+        TurnoEntity turno = buscarTurnoRespondido(payload, usuario);
         if (turno == null) {
             log.warn("WhatsApp: el usuario {} no tiene turnos pendientes para responder", usuario.getIdUsuario());
             return ResponseEntity.ok().build();
@@ -101,6 +91,60 @@ public class WhatsappWebhookController {
         turnoRepository.save(turno);
         log.info("WhatsApp: turno {} quedó {}", turno.getIdTurno(), turno.getEstado());
         return ResponseEntity.ok().build();
+    }
+
+    /**
+     * Al apretar un botón, WhatsApp manda en "context.id" el id del mensaje que se contestó:
+     * con eso se encuentra el turno exacto. Si no viene (la clienta escribió "no" a mano),
+     * se usa el próximo turno pendiente que recibió recordatorio.
+     */
+    private TurnoEntity buscarTurnoRespondido(Map<String, Object> payload, UsuarioEntity usuario) {
+        String mensajeRespondido = buscarTexto(buscarMapa(payload, "context"), "id");
+        if (mensajeRespondido != null) {
+            TurnoEntity turno = recordatorioRepository.findTurnoByMensajeId(mensajeRespondido)
+                    .filter(t -> t.getUsuario() != null
+                            && usuario.getIdUsuario().equals(t.getUsuario().getIdUsuario()))
+                    .filter(t -> t.getEstado() != EstadoTurno.CANCELADO
+                            && t.getEstado() != EstadoTurno.FINALIZADO)
+                    .orElse(null);
+            if (turno != null) {
+                return turno;
+            }
+            log.info("WhatsApp: el mensaje {} no corresponde a un turno activo, se busca el próximo pendiente",
+                    mensajeRespondido);
+        }
+
+        List<TurnoEntity> pendientes = turnoRepository.findByUsuario_IdUsuarioAndEstadoOrderByFechaAscHoraInicioAsc(
+                        usuario.getIdUsuario(), EstadoTurno.PENDIENTE)
+                .stream()
+                .filter(t -> !t.getFecha().isBefore(java.time.LocalDate.now()))
+                .toList();
+        return pendientes.stream()
+                .filter(t -> recordatorioRepository.existsByTurno_IdTurno(t.getIdTurno()))
+                .findFirst()
+                .orElse(pendientes.isEmpty() ? null : pendientes.getFirst());
+    }
+
+    private Map<?, ?> buscarMapa(Object value, String key) {
+        if (value instanceof Map<?, ?> map) {
+            if (map.get(key) instanceof Map<?, ?> encontrado) {
+                return encontrado;
+            }
+            for (Object child : map.values()) {
+                Map<?, ?> result = buscarMapa(child, key);
+                if (result != null) {
+                    return result;
+                }
+            }
+        } else if (value instanceof Iterable<?> iterable) {
+            for (Object child : iterable) {
+                Map<?, ?> result = buscarMapa(child, key);
+                if (result != null) {
+                    return result;
+                }
+            }
+        }
+        return null;
     }
 
     private String buscarRespuesta(Object value) {

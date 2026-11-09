@@ -33,4 +33,9 @@ public class RecordatorioTurnoEntity {
 
     @Column(nullable = false, length = 20)
     private String estado;
+
+    // Id que Meta le da al mensaje (wamid). La respuesta de la clienta lo trae en "context.id",
+    // así se sabe a qué turno contesta aunque tenga varios pendientes.
+    @Column(name = "mensaje_id", length = 128)
+    private String mensajeId;
 }

@@ -59,10 +59,13 @@ public class RecordatorioTurnoScheduler {
                 || recordatorioRepository.existsByTurno_IdTurnoAndTipo(turno.getIdTurno(), tipo)) {
             return;
         }
+        String mensajeId;
         try {
-            if (!whatsappService.enviarRecordatorio(turno)) {
+            java.util.Optional<String> enviado = whatsappService.enviarRecordatorio(turno);
+            if (enviado.isEmpty()) {
                 return;
             }
+            mensajeId = enviado.get();
         } catch (IllegalStateException | RestClientException ex) {
             log.error("No se pudo enviar recordatorio {} para turno {}: {}",
                     tipo, turno.getIdTurno(), ex.getMessage());
@@ -74,6 +77,7 @@ public class RecordatorioTurnoScheduler {
         recordatorio.setTipo(tipo);
         recordatorio.setFechaEnvio(LocalDateTime.now());
         recordatorio.setEstado("ACEPTADO_META");
+        recordatorio.setMensajeId(mensajeId.isBlank() ? null : mensajeId);
         recordatorioRepository.save(recordatorio);
         log.info("Meta aceptó el recordatorio {} para turno {}", tipo, turno.getIdTurno());
     }

@@ -8,6 +8,7 @@ import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestClient;
 
 import java.util.Map;
+import java.util.Optional;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -32,17 +33,21 @@ public class WhatsappService {
         this.restClient = RestClient.create();
     }
 
-    public boolean enviarRecordatorio(TurnoEntity turno) {
+    /**
+     * Devuelve el id del mensaje que dio Meta (vacío si no vino), o Optional.empty() si WhatsApp
+     * está apagado y no se mandó nada.
+     */
+    public Optional<String> enviarRecordatorio(TurnoEntity turno) {
         return enviarPlantillaTurno(turno);
     }
 
-    public boolean enviarConfirmacionTurno(TurnoEntity turno) {
+    public Optional<String> enviarConfirmacionTurno(TurnoEntity turno) {
         return enviarPlantillaTurno(turno);
     }
 
-    private boolean enviarPlantillaTurno(TurnoEntity turno) {
+    private Optional<String> enviarPlantillaTurno(TurnoEntity turno) {
         if (!properties.enabled()) {
-            return false;
+            return Optional.empty();
         }
         List<String> faltantes = new ArrayList<>();
         if (!StringUtils.hasText(properties.graphUrl())) {
@@ -73,7 +78,7 @@ public class WhatsappService {
                 + "/" + properties.phoneNumberId() + "/messages";
         String telefono = TelefonoWhatsapp.normalizar(turno.getUsuario().getTelefono());
         try {
-            enviar(url, armarMensaje(telefono, turno));
+            return Optional.of(enviar(url, armarMensaje(telefono, turno)));
         } catch (HttpClientErrorException ex) {
             // El número de prueba de Meta guarda los celulares de Argentina sin el 9 (54 + área + número),
             // así que si lo rechaza se reintenta en ese formato. Con un número real se usa el 549.
@@ -82,9 +87,8 @@ public class WhatsappService {
                 throw ex;
             }
             log.info("Meta rechazó {}, se reintenta sin el 9", telefono);
-            enviar(url, armarMensaje(sinNueve, turno));
+            return Optional.of(enviar(url, armarMensaje(sinNueve, turno)));
         }
-        return true;
     }
 
     private Map<String, Object> armarMensaje(String telefono, TurnoEntity turno) {
@@ -104,13 +108,24 @@ public class WhatsappService {
                         }));
     }
 
-    private void enviar(String url, Map<String, Object> body) {
-        restClient.post()
+    private String enviar(String url, Map<String, Object> body) {
+        Map<?, ?> respuesta = restClient.post()
                 .uri(url)
                 .contentType(MediaType.APPLICATION_JSON)
                 .header("Authorization", "Bearer " + properties.accessToken())
                 .body(body)
                 .retrieve()
-                .toBodilessEntity();
+                .body(Map.class);
+        return mensajeIdDe(respuesta);
+    }
+
+    // Meta responde {"messages": [{"id": "wamid..."}]}
+    static String mensajeIdDe(Map<?, ?> respuesta) {
+        if (respuesta != null && respuesta.get("messages") instanceof List<?> mensajes
+                && !mensajes.isEmpty() && mensajes.getFirst() instanceof Map<?, ?> mensaje
+                && mensaje.get("id") instanceof String id) {
+            return id;
+        }
+        return "";
     }
 }
