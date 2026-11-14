@@ -22,7 +22,6 @@ public class UsuarioResponse
     private String email;
     private String dni;
 
-    private List<Long> serviciosId;
     private List<Long>turnosIds;
     private List<Long>cancelacionesIds;
 

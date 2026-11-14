@@ -2,7 +2,6 @@ package com.example.ProyectoPeluqueria.Features.Usuario.Mapper;
 
 
 import com.example.ProyectoPeluqueria.Features.Enums.Rol;
-import com.example.ProyectoPeluqueria.Features.Servicio.ServicioEntity;
 import com.example.ProyectoPeluqueria.Features.Usuario.Dtos.UsuarioRequest;
 import com.example.ProyectoPeluqueria.Features.Usuario.Dtos.UsuarioResponse;
 import com.example.ProyectoPeluqueria.Features.Usuario.UsuarioEntity;
@@ -41,15 +40,6 @@ public class UsuarioMapper
     public UsuarioResponse toResponce(UsuarioEntity usuario)
     {
         UsuarioResponse dto = modelMapper.map(usuario, UsuarioResponse.class);
-
-        if(usuario.getServiciosVinculados() != null){
-            dto.setServiciosId(
-                    usuario.getServiciosVinculados()
-                            .stream()
-                            .map(ServicioEntity::getIdServicio)
-                            .collect(Collectors.toList())
-            );
-        }
 
         if (usuario.getTurnosVinculados() != null) {
             dto.setTurnosIds(
