@@ -1,5 +1,6 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit, computed, signal } from '@angular/core';
+import { Component, OnInit, computed, effect, signal } from '@angular/core';
+import { subirAlInicio } from '../../../shared/subir-al-inicio';
 import { RouterLink } from '@angular/router';
 import { TurnoService } from '../../../core/services/turno.service';
 import { ServicioService } from '../../../core/services/servicio.service';
@@ -22,6 +23,12 @@ export class MisTurnosComponent implements OnInit {
   readonly cargando = signal(true);
   readonly errorMsg = signal<string | null>(null);
   readonly aviso = signal<string | null>(null);
+  // Cada vez que aparece un aviso, sube la página para que se vea (los avisos están arriba)
+  private readonly subirConAvisos = effect(() => {
+    if (this.aviso() || this.errorMsg()) {
+      subirAlInicio();
+    }
+  });
   readonly cancelacionPendiente = signal<number | null>(null);
   readonly cancelando = signal(false);
   /** Datos del salón, para mostrar el teléfono real en el mensaje de ayuda. */

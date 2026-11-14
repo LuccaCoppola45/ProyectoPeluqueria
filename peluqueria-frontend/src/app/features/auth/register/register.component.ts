@@ -3,6 +3,7 @@ import { Component, signal } from '@angular/core';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
+import { subirAlInicio } from '../../../shared/subir-al-inicio';
 import { RegisterRequest } from '../../../core/models/auth.model';
 
 @Component({
@@ -85,6 +86,7 @@ export class RegisterComponent {
       next: () => {
         this.cargando.set(false);
         this.exito.set(true);
+        subirAlInicio();
         setTimeout(() => this.router.navigate(['/login']), 2000);
       },
       error: (err) => {

@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, computed, OnInit, signal } from '@angular/core';
+import { Component, computed, effect, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Observable } from 'rxjs';
 import { ComercioService } from '../../../core/services/comercio.service';
@@ -14,6 +14,7 @@ import { TurnoResponse } from '../../../core/models/turno.model';
 import { UsuarioResponse } from '../../../core/models/usuario.model';
 import { DatePickerComponent } from '../../../shared/date-picker/date-picker.component';
 import { formatearDiaSemana } from '../../../shared/formato-fecha';
+import { subirAlInicio } from '../../../shared/subir-al-inicio';
 
 @Component({
   selector: 'app-admin-panel',
@@ -39,6 +40,12 @@ export class AdminPanelComponent implements OnInit {
   readonly buscandoHorarios = signal(false);
   readonly mensaje = signal<string | null>(null);
   readonly errorMsg = signal<string | null>(null);
+  // Cada vez que aparece un aviso, sube la página para que se vea (los avisos están arriba)
+  private readonly subirConAvisos = effect(() => {
+    if (this.mensaje() || this.errorMsg()) {
+      subirAlInicio();
+    }
+  });
   readonly mostrarHistorial = signal(false);
   readonly guardandoServicioId = signal<number | null>(null);
   readonly eliminandoUsuarioId = signal<number | null>(null);
