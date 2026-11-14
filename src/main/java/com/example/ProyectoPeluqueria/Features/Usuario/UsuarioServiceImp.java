@@ -96,7 +96,6 @@ public class UsuarioServiceImp implements UsuarioService {
         usuarioLimpiezaRepository.borrarCancelaciones(id);
         usuarioLimpiezaRepository.borrarTurnos(id);
         usuarioLimpiezaRepository.borrarResenias(id);
-        usuarioLimpiezaRepository.borrarServiciosVinculados(id);
         usuarioLimpiezaRepository.borrarUsuario(id);
     }
 

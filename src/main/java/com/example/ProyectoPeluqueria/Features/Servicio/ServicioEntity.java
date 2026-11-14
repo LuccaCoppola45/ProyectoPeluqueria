@@ -3,7 +3,6 @@ package com.example.ProyectoPeluqueria.Features.Servicio;
 
 import com.example.ProyectoPeluqueria.Features.Comercio.ComercioEntity;
 import com.example.ProyectoPeluqueria.Features.Turno.TurnoEntity;
-import com.example.ProyectoPeluqueria.Features.Usuario.UsuarioEntity;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -56,13 +55,7 @@ public class ServicioEntity {
     @JsonIgnore
     private ComercioEntity comercio;
 
-    // 1. RELACIÓN MUCHOS A MUCHOS (Tabla Usuarios_Servicios)
-    // Es el "espejo" de la relación que definimos en Usuario
-    @ManyToMany(mappedBy = "serviciosVinculados")
-    @JsonIgnore
-    private List<UsuarioEntity> usuariosVinculados;
-
-    // 2. RELACIÓN CON TURNOS (Tabla intermedia con datos)
+    // RELACIÓN CON TURNOS (Tabla intermedia con datos)
     // Un servicio puede estar presente en muchos turnos agendados
     @OneToMany(mappedBy = "servicio")
     private List<TurnoEntity> turnos;

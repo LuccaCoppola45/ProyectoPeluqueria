@@ -31,10 +31,6 @@ public interface UsuarioLimpiezaRepository extends Repository<UsuarioEntity, Lon
     int borrarResenias(@Param("id") Long id);
 
     @Modifying(flushAutomatically = true, clearAutomatically = true)
-    @Query(value = "delete from usuarios_servicios where id_usuario = :id", nativeQuery = true)
-    int borrarServiciosVinculados(@Param("id") Long id);
-
-    @Modifying(flushAutomatically = true, clearAutomatically = true)
     @Query("delete from UsuarioEntity u where u.idUsuario = :id")
     int borrarUsuario(@Param("id") Long id);
 }
