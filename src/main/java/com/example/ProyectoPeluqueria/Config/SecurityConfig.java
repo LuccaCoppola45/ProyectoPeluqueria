@@ -169,7 +169,7 @@ private final JwtAuthenticationFilter jwtAuthFilter;
                         .requestMatchers(HttpMethod.PUT, "/api/usuarios/**").hasAnyAuthority("CLIENTE", "ADMIN")
                         .requestMatchers("/api/usuarios/**").hasAuthority("ADMIN")
                         // Rutas del frontend SPA
-                        .requestMatchers("/", "/index.html", "/login", "/login/**", "/register", "/register/**", "/servicios", "/servicios/**", "/turnos", "/turnos/**", "/mis-turnos", "/mis-turnos/**", "/reservar", "/reservar/**", "/perfil", "/perfil/**", "/admin", "/admin/**").permitAll()
+                        .requestMatchers("/", "/index.html", "/login", "/login/**", "/register", "/register/**", "/servicios", "/servicios/**", "/turnos", "/turnos/**", "/mis-turnos", "/mis-turnos/**", "/reservar", "/reservar/**", "/perfil", "/perfil/**", "/admin", "/admin/**", "/privacidad").permitAll()
                         .anyRequest().authenticated()
                 )
                 // 4. Política Stateless

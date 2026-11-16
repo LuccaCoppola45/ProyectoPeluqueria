@@ -41,7 +41,8 @@ public class SpaController {
             "/mis-turnos", "/mis-turnos/**",
             "/reservar", "/reservar/**",
             "/perfil", "/perfil/**",
-            "/admin", "/admin/**"
+            "/admin", "/admin/**",
+            "/privacidad"
     }, produces = MediaType.TEXT_HTML_VALUE)
     public ResponseEntity<String> spa() {
         try {

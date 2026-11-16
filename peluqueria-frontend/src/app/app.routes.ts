@@ -69,5 +69,13 @@ export const routes: Routes = [
         (m) => m.CalendarioComponent
       )
   },
+  {
+    // Pública: Meta la pide para publicar la app de WhatsApp
+    path: 'privacidad',
+    loadComponent: () =>
+      import('./features/legal/privacidad/privacidad.component').then(
+        (m) => m.PrivacidadComponent
+      )
+  },
   { path: '**', redirectTo: '' }
 ];

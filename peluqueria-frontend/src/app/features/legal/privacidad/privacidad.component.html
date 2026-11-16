@@ -1,0 +1,77 @@
+<section class="container privacidad-page">
+  <header class="page-header">
+    <p class="eyebrow">Piazzolla</p>
+    <h1>Política de privacidad</h1>
+    <p class="helper-text">Última actualización: {{ ultimaActualizacion }}</p>
+  </header>
+
+  <article class="card privacidad-texto">
+    <p>
+      En Piazzolla Peluquería cuidamos los datos que nos dejás al reservar un turno en este sitio.
+      Acá te contamos qué guardamos, para qué lo usamos y cómo pedir que lo borremos.
+    </p>
+
+    <h2>Qué datos guardamos</h2>
+    <ul>
+      <li>Tu nombre, apellido y DNI, para identificarte cuando iniciás sesión.</li>
+      <li>Tu número de teléfono, para avisarte de tus turnos por WhatsApp.</li>
+      <li>Tu contraseña, guardada de forma cifrada: nadie puede leerla, ni siquiera nosotros.</li>
+      <li>Los turnos que reservás (servicio, día y hora) y si los confirmaste o cancelaste.</li>
+      <li>Las reseñas que decidas dejar.</li>
+    </ul>
+
+    <h2>Para qué los usamos</h2>
+    <ul>
+      <li>Para reservar, mostrar y administrar tus turnos.</li>
+      <li>
+        Para mandarte por WhatsApp la confirmación de tu turno y un recordatorio el día anterior,
+        donde podés responder si venís o no.
+      </li>
+    </ul>
+    <p>
+      No vendemos ni compartimos tus datos con nadie para publicidad. No te mandamos promociones.
+    </p>
+
+    <h2>Con quién se comparten</h2>
+    <p>
+      Los mensajes de WhatsApp se envían a través de la plataforma de WhatsApp Business de Meta.
+      Para eso, Meta recibe tu número de teléfono y el texto del mensaje (tu nombre y el día y la hora
+      del turno). Meta trata esos datos según sus propias políticas.
+    </p>
+    <p>
+      El sitio y la base de datos están alojados en servicios de hosting que solo los guardan para
+      que la página funcione.
+    </p>
+
+    <h2>Cuánto tiempo los guardamos</h2>
+    <p>
+      Mientras tengas tu cuenta. Si nos pedís que la borremos, eliminamos tus datos y tu historial de turnos.
+    </p>
+
+    <h2 id="eliminar-datos">Cómo pedir que borremos tus datos</h2>
+    <p>Podés pedirlo en cualquier momento, de cualquiera de estas formas:</p>
+    <ol>
+      <li>
+        Escribinos por WhatsApp o llamanos al
+        <a *ngIf="telefonoLimpio(); else sinTelefono" [href]="'tel:' + telefonoLimpio()">{{ telefonoLegible() }}</a>
+        <ng-template #sinTelefono>teléfono del salón</ng-template>
+        diciendo "quiero borrar mis datos", junto con tu nombre y DNI.
+      </li>
+      <li>
+        O acercate al salón<ng-container *ngIf="comercio()?.direccion"> ({{ comercio()!.direccion }})</ng-container>
+        y pedíselo a quien te atienda.
+      </li>
+    </ol>
+    <p>
+      Borramos tu cuenta, tu teléfono y tus turnos en un plazo máximo de 30 días y te avisamos cuando esté hecho.
+      Si solo querés dejar de recibir mensajes de WhatsApp, avisanos y dejamos de mandarte.
+    </p>
+
+    <h2>Tus derechos</h2>
+    <p>
+      Según la Ley 25.326 de Protección de Datos Personales de Argentina, podés pedirnos ver, corregir
+      o borrar tus datos cuando quieras, sin costo. La Agencia de Acceso a la Información Pública es el
+      organismo que controla el cumplimiento de esta ley.
+    </p>
+  </article>
+</section>

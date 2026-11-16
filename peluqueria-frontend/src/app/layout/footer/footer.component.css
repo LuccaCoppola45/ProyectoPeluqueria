@@ -152,6 +152,15 @@
   text-align: center;
 }
 
+.footer-legal-enlace {
+  color: inherit;
+  text-decoration: underline;
+}
+
+.footer-legal-enlace:hover {
+  color: var(--texto-blanco);
+}
+
 @media (max-width: 820px) {
   .site-footer {
     margin-top: 32px;
