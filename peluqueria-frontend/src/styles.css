@@ -422,6 +422,17 @@ body {
   color: var(--texto);
 }
 
+/* Línea de datos legales: está en index.html (HTML fijo) y queda pegada debajo del pie */
+.datos-legales {
+  margin: 0;
+  /* El espacio de abajo evita que la tape el selector de paleta, que queda fijo */
+  padding: 0 20px 110px;
+  background: var(--fondo-footer);
+  color: var(--marca-texto-3);
+  font-size: 0.9rem;
+  text-align: center;
+}
+
 /* Foco visible y consistente en TODOS los elementos interactivos */
 :focus-visible {
   outline: 3px solid var(--foco);
