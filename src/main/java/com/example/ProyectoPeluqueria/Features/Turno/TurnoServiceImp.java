@@ -78,6 +78,7 @@ public class TurnoServiceImp implements TurnoService {
         turno.setHoraFin(horaFinCalculada);
         turno.setComercio(servicio.getComercio());
         turno.setEstado(EstadoTurno.PENDIENTE);
+        turno.setFechaReserva(java.time.LocalDateTime.now());
 
         TurnoEntity guardado = turnoRepository.save(turno);
         eventPublisher.publishEvent(new TurnoCreadoEvent(guardado.getIdTurno()));
@@ -172,6 +173,10 @@ public class TurnoServiceImp implements TurnoService {
                 turno.getUsuario().getIdUsuario(), dto.getFecha(), horaInicio, horaFinCalculada);
         validarAgendaLibre(servicio, dto.getFecha(), horaInicio, horaFinCalculada, turno.getIdTurno());
 
+        if (!dto.getFecha().equals(turno.getFecha()) || !horaInicio.equals(turno.getHoraInicio())) {
+            // Moverlo cuenta como reservarlo de nuevo para calcular cuándo va el recordatorio
+            turno.setFechaReserva(java.time.LocalDateTime.now());
+        }
         turno.setFecha(dto.getFecha());
         turno.setHoraInicio(horaInicio);
         turno.setHoraFin(horaFinCalculada);

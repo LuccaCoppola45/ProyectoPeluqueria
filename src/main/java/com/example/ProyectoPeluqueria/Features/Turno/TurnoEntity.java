@@ -48,6 +48,11 @@ public class TurnoEntity
     @Column(name = "fecha_respuesta", columnDefinition = "DATETIME")
     private java.time.LocalDateTime fechaRespuesta;
 
+    // Cuándo se sacó (o se movió) el turno: decide si el recordatorio va 24 o 12 hs antes.
+    // Los turnos viejos lo tienen vacío y siguen con el de 24 hs.
+    @Column(name = "fecha_reserva", columnDefinition = "DATETIME")
+    private java.time.LocalDateTime fechaReserva;
+
 
 
     // RELACIÓN: Muchos turnos pueden ser de un Usuario
