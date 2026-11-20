@@ -71,7 +71,7 @@ class TurnoDisponibilidadTest {
                 .thenAnswer(inv -> turnos.stream().filter(t -> t.getFecha().equals(inv.getArgument(1))).toList());
 
         turnoService = new TurnoServiceImp(turnoRepository, null, servicioRepository, null,
-                bloqueoHorarioService, null, null);
+                bloqueoHorarioService, null);
     }
 
     @Test

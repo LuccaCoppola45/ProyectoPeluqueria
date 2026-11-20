@@ -21,7 +21,6 @@ import com.example.ProyectoPeluqueria.Features.Usuario.UsuarioEntity;
 import com.example.ProyectoPeluqueria.Features.Usuario.UsuarioRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -46,7 +45,6 @@ public class TurnoServiceImp implements TurnoService {
     private final TurnoMapper turnoMapper;
     private final BloqueoHorarioService bloqueoHorarioService;
     private final WhatsappService whatsappService;
-    private final ApplicationEventPublisher eventPublisher;
 
     @Override
     public TurnoResponse crearTurno(TurnoRequest dto) {
@@ -81,7 +79,6 @@ public class TurnoServiceImp implements TurnoService {
         turno.setFechaReserva(java.time.LocalDateTime.now());
 
         TurnoEntity guardado = turnoRepository.save(turno);
-        eventPublisher.publishEvent(new TurnoCreadoEvent(guardado.getIdTurno()));
 
         return turnoMapper.toDto(guardado);
     }

@@ -41,10 +41,6 @@ public class WhatsappService {
         return enviarPlantillaTurno(turno);
     }
 
-    public Optional<String> enviarConfirmacionTurno(TurnoEntity turno) {
-        return enviarPlantillaTurno(turno);
-    }
-
     private Optional<String> enviarPlantillaTurno(TurnoEntity turno) {
         if (!properties.enabled()) {
             return Optional.empty();
