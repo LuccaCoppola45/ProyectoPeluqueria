@@ -18,4 +18,10 @@ public interface UsuarioService {
     void eliminarUsuarioConDatos(Long id);
 
     UpdateUserResponse actualizarUsuario(Long id, UpdateUserRequestDTO dto);
+
+    // El usuario logueado cambia su contraseña (tiene que poner la actual)
+    void cambiarMiContrasena(com.example.ProyectoPeluqueria.Features.Usuario.Dtos.CambiarContrasenaRequest dto);
+
+    // El admin le pone una contraseña nueva a un cliente que se la olvidó
+    void cambiarContrasenaDeUsuario(Long id, com.example.ProyectoPeluqueria.Features.Usuario.Dtos.CambiarContrasenaRequest dto);
 }

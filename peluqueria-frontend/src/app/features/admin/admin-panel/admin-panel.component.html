@@ -270,13 +270,44 @@
                   <strong>{{ usuario.nombre }} {{ usuario.apellido }}</strong>
                   <span>{{ usuario.dni ? 'DNI ' + usuario.dni : 'Sin DNI' }}<ng-container *ngIf="usuario.email"> · {{ usuario.email }}</ng-container></span>
                 </div>
-                <button
-                  class="danger"
-                  type="button"
-                  [disabled]="eliminandoUsuarioId() === usuario.idUsuario"
-                  (click)="eliminarUsuario(usuario)">
-                  {{ eliminandoUsuarioId() === usuario.idUsuario ? 'Eliminando...' : 'Eliminar' }}
-                </button>
+                <div class="admin-cliente-acciones" *ngIf="contrasenaUsuarioId() !== usuario.idUsuario">
+                  <button class="secondary" type="button" (click)="abrirCambioDeContrasena(usuario)">
+                    Cambiar contraseña
+                  </button>
+                  <button
+                    class="danger"
+                    type="button"
+                    [disabled]="eliminandoUsuarioId() === usuario.idUsuario"
+                    (click)="eliminarUsuario(usuario)">
+                    {{ eliminandoUsuarioId() === usuario.idUsuario ? 'Eliminando...' : 'Eliminar' }}
+                  </button>
+                </div>
+                <form
+                  class="admin-cliente-contrasena"
+                  *ngIf="contrasenaUsuarioId() === usuario.idUsuario"
+                  (ngSubmit)="guardarContrasena(usuario)">
+                  <label>Contraseña nueva para {{ usuario.nombre }}
+                    <input
+                      type="text"
+                      name="nuevaContrasena"
+                      autocomplete="off"
+                      minlength="6"
+                      maxlength="72"
+                      placeholder="Al menos 6 caracteres"
+                      [(ngModel)]="nuevaContrasena" />
+                  </label>
+                  <p class="helper-text">Se ve mientras la escribís para que se la puedas pasar.</p>
+                  <p class="error-msg" *ngIf="contrasenaError()" role="alert">{{ contrasenaError() }}</p>
+                  <div class="admin-cliente-acciones">
+                    <button class="primary" type="submit" [disabled]="guardandoContrasena()">
+                      {{ guardandoContrasena() ? 'Guardando...' : 'Guardar contraseña' }}
+                    </button>
+                    <button class="secondary" type="button" (click)="cerrarCambioDeContrasena()">Cancelar</button>
+                  </div>
+                </form>
+                <p class="success-msg admin-cliente-ok" *ngIf="contrasenaCambiadaId() === usuario.idUsuario" role="status">
+                  Listo: {{ usuario.nombre }} ya puede entrar con la contraseña nueva.
+                </p>
               </div>
             </div>
           </div>

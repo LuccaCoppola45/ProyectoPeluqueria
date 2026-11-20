@@ -49,6 +49,12 @@ export class AdminPanelComponent implements OnInit {
   readonly mostrarHistorial = signal(false);
   readonly guardandoServicioId = signal<number | null>(null);
   readonly eliminandoUsuarioId = signal<number | null>(null);
+  /** Cliente al que se le está poniendo una contraseña nueva */
+  readonly contrasenaUsuarioId = signal<number | null>(null);
+  readonly guardandoContrasena = signal(false);
+  readonly contrasenaCambiadaId = signal<number | null>(null);
+  readonly contrasenaError = signal<string | null>(null);
+  nuevaContrasena = '';
   readonly probandoWhatsappId = signal<number | null>(null);
   readonly busquedaClientes = signal('');
   readonly busquedaReserva = signal('');
@@ -339,6 +345,41 @@ export class AdminPanelComponent implements OnInit {
   /** "MIERCOLES" -> "Miércoles" (el backend no pone tildes). */
   diaLegible(dia: string): string {
     return formatearDiaSemana(dia);
+  }
+
+  abrirCambioDeContrasena(usuario: UsuarioResponse): void {
+    this.contrasenaUsuarioId.set(usuario.idUsuario);
+    this.contrasenaCambiadaId.set(null);
+    this.contrasenaError.set(null);
+    this.nuevaContrasena = '';
+  }
+
+  cerrarCambioDeContrasena(): void {
+    this.contrasenaUsuarioId.set(null);
+    this.contrasenaError.set(null);
+    this.nuevaContrasena = '';
+  }
+
+  guardarContrasena(usuario: UsuarioResponse): void {
+    const contrasena = this.nuevaContrasena.trim();
+    if (contrasena.length < 6) {
+      this.contrasenaError.set('La contraseña tiene que tener al menos 6 caracteres.');
+      return;
+    }
+    this.guardandoContrasena.set(true);
+    this.contrasenaError.set(null);
+    this.usuarioService.cambiarContrasenaDe(usuario.idUsuario, contrasena).subscribe({
+      next: () => {
+        this.guardandoContrasena.set(false);
+        this.contrasenaUsuarioId.set(null);
+        this.contrasenaCambiadaId.set(usuario.idUsuario);
+        this.nuevaContrasena = '';
+      },
+      error: (err) => {
+        this.guardandoContrasena.set(false);
+        this.contrasenaError.set(err.error?.message ?? 'No se pudo cambiar la contraseña.');
+      }
+    });
   }
 
   eliminarUsuario(usuario: UsuarioResponse): void {

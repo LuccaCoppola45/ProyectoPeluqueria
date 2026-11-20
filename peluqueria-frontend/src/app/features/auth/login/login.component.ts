@@ -4,6 +4,9 @@ import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angula
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
 import { LoginRequest } from '../../../core/models/auth.model';
+import { ComercioService } from '../../../core/services/comercio.service';
+import { ComercioResponse } from '../../../core/models/comercio.model';
+import { formatearTelefono } from '../../../shared/formato-fecha';
 
 @Component({
   selector: 'app-login',
@@ -16,6 +19,7 @@ export class LoginComponent {
   readonly cargando = signal(false);
   readonly errorMsg = signal<string | null>(null);
   readonly mostrarPassword = signal(false);
+  readonly comercio = signal<ComercioResponse | null>(null);
 
   form!: FormGroup;
 
@@ -23,8 +27,15 @@ export class LoginComponent {
     private fb: FormBuilder,
     private authService: AuthService,
     private router: Router,
-    private route: ActivatedRoute
+    private route: ActivatedRoute,
+    comercioService: ComercioService
   ) {
+    // Teléfono del salón para el aviso de "¿Te olvidaste la contraseña?"
+    comercioService.obtenerInfo().subscribe({
+      next: (datos) => this.comercio.set(datos),
+      error: () => this.comercio.set(null)
+    });
+
     this.form = this.fb.group({
       dni: ['', [Validators.required, Validators.pattern(/^\d{7,8}$/)]],
       password: ['', [Validators.required, Validators.minLength(6)]]
@@ -33,6 +44,14 @@ export class LoginComponent {
     if (this.route.snapshot.queryParamMap.get('sesion') === 'vencida') {
       this.errorMsg.set('Tu sesión venció. Iniciá sesión nuevamente.');
     }
+  }
+
+  telefonoLimpio(): string {
+    return (this.comercio()?.telefono ?? '').replace(/\D/g, '');
+  }
+
+  telefonoLegible(): string {
+    return formatearTelefono(this.comercio()?.telefono);
   }
 
   onDniInput(event: Event): void {

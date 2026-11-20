@@ -142,6 +142,30 @@ public class UsuarioServiceImp implements UsuarioService {
                 .build();
     }
 
+    @Override
+    @Transactional
+    public void cambiarMiContrasena(com.example.ProyectoPeluqueria.Features.Usuario.Dtos.CambiarContrasenaRequest dto) {
+        String identificador = obtenerIdentificadorAutenticado();
+        UsuarioEntity usuario = usuarioRepository.findByDniOrEmail(identificador, identificador)
+                .orElseThrow(() -> new UserProfileNotFoundException("Usuario autenticado no encontrado"));
+        if (dto.getContrasenaActual() == null
+                || !passwordEncoder.matches(dto.getContrasenaActual(), usuario.getPassword())) {
+            // 400 y no 401: un 401 haría que la página cierre la sesión
+            throw new IllegalArgumentException("La contraseña actual no es correcta");
+        }
+        usuario.setPassword(passwordEncoder.encode(dto.getContrasenaNueva()));
+        usuarioRepository.save(usuario);
+    }
+
+    @Override
+    @Transactional
+    public void cambiarContrasenaDeUsuario(Long id, com.example.ProyectoPeluqueria.Features.Usuario.Dtos.CambiarContrasenaRequest dto) {
+        UsuarioEntity usuario = usuarioRepository.findById(id)
+                .orElseThrow(() -> new UserProfileNotFoundException("Usuario no encontrado"));
+        usuario.setPassword(passwordEncoder.encode(dto.getContrasenaNueva()));
+        usuarioRepository.save(usuario);
+    }
+
     private String obtenerIdentificadorAutenticado() {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         if (auth == null || auth.getName() == null) {

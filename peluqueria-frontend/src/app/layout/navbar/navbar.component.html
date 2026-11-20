@@ -24,6 +24,7 @@
       <div *ngIf="authService.logueado() && !authService.isAdmin()" class="navbar-actions">
         <a routerLink="/turnos/reservar" class="navbar-link" routerLinkActive="navbar-link--active">Reservar turno</a>
         <a routerLink="/turnos/mis-turnos" class="navbar-link" routerLinkActive="navbar-link--active">Mis turnos</a>
+        <a routerLink="/cuenta/contrasena" class="navbar-link" routerLinkActive="navbar-link--active">Cambiar contraseña</a>
         <button class="secondary navbar-salir" type="button" (click)="logout()">Cerrar sesión</button>
       </div>
 
@@ -34,6 +35,7 @@
           class="admin-nav-button"
           routerLinkActive="admin-nav-button--active"
           [routerLinkActiveOptions]="{ exact: true }">Administrar turnos</a>
+        <a routerLink="/cuenta/contrasena" class="navbar-link" routerLinkActive="navbar-link--active">Cambiar contraseña</a>
         <button class="secondary navbar-salir" type="button" (click)="logout()">Cerrar sesión</button>
       </div>
 

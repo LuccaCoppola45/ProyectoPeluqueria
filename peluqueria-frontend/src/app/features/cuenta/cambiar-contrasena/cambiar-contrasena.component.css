@@ -1,0 +1,68 @@
+.cuenta-page {
+  max-width: 560px;
+}
+
+.cuenta-card h1 {
+  margin: 0 0 8px;
+}
+
+.cuenta-intro {
+  margin: 0 0 24px;
+  color: var(--texto-tenue);
+  font-size: 1.1rem;
+}
+
+.campo {
+  margin-bottom: 22px;
+}
+
+.campo label {
+  display: block;
+  margin-bottom: 6px;
+  color: var(--texto);
+  font-size: 1.1rem;
+  font-weight: 700;
+}
+
+.campo input {
+  width: 100%;
+  margin: 0;
+}
+
+.field-hint {
+  display: block;
+  margin: 8px 0 0;
+  color: var(--texto-suave);
+  font-size: 1rem;
+}
+
+.campo .error-msg {
+  margin: 10px 0 0;
+}
+
+.cuenta-mostrar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 22px;
+  font-size: 1.05rem;
+  cursor: pointer;
+}
+
+.cuenta-mostrar input {
+  width: 20px;
+  height: 20px;
+  margin: 0;
+}
+
+.cuenta-error {
+  margin: 0 0 18px;
+}
+
+.cuenta-card button.primary {
+  width: 100%;
+}
+
+.cuenta-listo p {
+  font-size: 1.1rem;
+}

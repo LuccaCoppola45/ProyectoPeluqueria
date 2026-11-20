@@ -204,6 +204,42 @@ button.small {
   min-width: 0;
 }
 
+/* Al cambiar la contraseña, el formulario baja a su propia línea */
+.admin-horario.admin-cliente {
+  flex-wrap: wrap;
+}
+
+.admin-cliente-acciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.admin-cliente-contrasena {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex-basis: 100%;
+}
+
+.admin-cliente-contrasena label {
+  margin: 0;
+}
+
+.admin-cliente-contrasena input {
+  margin: 6px 0 0;
+}
+
+.admin-cliente-contrasena .helper-text,
+.admin-cliente-contrasena .error-msg {
+  margin: 0;
+}
+
+.admin-cliente-ok {
+  flex-basis: 100%;
+  margin: 0;
+}
+
 .admin-cliente-datos span {
   color: var(--texto-gris);
   font-size: 0.9rem;

@@ -1,0 +1,65 @@
+<section class="container cuenta-page">
+  <div class="card cuenta-card">
+    <h1>Cambiar contraseña</h1>
+
+    <div class="cuenta-listo" *ngIf="listo(); else formulario" role="status">
+      <p><strong>Listo, tu contraseña cambió.</strong></p>
+      <p>La próxima vez que inicies sesión, usá la contraseña nueva.</p>
+      <button type="button" class="primary" routerLink="/turnos/mis-turnos">Volver a mis turnos</button>
+    </div>
+
+    <ng-template #formulario>
+      <p class="cuenta-intro">Escribí tu contraseña de ahora y después la nueva dos veces.</p>
+
+      <form [formGroup]="form" (ngSubmit)="guardar()" novalidate>
+        <div class="campo">
+          <label for="actual">Contraseña actual</label>
+          <input
+            id="actual"
+            [type]="mostrar() ? 'text' : 'password'"
+            formControlName="actual"
+            autocomplete="current-password" />
+          <div class="error-msg" *ngIf="form.controls.actual.touched && form.controls.actual.invalid">
+            Escribí tu contraseña actual.
+          </div>
+        </div>
+
+        <div class="campo">
+          <label for="nueva">Contraseña nueva</label>
+          <input
+            id="nueva"
+            [type]="mostrar() ? 'text' : 'password'"
+            formControlName="nueva"
+            autocomplete="new-password" />
+          <small class="field-hint">Tiene que tener al menos 6 caracteres.</small>
+          <div class="error-msg" *ngIf="form.controls.nueva.touched && form.controls.nueva.invalid">
+            La contraseña nueva debe tener al menos 6 caracteres.
+          </div>
+        </div>
+
+        <div class="campo">
+          <label for="repetida">Repetí la contraseña nueva</label>
+          <input
+            id="repetida"
+            [type]="mostrar() ? 'text' : 'password'"
+            formControlName="repetida"
+            autocomplete="new-password" />
+          <div class="error-msg" *ngIf="form.controls.repetida.touched && form.hasError('distintas')">
+            Las dos contraseñas nuevas no son iguales.
+          </div>
+        </div>
+
+        <label class="cuenta-mostrar">
+          <input type="checkbox" [checked]="mostrar()" (change)="mostrar.set(!mostrar())" />
+          Mostrar las contraseñas
+        </label>
+
+        <div class="error-msg cuenta-error" *ngIf="errorMsg()" role="alert">{{ errorMsg() }}</div>
+
+        <button type="submit" class="primary" [disabled]="cargando()">
+          {{ cargando() ? 'Guardando...' : 'Cambiar contraseña' }}
+        </button>
+      </form>
+    </ng-template>
+  </div>
+</section>

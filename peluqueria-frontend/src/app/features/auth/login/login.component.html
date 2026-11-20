@@ -58,7 +58,7 @@
               type="button"
               [attr.aria-pressed]="mostrarPassword()"
               (click)="togglePassword()">
-              {{ mostrarPassword() ? 'Ocultar' : 'mostrar' }}
+              {{ mostrarPassword() ? 'Ocultar' : 'Mostrar' }}
             </button>
           </div>
           <small class="field-hint">La contraseña tiene al menos 6 caracteres.</small>
@@ -75,6 +75,14 @@
           {{ cargando() ? 'Entrando...' : 'Iniciar sesión' }}
         </button>
       </form>
+
+      <p class="auth-link">
+        ¿Te olvidaste la contraseña? Avisale al salón por WhatsApp o llamando
+        <ng-container *ngIf="telefonoLimpio()">
+          al <a [href]="'tel:' + telefonoLimpio()">{{ telefonoLegible() }}</a>
+        </ng-container>
+        y te ponen una nueva.
+      </p>
 
       <p class="auth-link">
         ¿No tenés cuenta? <a routerLink="/register">Crear una cuenta</a>

@@ -53,6 +53,14 @@ export const routes: Routes = [
       )
   },
   {
+    path: 'cuenta/contrasena',
+    canActivate: [authGuard],
+    loadComponent: () =>
+      import('./features/cuenta/cambiar-contrasena/cambiar-contrasena.component').then(
+        (m) => m.CambiarContrasenaComponent
+      )
+  },
+  {
     path: 'admin',
     canActivate: [adminGuard],
     loadComponent: () =>
