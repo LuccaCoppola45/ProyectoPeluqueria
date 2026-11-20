@@ -392,10 +392,6 @@
   line-height: 1.8;
 }
 
-.about-copy > p:not(.eyebrow) + p {
-  margin-top: -12px;
-}
-
 /* Foto histórica: se ve entera (con el cartel de abajo), sin recorte ni zoom */
 .about-photo.about-photo--historica {
   height: auto;
@@ -412,39 +408,6 @@
   height: auto;
   filter: none;
   transform: none;
-}
-
-.about-photo--historica figcaption {
-  margin-top: 12px;
-  color: var(--texto-tenue);
-  font-size: 0.95rem;
-  font-style: italic;
-}
-
-.historia-generaciones {
-  display: grid;
-  gap: 14px;
-  max-width: 500px;
-  margin: 0 0 28px;
-  padding: 0;
-  list-style: none;
-}
-
-.historia-generaciones li {
-  padding-left: 16px;
-  border-left: 3px solid var(--marca-texto);
-  color: var(--texto);
-  font-size: 1.05rem;
-  line-height: 1.6;
-}
-
-.historia-generaciones span {
-  display: block;
-  color: var(--marca-texto);
-  font-size: 0.85rem;
-  font-weight: 700;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
 }
 
 /* ------------------------------------------------------------------ */
