@@ -231,6 +231,21 @@ button.small {
   margin: 0;
 }
 
+/* Casilla "No tiene cuenta": el texto al lado, no debajo */
+.admin-cliente-selector .admin-sin-cuenta {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+}
+
+.admin-sin-cuenta input[type="checkbox"] {
+  width: 20px;
+  height: 20px;
+  margin: 0;
+  flex-shrink: 0;
+}
+
 .admin-clientes-cuerpo {
   display: flex;
   flex-direction: column;

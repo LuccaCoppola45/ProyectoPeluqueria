@@ -44,7 +44,8 @@ public class CancelacionServiceImp implements CancelacionService {
 
         // 1. ¿El turno le pertenece al usuario que lo quiere cancelar?
         if (!esAdmin(usuarioAutenticado)
-                && !turno.getUsuario().getIdUsuario().equals(usuarioAutenticado.getIdUsuario())) {
+                && (turno.getUsuario() == null
+                    || !turno.getUsuario().getIdUsuario().equals(usuarioAutenticado.getIdUsuario()))) {
             throw new UnauthorizedTurnoAccessException("No tienes permiso para cancelar un turno que no te pertenece.");
         }
 

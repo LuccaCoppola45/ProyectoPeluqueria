@@ -53,6 +53,11 @@ public class TurnoEntity
     @Column(name = "fecha_reserva", columnDefinition = "DATETIME")
     private java.time.LocalDateTime fechaReserva;
 
+    // Turno que el admin sacó para alguien sin cuenta: solo se guarda el nombre que escribió
+    // (no hay usuario ni teléfono, así que no recibe WhatsApp).
+    @Column(name = "nombre_cliente", length = 80)
+    private String nombreCliente;
+
 
 
     // RELACIÓN: Muchos turnos pueden ser de un Usuario

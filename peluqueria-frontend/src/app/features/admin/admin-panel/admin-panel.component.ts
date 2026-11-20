@@ -66,6 +66,8 @@ export class AdminPanelComponent implements OnInit {
   readonly fechaMinima = this.formatearFecha(new Date());
 
   reserva = {
+    sinCuenta: false,
+    nombreCliente: '',
     usuarioId: null as number | null,
     servicioId: null as number | null,
     fecha: '',
@@ -257,14 +259,20 @@ export class AdminPanelComponent implements OnInit {
   }
 
   reservarParaUsuario(): void {
-    if (!this.reserva.usuarioId || !this.reserva.servicioId || !this.reserva.fecha ||
+    const nombreCliente = this.reserva.nombreCliente.trim();
+    const tieneCliente = this.reserva.sinCuenta ? nombreCliente.length > 0 : !!this.reserva.usuarioId;
+    if (!tieneCliente || !this.reserva.servicioId || !this.reserva.fecha ||
         !this.reserva.horaInicio || !this.reserva.idComercio) {
-      this.errorMsg.set('Completá usuario, servicio, fecha y horario.');
+      this.errorMsg.set(this.reserva.sinCuenta
+        ? 'Completá el nombre, servicio, fecha y horario.'
+        : 'Completá usuario, servicio, fecha y horario.');
       return;
     }
 
     this.turnoService.crear({
-      usuarioId: this.reserva.usuarioId,
+      ...(this.reserva.sinCuenta
+        ? { nombreCliente }
+        : { usuarioId: this.reserva.usuarioId ?? undefined }),
       servicioId: this.reserva.servicioId,
       fecha: this.reserva.fecha,
       horaInicio: this.reserva.horaInicio,
@@ -281,6 +289,8 @@ export class AdminPanelComponent implements OnInit {
 
   private resetSeleccionTurno(): void {
     this.reserva = {
+      sinCuenta: this.reserva.sinCuenta,
+      nombreCliente: '',
       usuarioId: null,
       servicioId: null,
       fecha: '',
@@ -562,7 +572,7 @@ export class AdminPanelComponent implements OnInit {
     }
 
     const usuario = this.usuarios().find((item) => item.idUsuario === turno.usuarioId);
-    return usuario ? `${usuario.nombre} ${usuario.apellido}` : `Usuario ${turno.usuarioId}`;
+    return usuario ? `${usuario.nombre} ${usuario.apellido}` : 'Cliente';
   }
 
   emailDelUsuario(turno: TurnoResponse): string | null {

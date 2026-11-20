@@ -7,6 +7,8 @@ export interface TurnoRequest {
   servicioId: number;
   idComercio: number;
   usuarioId?: number;
+  /** Solo admin: turno para alguien sin cuenta, con el nombre que quiera */
+  nombreCliente?: string;
 }
 
 export interface TurnoResponse {
@@ -15,7 +17,8 @@ export interface TurnoResponse {
   horaInicio: string;
   horaFin: string;
   estado: EstadoTurno;
-  usuarioId: number;
+  /** null en los turnos sin cuenta (los saca el admin con un nombre) */
+  usuarioId: number | null;
   servicioId: number;
   cancelacionId: number | null;
   idComercio: number;

@@ -20,11 +20,28 @@
   <section class="booking-panel admin-panel" *ngIf="!cargando()">
       <div class="admin-panel-heading">
         <p class="eyebrow">Nueva reserva</p>
-        <h2>Agendar turno para un usuario</h2>
+        <h2>Agendar turno para un cliente</h2>
         <p class="helper-text">Elegí el cliente, el servicio y la fecha para consultar los horarios disponibles.</p>
       </div>
       <div class="admin-form-grid">
         <div class="admin-cliente-selector">
+          <label class="admin-sin-cuenta">
+            <input
+              type="checkbox"
+              [(ngModel)]="reserva.sinCuenta"
+              (ngModelChange)="limpiarMensajes()" />
+            No tiene cuenta: escribir solo el nombre
+          </label>
+          <label *ngIf="reserva.sinCuenta">Nombre
+            <input
+              type="text"
+              maxlength="80"
+              placeholder="Ej: María Gómez"
+              autocomplete="off"
+              [(ngModel)]="reserva.nombreCliente"
+              (ngModelChange)="limpiarMensajes()" />
+          </label>
+          <ng-container *ngIf="!reserva.sinCuenta">
           <label>Cliente
             <input
               type="search"
@@ -45,6 +62,7 @@
               {{ nombreParaSeleccionar(usuario) }}
             </option>
           </select>
+          </ng-container>
         </div>
         <label>Servicio
           <select [(ngModel)]="reserva.servicioId" (ngModelChange)="buscarHorarios()">
@@ -127,7 +145,10 @@
               <strong>{{ turno.horaInicio.substring(0, 5) }} - {{ turno.horaFin.substring(0, 5) }}</strong>
               <span>
                 <strong>Cliente:</strong> {{ nombreDelUsuario(turno) }}
-                · <strong>DNI:</strong> {{ dniDelUsuario(turno) || 'No disponible' }}
+                <ng-container *ngIf="turno.usuarioId; else sinCuenta">
+                  · <strong>DNI:</strong> {{ dniDelUsuario(turno) || 'No disponible' }}
+                </ng-container>
+                <ng-template #sinCuenta>(sin cuenta)</ng-template>
                 · <strong>Servicio:</strong> {{ nombreDelServicio(turno) }} ·
                 <ng-container *ngIf="turno.conAyudante"><strong>Atiende:</strong> Segunda peluquera ·</ng-container>
                 <span class="turno-estado" [class.turno-estado--terminado]="mostrarHistorial() || turnoVencido(turno)">
@@ -137,6 +158,7 @@
             </div>
             <div class="admin-turno-acciones" *ngIf="!mostrarHistorial() && turno.estado !== 'CANCELADO' && turno.estado !== 'FINALIZADO'">
               <button
+                *ngIf="turno.usuarioId"
                 class="secondary"
                 type="button"
                 [disabled]="probandoWhatsappId() === turno.idTurno"

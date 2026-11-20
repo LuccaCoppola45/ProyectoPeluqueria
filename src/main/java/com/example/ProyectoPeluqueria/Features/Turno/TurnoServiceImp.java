@@ -67,11 +67,16 @@ public class TurnoServiceImp implements TurnoService {
         // Validar horario en base al comercio del servicio
         validarHorarioAtencion(servicio.getComercio(), dto.getFecha(), horaInicio, horaFinCalculada);
 
-        validarSuperposicionUsuario(usuario.getIdUsuario(), dto.getFecha(), horaInicio, horaFinCalculada);
+        if (usuario != null) {
+            validarSuperposicionUsuario(usuario.getIdUsuario(), dto.getFecha(), horaInicio, horaFinCalculada);
+        }
         validarAgendaLibre(servicio, dto.getFecha(), horaInicio, horaFinCalculada, null);
 
         TurnoEntity turno = turnoMapper.toEntity(dto);
         turno.setUsuario(usuario);
+        if (usuario == null) {
+            turno.setNombreCliente(dto.getNombreCliente().trim());
+        }
         turno.setServicio(servicio);
         turno.setHoraFin(horaFinCalculada);
         turno.setComercio(servicio.getComercio());
@@ -83,13 +88,22 @@ public class TurnoServiceImp implements TurnoService {
         return turnoMapper.toDto(guardado);
     }
 
+    /** Los turnos sin cuenta (los saca el admin con un nombre) no son de ningún usuario */
+    private static boolean esDelUsuario(TurnoEntity turno, UsuarioEntity usuario) {
+        return turno.getUsuario() != null && turno.getUsuario().getIdUsuario().equals(usuario.getIdUsuario());
+    }
+
     private UsuarioEntity resolverUsuarioDelTurno(
             TurnoRequest dto,
             UsuarioEntity usuarioAutenticado) {
         if (esAdmin(usuarioAutenticado)) {
             if (dto.getUsuarioId() == null) {
-                throw new IllegalArgumentException(
-                        "El usuarioId es obligatorio cuando un administrador crea un turno");
+                // Turno para alguien sin cuenta: alcanza con el nombre
+                if (dto.getNombreCliente() == null || dto.getNombreCliente().isBlank()) {
+                    throw new IllegalArgumentException(
+                            "Elegí un cliente o escribí el nombre de la persona");
+                }
+                return null;
             }
             return usuarioRepository.findById(dto.getUsuarioId())
                     .orElseThrow(() -> new UserProfileNotFoundException(
@@ -121,7 +135,7 @@ public class TurnoServiceImp implements TurnoService {
         TurnoEntity turno = turnoRepository.findById(id)
                 .orElseThrow(() -> new TurnoNotFoundException("Turno no encontrado"));
         UsuarioEntity usuario = obtenerUsuarioAutenticado();
-        if (!esAdmin(usuario) && !turno.getUsuario().getIdUsuario().equals(usuario.getIdUsuario())) {
+        if (!esAdmin(usuario) && !esDelUsuario(turno, usuario)) {
             throw new UnauthorizedTurnoAccessException("No tienes permisos para consultar este turno");
         }
         return turnoMapper.toDto(turno);
@@ -147,7 +161,7 @@ public class TurnoServiceImp implements TurnoService {
         // Verificar permisos: solo el propietario o ADMIN pueden modificar
         boolean esAdmin = esAdmin(usuarioAutenticado);
 
-        if (!turno.getUsuario().getIdUsuario().equals(usuarioAutenticado.getIdUsuario()) && !esAdmin) {
+        if (!esAdmin && !esDelUsuario(turno, usuarioAutenticado)) {
             throw new UnauthorizedTurnoAccessException(
                     "No tienes permisos para modificar este turno"
             );
@@ -166,8 +180,10 @@ public class TurnoServiceImp implements TurnoService {
 
         validarHorarioAtencion(servicio.getComercio(), dto.getFecha(), horaInicio, horaFinCalculada);
 
-        validarSuperposicionUsuarioExcluyendoActual(turno.getIdTurno(),
-                turno.getUsuario().getIdUsuario(), dto.getFecha(), horaInicio, horaFinCalculada);
+        if (turno.getUsuario() != null) {
+            validarSuperposicionUsuarioExcluyendoActual(turno.getIdTurno(),
+                    turno.getUsuario().getIdUsuario(), dto.getFecha(), horaInicio, horaFinCalculada);
+        }
         validarAgendaLibre(servicio, dto.getFecha(), horaInicio, horaFinCalculada, turno.getIdTurno());
 
         if (!dto.getFecha().equals(turno.getFecha()) || !horaInicio.equals(turno.getHoraInicio())) {
@@ -196,8 +212,7 @@ public class TurnoServiceImp implements TurnoService {
         UsuarioEntity usuarioAutenticado = obtenerUsuarioAutenticado();
 
         // Verificar permisos: solo el propietario o ADMIN pueden eliminar
-        if (!turno.getUsuario().getIdUsuario().equals(usuarioAutenticado.getIdUsuario())
-                && !esAdmin(usuarioAutenticado)) {
+        if (!esDelUsuario(turno, usuarioAutenticado) && !esAdmin(usuarioAutenticado)) {
             throw new UnauthorizedTurnoAccessException("No tienes permisos para eliminar este turno");
         }
 

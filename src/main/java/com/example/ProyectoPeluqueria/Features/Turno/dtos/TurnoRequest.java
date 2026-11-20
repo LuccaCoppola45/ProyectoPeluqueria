@@ -2,6 +2,7 @@ package com.example.ProyectoPeluqueria.Features.Turno.dtos;
 
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
+import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -25,6 +26,10 @@ public class TurnoRequest
     // Solo ADMIN lo usa para reservar en nombre de otro usuario.
     @Positive(message = "El id del usuario debe ser positivo")
     private Long usuarioId;
+
+    // Solo ADMIN: turno para alguien sin cuenta, con el nombre que quiera (en vez de usuarioId).
+    @Size(max = 80, message = "El nombre puede tener hasta 80 caracteres")
+    private String nombreCliente;
 
     @NotNull(message = "El id del servicio es obligatorio")
     @Positive(message = "El id del servicio debe ser positivo")

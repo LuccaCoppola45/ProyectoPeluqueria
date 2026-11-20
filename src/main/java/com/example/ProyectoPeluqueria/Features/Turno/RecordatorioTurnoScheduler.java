@@ -80,6 +80,8 @@ public class RecordatorioTurnoScheduler {
         return turnoRepository.findAll().stream()
                 .filter(turno -> turno.getEstado() != EstadoTurno.CANCELADO
                         && turno.getEstado() != EstadoTurno.FINALIZADO)
+                // Los turnos sin cuenta no tienen teléfono
+                .filter(turno -> turno.getUsuario() != null)
                 .flatMap(turno -> {
                     LocalDateTime inicio = LocalDateTime.of(turno.getFecha(), turno.getHoraInicio());
                     return planPara(turno.getFechaReserva(), inicio)

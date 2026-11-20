@@ -37,6 +37,9 @@ public class TurnoMapper {
             dto.setUsuarioId(entity.getUsuario().getIdUsuario());
             dto.setNombreUsuario(entity.getUsuario().getNombre());
             dto.setApellidoUsuario(entity.getUsuario().getApellido());
+        } else {
+            // Turno sin cuenta: se muestra el nombre que puso el admin
+            dto.setNombreUsuario(entity.getNombreCliente());
         }
 
         if (entity.getServicio() != null) {
