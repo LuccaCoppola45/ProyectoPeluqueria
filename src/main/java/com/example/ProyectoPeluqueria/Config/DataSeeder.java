@@ -79,6 +79,8 @@ public class DataSeeder implements CommandLineRunner {
             intentar("crear los servicios", () -> {
                 cargarServicio(comercio, "Corte de cabello", 30, 0, null);
                 cargarServicio(comercio, "Color", 60, 35000, null);
+                // Sin precio todavía ("A consultar"): el admin lo carga desde el panel
+                cargarServicio(comercio, "Color y corte", 90, 0, null);
                 cargarServicio(comercio, "Reflejos / Balayage", 60, 95000, HORARIOS_REFLEJOS_Y_BASE);
                 cargarServicio(comercio, "Brushing", 30, 20000, null);
                 cargarServicio(comercio, "Peinado de fiesta", 40, 60000, null);
