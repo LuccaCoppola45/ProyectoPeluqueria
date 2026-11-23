@@ -240,6 +240,61 @@ button.small {
   margin: 0;
 }
 
+/* El nombre del cliente es un botón que despliega sus turnos */
+.admin-cliente-toggle {
+  align-items: flex-start;
+  flex: 1;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.admin-cliente-toggle .admin-cliente-ver {
+  color: var(--marca-texto);
+  font-size: 0.95rem;
+  font-weight: 700;
+}
+
+.admin-cliente-toggle:hover strong {
+  text-decoration: underline;
+}
+
+.admin-cliente-turnos {
+  flex-basis: 100%;
+  padding: 12px 14px;
+  border-radius: 8px;
+  /* --marca-tenue existe en las tres paletas (en "Noche" es oscuro) */
+  background: var(--marca-tenue);
+}
+
+.admin-cliente-turnos h4 {
+  margin: 4px 0 8px;
+  font-size: 1rem;
+}
+
+.admin-cliente-turnos ul {
+  display: grid;
+  gap: 8px;
+  margin: 0 0 12px;
+  padding: 0;
+  list-style: none;
+}
+
+.admin-cliente-turnos li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 12px;
+}
+
+.admin-cliente-turnos .helper-text {
+  margin: 0;
+}
+
 .admin-cliente-datos span {
   color: var(--texto-gris);
   font-size: 0.9rem;

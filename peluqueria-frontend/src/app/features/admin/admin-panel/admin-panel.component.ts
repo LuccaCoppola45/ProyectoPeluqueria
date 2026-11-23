@@ -57,6 +57,8 @@ export class AdminPanelComponent implements OnInit {
   nuevaContrasena = '';
   readonly probandoWhatsappId = signal<number | null>(null);
   readonly busquedaClientes = signal('');
+  /** Cliente de la lista con sus turnos desplegados */
+  readonly clienteAbiertoId = signal<number | null>(null);
   readonly busquedaReserva = signal('');
   readonly clientesFiltrados = computed(() =>
     this.usuarios().filter((usuario) => this.coincideBusqueda(usuario, this.busquedaClientes()))
@@ -170,6 +172,26 @@ export class AdminPanelComponent implements OnInit {
     }));
   }
 
+  verTurnosDelCliente(usuario: UsuarioResponse): void {
+    this.clienteAbiertoId.update((id) => (id === usuario.idUsuario ? null : usuario.idUsuario));
+  }
+
+  cantidadDeTurnos(usuario: UsuarioResponse): number {
+    return this.turnos().filter((turno) => turno.usuarioId === usuario.idUsuario).length;
+  }
+
+  /** Turnos del cliente: los que vienen (del más cercano al más lejano) y los anteriores (del último para atrás). */
+  turnosDelCliente(usuario: UsuarioResponse): { proximos: TurnoResponse[]; anteriores: TurnoResponse[] } {
+    const porFecha = (a: TurnoResponse, b: TurnoResponse) =>
+      a.fecha.localeCompare(b.fecha) || a.horaInicio.localeCompare(b.horaInicio);
+    const delCliente = this.turnos().filter((turno) => turno.usuarioId === usuario.idUsuario);
+    const esAnterior = (turno: TurnoResponse) => turno.estado === 'CANCELADO' || this.turnoVencido(turno);
+    return {
+      proximos: delCliente.filter((turno) => !esAnterior(turno)).sort(porFecha),
+      anteriores: delCliente.filter(esAnterior).sort((a, b) => porFecha(b, a))
+    };
+  }
+
   /** Un turno ya pasó cuando está finalizado o cuando su hora de cierre pasó. */
   turnoVencido(turno: TurnoResponse): boolean {
     if (turno.estado === 'FINALIZADO') {
@@ -192,6 +214,9 @@ export class AdminPanelComponent implements OnInit {
       return 'Finalizado';
     }
 
+    if (turno.estado === 'CONFIRMADO') {
+      return 'Confirmado';
+    }
     return turno.estado === 'PENDIENTE' ? 'Pendiente' : turno.estado;
   }
 
