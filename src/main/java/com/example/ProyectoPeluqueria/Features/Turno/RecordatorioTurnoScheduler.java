@@ -20,6 +20,9 @@ import java.util.Optional;
  * - Si lo sacó con entre 18 y 30 hs: 12 hs antes (el de 24 hs le llegaría casi al reservar).
  * - Si lo sacó con menos de 18 hs: no se manda, lo acaba de reservar.
  *
+ * Si le llegó el de 24 hs y a 10 hs del turno todavía no tocó SI, el turno se cancela solo
+ * (así se libera el horario). Con el de 12 hs no, porque no le daría tiempo a contestar.
+ *
  * El registro del recordatorio se guarda ANTES de llamar a Meta y cada turno va en su propia
  * transacción. Así, si algo falla (otro turno con datos raros, la base, Meta), nunca se vuelve
  * a mandar el mismo recordatorio en la siguiente pasada. Antes todo iba en una sola transacción:
@@ -38,6 +41,9 @@ public class RecordatorioTurnoScheduler {
     static final Plan PLAN_12H = new Plan("12H", 11, 13);
     static final long ANTICIPACION_MINIMA_24H = 30;
     static final long ANTICIPACION_MINIMA_12H = 18;
+    /** Hasta cuántas horas antes del turno tiene para confirmar el recordatorio de 24 hs */
+    static final long HORAS_LIMITE_PARA_CONFIRMAR = 10;
+    static final String RESPUESTA_SIN_CONFIRMAR = "SIN_RESPUESTA";
 
     private record Pendiente(Long turnoId, String tipo) {
     }
@@ -72,6 +78,43 @@ public class RecordatorioTurnoScheduler {
                 // Un turno con problemas no frena a los demás
                 log.error("Falló el recordatorio {} del turno {}: {}",
                         pendiente.tipo(), pendiente.turnoId(), ex.getMessage());
+            }
+        }
+        cancelarTurnosSinConfirmar(ahora);
+    }
+
+    /**
+     * Cancela los turnos que recibieron el recordatorio de 24 hs (le llegó o lo leyó) y a 10 hs
+     * del turno siguen sin confirmar. Si el mensaje no llegó, no se cancela.
+     */
+    void cancelarTurnosSinConfirmar(LocalDateTime ahora) {
+        List<Long> vencidos = transaccion.execute(estado ->
+                recordatorioRepository.findEntregadosConTurnoPendiente(PLAN_24H.tipo()).stream()
+                        .map(RecordatorioTurnoEntity::getTurno)
+                        .filter(turno -> {
+                            LocalDateTime inicio = LocalDateTime.of(turno.getFecha(), turno.getHoraInicio());
+                            return inicio.isAfter(ahora)
+                                    && Duration.between(ahora, inicio).toMinutes() <= HORAS_LIMITE_PARA_CONFIRMAR * 60;
+                        })
+                        .map(TurnoEntity::getIdTurno)
+                        .distinct()
+                        .toList());
+        if (vencidos == null) {
+            return;
+        }
+        for (Long turnoId : vencidos) {
+            try {
+                transaccion.executeWithoutResult(estado -> turnoRepository.findById(turnoId)
+                        .filter(turno -> turno.getEstado() == EstadoTurno.PENDIENTE)
+                        .ifPresent(turno -> {
+                            turno.setEstado(EstadoTurno.CANCELADO);
+                            turno.setRespuestaCliente(RESPUESTA_SIN_CONFIRMAR);
+                            turno.setFechaRespuesta(LocalDateTime.now());
+                            turnoRepository.save(turno);
+                            log.info("Turno {} cancelado: no confirmó el recordatorio a tiempo", turnoId);
+                        }));
+            } catch (RuntimeException ex) {
+                log.error("No se pudo cancelar el turno {} sin confirmar: {}", turnoId, ex.getMessage());
             }
         }
     }

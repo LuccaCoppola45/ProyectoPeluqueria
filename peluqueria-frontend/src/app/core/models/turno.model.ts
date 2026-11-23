@@ -23,6 +23,8 @@ export interface TurnoResponse {
   cancelacionId: number | null;
   idComercio: number;
   conAyudante?: boolean;
+  /** "SIN_RESPUESTA" si se canceló solo por no confirmar el recordatorio */
+  respuestaCliente?: string | null;
   nombreUsuario?: string;
   apellidoUsuario?: string;
   nombre?: string;

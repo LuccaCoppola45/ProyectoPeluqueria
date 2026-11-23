@@ -34,6 +34,7 @@ public class TurnoMapper {
         dto.setHoraInicio(entity.getHoraInicio());
         dto.setHoraFin(entity.getHoraFin());
         dto.setEstado(entity.getEstado());
+        dto.setRespuestaCliente(entity.getRespuestaCliente());
         if (entity.getComercio() != null) {
             dto.setIdComercio(entity.getComercio().getIdComercio());
         }

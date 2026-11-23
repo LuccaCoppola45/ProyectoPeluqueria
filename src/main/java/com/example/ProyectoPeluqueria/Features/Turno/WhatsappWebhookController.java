@@ -135,6 +135,7 @@ public class WhatsappWebhookController {
             if (map.get("statuses") instanceof List<?> estados) {
                 for (Object e : estados) {
                     if (e instanceof Map<?, ?> estado) {
+                        guardarEstadoDeEntrega(estado.get("id"), estado.get("status"));
                         if ("failed".equals(estado.get("status"))) {
                             log.warn("WhatsApp: Meta NO pudo entregar el mensaje {} a {}: {}",
                                     estado.get("id"), estado.get("recipient_id"), estado.get("errors"));
@@ -150,6 +151,38 @@ public class WhatsappWebhookController {
         } else if (value instanceof Iterable<?> iterable) {
             iterable.forEach(this::registrarEstadosDeEntrega);
         }
+    }
+
+    // Orden de avance: un "delivered" que llega tarde no pisa un "read"
+    private static final List<String> ORDEN_ESTADOS = List.of("ACEPTADO_META", "ENVIADO", "ENTREGADO", "LEIDO");
+
+    /**
+     * Anota en el recordatorio si el WhatsApp se envió, llegó, se leyó o falló. El turno solo se
+     * cancela solo por falta de respuesta si el mensaje llegó de verdad (ENTREGADO o LEIDO).
+     */
+    private void guardarEstadoDeEntrega(Object mensajeId, Object status) {
+        if (!(mensajeId instanceof String id) || !(status instanceof String s)) {
+            return;
+        }
+        String nuevo = switch (s) {
+            case "sent" -> "ENVIADO";
+            case "delivered" -> "ENTREGADO";
+            case "read" -> "LEIDO";
+            case "failed" -> "FALLO";
+            default -> null;
+        };
+        if (nuevo == null) {
+            return;
+        }
+        recordatorioRepository.findFirstByMensajeId(id).ifPresent(recordatorio -> {
+            String actual = recordatorio.getEstado();
+            boolean avanza = "FALLO".equals(nuevo)
+                    || ORDEN_ESTADOS.indexOf(nuevo) > ORDEN_ESTADOS.indexOf(actual);
+            if (avanza && !"FALLO".equals(actual)) {
+                recordatorio.setEstado(nuevo);
+                recordatorioRepository.save(recordatorio);
+            }
+        });
     }
 
     private Map<?, ?> buscarMapa(Object value, String key) {

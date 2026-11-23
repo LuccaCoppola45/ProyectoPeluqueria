@@ -71,6 +71,26 @@ class WhatsappWebhookControllerTest {
     }
 
     @Test
+    void guardaSiElRecordatorioLlegoYNoLoPisaUnAvisoAtrasado() {
+        RecordatorioTurnoEntity recordatorio = new RecordatorioTurnoEntity();
+        recordatorio.setEstado("ACEPTADO_META");
+        when(recordatorioRepository.findFirstByMensajeId("wamid.1330")).thenReturn(Optional.of(recordatorio));
+
+        controller.recibir(estado("wamid.1330", "read"));
+        assertEquals("LEIDO", recordatorio.getEstado());
+
+        // Meta a veces avisa "delivered" después de "read"
+        controller.recibir(estado("wamid.1330", "delivered"));
+        assertEquals("LEIDO", recordatorio.getEstado());
+    }
+
+    private static Map<String, Object> estado(String mensajeId, String status) {
+        Map<String, Object> value = Map.of("statuses", List.of(Map.of(
+                "id", mensajeId, "status", status, "recipient_id", "542235964948")));
+        return Map.of("entry", List.of(Map.of("changes", List.of(Map.of("value", value)))));
+    }
+
+    @Test
     void unAvisoDeEntregaNoCambiaNingunTurno() {
         Map<String, Object> value = Map.of("statuses", List.of(Map.of(
                 "id", "wamid.1330", "status", "failed", "recipient_id", "542235964948",

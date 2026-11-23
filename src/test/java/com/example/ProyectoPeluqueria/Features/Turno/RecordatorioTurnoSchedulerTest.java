@@ -152,6 +152,49 @@ class RecordatorioTurnoSchedulerTest {
         assertEquals("12H", tabla.values().iterator().next().getTipo());
     }
 
+    @Test
+    void siNoConfirmaElDe24hsSeCancelaA10hsDelTurno() {
+        LocalDateTime ahora = LocalDateTime.now().truncatedTo(ChronoUnit.MINUTES);
+        TurnoEntity aNueveHoras = turno(20L, ahora.plusHours(9));
+        TurnoEntity aOnceHoras = turno(21L, ahora.plusHours(11));
+        TurnoEntity yaConfirmado = turno(22L, ahora.plusHours(8));
+        yaConfirmado.setEstado(EstadoTurno.CONFIRMADO);
+        when(recordatorioRepository.findEntregadosConTurnoPendiente("24H")).thenReturn(List.of(
+                recordatorio(aNueveHoras), recordatorio(aOnceHoras), recordatorio(yaConfirmado)));
+        when(turnoRepository.findById(20L)).thenReturn(Optional.of(aNueveHoras));
+        when(turnoRepository.findById(21L)).thenReturn(Optional.of(aOnceHoras));
+        when(turnoRepository.findById(22L)).thenReturn(Optional.of(yaConfirmado));
+
+        scheduler.cancelarTurnosSinConfirmar(ahora);
+
+        assertEquals(EstadoTurno.CANCELADO, aNueveHoras.getEstado());
+        assertEquals("SIN_RESPUESTA", aNueveHoras.getRespuestaCliente());
+        // Todavía tiene tiempo
+        assertEquals(EstadoTurno.PENDIENTE, aOnceHoras.getEstado());
+        // Contestó SI mientras tanto: no se toca
+        assertEquals(EstadoTurno.CONFIRMADO, yaConfirmado.getEstado());
+    }
+
+    @Test
+    void noCancelaTurnosQueYaPasaron() {
+        LocalDateTime ahora = LocalDateTime.now().truncatedTo(ChronoUnit.MINUTES);
+        TurnoEntity pasado = turno(30L, ahora.minusHours(2));
+        when(recordatorioRepository.findEntregadosConTurnoPendiente("24H")).thenReturn(List.of(recordatorio(pasado)));
+        when(turnoRepository.findById(30L)).thenReturn(Optional.of(pasado));
+
+        scheduler.cancelarTurnosSinConfirmar(ahora);
+
+        assertEquals(EstadoTurno.PENDIENTE, pasado.getEstado());
+    }
+
+    private static RecordatorioTurnoEntity recordatorio(TurnoEntity turno) {
+        RecordatorioTurnoEntity r = new RecordatorioTurnoEntity();
+        r.setTurno(turno);
+        r.setTipo("24H");
+        r.setEstado("ENTREGADO");
+        return r;
+    }
+
     private static TurnoEntity turno(Long id, LocalDateTime inicio) {
         UsuarioEntity usuario = new UsuarioEntity();
         usuario.setIdUsuario(id);

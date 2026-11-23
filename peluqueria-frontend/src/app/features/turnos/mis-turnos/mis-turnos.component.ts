@@ -109,7 +109,9 @@ export class MisTurnosComponent implements OnInit {
 
   estadoTurno(turno: TurnoResponse): string {
     if (turno.estado === 'CANCELADO') {
-      return 'Cancelado';
+      return turno.respuestaCliente === 'SIN_RESPUESTA'
+        ? 'Cancelado: no se confirmó a tiempo'
+        : 'Cancelado';
     }
 
     if (turno.estado === 'FINALIZADO' || this.turnoPasado(turno)) {

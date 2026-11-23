@@ -207,7 +207,7 @@ export class AdminPanelComponent implements OnInit {
 
   estadoTurno(turno: TurnoResponse): string {
     if (turno.estado === 'CANCELADO') {
-      return 'Cancelado';
+      return turno.respuestaCliente === 'SIN_RESPUESTA' ? 'Cancelado: no confirmó' : 'Cancelado';
     }
 
     if (turno.estado === 'FINALIZADO' || this.turnoVencido(turno)) {

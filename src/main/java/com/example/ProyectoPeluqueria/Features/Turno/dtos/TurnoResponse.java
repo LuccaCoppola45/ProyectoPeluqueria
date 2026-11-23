@@ -27,6 +27,8 @@ public class TurnoResponse
     private Long cancelacionId;
     private Long idComercio;
     private Boolean conAyudante;
+    // "CONFIRMADO", "CANCELADO" (respondió por WhatsApp) o "SIN_RESPUESTA" (se canceló solo)
+    private String respuestaCliente;
 
 
 }
