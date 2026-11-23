@@ -177,19 +177,15 @@ export class AdminPanelComponent implements OnInit {
   }
 
   cantidadDeTurnos(usuario: UsuarioResponse): number {
-    return this.turnos().filter((turno) => turno.usuarioId === usuario.idUsuario).length;
+    return this.turnosDelCliente(usuario).length;
   }
 
-  /** Turnos del cliente: los que vienen (del más cercano al más lejano) y los anteriores (del último para atrás). */
-  turnosDelCliente(usuario: UsuarioResponse): { proximos: TurnoResponse[]; anteriores: TurnoResponse[] } {
-    const porFecha = (a: TurnoResponse, b: TurnoResponse) =>
-      a.fecha.localeCompare(b.fecha) || a.horaInicio.localeCompare(b.horaInicio);
-    const delCliente = this.turnos().filter((turno) => turno.usuarioId === usuario.idUsuario);
-    const esAnterior = (turno: TurnoResponse) => turno.estado === 'CANCELADO' || this.turnoVencido(turno);
-    return {
-      proximos: delCliente.filter((turno) => !esAnterior(turno)).sort(porFecha),
-      anteriores: delCliente.filter(esAnterior).sort((a, b) => porFecha(b, a))
-    };
+  /** Turnos activos del cliente (ni cancelados ni pasados), del más cercano al más lejano. */
+  turnosDelCliente(usuario: UsuarioResponse): TurnoResponse[] {
+    return this.turnos()
+      .filter((turno) => turno.usuarioId === usuario.idUsuario
+        && turno.estado !== 'CANCELADO' && !this.turnoVencido(turno))
+      .sort((a, b) => a.fecha.localeCompare(b.fecha) || a.horaInicio.localeCompare(b.horaInicio));
   }
 
   /** Un turno ya pasó cuando está finalizado o cuando su hora de cierre pasó. */

@@ -274,7 +274,7 @@
                   <strong>{{ usuario.nombre }} {{ usuario.apellido }}</strong>
                   <span>{{ usuario.dni ? 'DNI ' + usuario.dni : 'Sin DNI' }}<ng-container *ngIf="usuario.email"> · {{ usuario.email }}</ng-container></span>
                   <span class="admin-cliente-ver">
-                    {{ clienteAbiertoId() === usuario.idUsuario ? 'Ocultar turnos' : 'Ver turnos (' + cantidadDeTurnos(usuario) + ')' }}
+                    {{ clienteAbiertoId() === usuario.idUsuario ? 'Ocultar turnos' : 'Ver turnos activos (' + cantidadDeTurnos(usuario) + ')' }}
                     <span aria-hidden="true">{{ clienteAbiertoId() === usuario.idUsuario ? '▲' : '▼' }}</span>
                   </span>
                 </button>
@@ -317,30 +317,17 @@
                   Listo: {{ usuario.nombre }} ya puede entrar con la contraseña nueva.
                 </p>
                 <div class="admin-cliente-turnos" *ngIf="clienteAbiertoId() === usuario.idUsuario">
-                  <ng-container *ngIf="turnosDelCliente(usuario) as lista">
-                    <p class="helper-text" *ngIf="lista.proximos.length === 0 && lista.anteriores.length === 0">
-                      {{ usuario.nombre }} todavía no sacó ningún turno.
+                  <ng-container *ngIf="turnosDelCliente(usuario) as activos">
+                    <p class="helper-text" *ngIf="activos.length === 0">
+                      {{ usuario.nombre }} no tiene turnos activos.
                     </p>
-                    <ng-container *ngIf="lista.proximos.length > 0">
-                      <h4>Próximos</h4>
-                      <ul>
-                        <li *ngFor="let turno of lista.proximos">
-                          <strong>{{ fechaVisible(turno.fecha) }} · {{ turno.horaInicio.substring(0, 5) }}</strong>
-                          <span>{{ nombreDelServicio(turno) }}</span>
-                          <span class="turno-estado">{{ estadoTurno(turno) }}</span>
-                        </li>
-                      </ul>
-                    </ng-container>
-                    <ng-container *ngIf="lista.anteriores.length > 0">
-                      <h4>Anteriores</h4>
-                      <ul>
-                        <li *ngFor="let turno of lista.anteriores">
-                          <strong>{{ fechaVisible(turno.fecha) }} · {{ turno.horaInicio.substring(0, 5) }}</strong>
-                          <span>{{ nombreDelServicio(turno) }}</span>
-                          <span class="turno-estado turno-estado--terminado">{{ estadoTurno(turno) }}</span>
-                        </li>
-                      </ul>
-                    </ng-container>
+                    <ul *ngIf="activos.length > 0">
+                      <li *ngFor="let turno of activos">
+                        <strong>{{ fechaVisible(turno.fecha) }} · {{ turno.horaInicio.substring(0, 5) }}</strong>
+                        <span>{{ nombreDelServicio(turno) }}</span>
+                        <span class="turno-estado">{{ estadoTurno(turno) }}</span>
+                      </li>
+                    </ul>
                   </ng-container>
                 </div>
               </div>
