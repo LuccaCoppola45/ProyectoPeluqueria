@@ -44,7 +44,7 @@ class RecordatorioTurnoSchedulerTest {
         LocalDateTime enVentana = LocalDateTime.now().plusHours(24).truncatedTo(ChronoUnit.MINUTES);
         turnoBien = turno(1L, enVentana);
         turnoQueFalla = turno(2L, enVentana);
-        when(turnoRepository.findAll()).thenReturn(List.of(turnoBien, turnoQueFalla));
+        when(turnoRepository.findAllConDetalle()).thenReturn(List.of(turnoBien, turnoQueFalla));
         when(turnoRepository.findById(1L)).thenReturn(Optional.of(turnoBien));
         when(turnoRepository.findById(2L)).thenReturn(Optional.of(turnoQueFalla));
         when(turnoRepository.getReferenceById(1L)).thenReturn(turnoBien);
@@ -83,7 +83,7 @@ class RecordatorioTurnoSchedulerTest {
 
     @Test
     void conWhatsappApagadoNoQuedaRegistroYSeMandaAlPrenderlo() {
-        when(turnoRepository.findAll()).thenReturn(List.of(turnoBien));
+        when(turnoRepository.findAllConDetalle()).thenReturn(List.of(turnoBien));
         when(whatsappService.enviarRecordatorio(turnoBien)).thenReturn(Optional.empty());
         org.mockito.Mockito.doAnswer(inv -> tabla.remove((Long) inv.getArgument(0)))
                 .when(recordatorioRepository).deleteById(anyLong());
@@ -103,7 +103,7 @@ class RecordatorioTurnoSchedulerTest {
     @Test
     void turnoFueraDeVentanaNoSeToca() {
         TurnoEntity lejos = turno(3L, LocalDateTime.now().plusDays(3));
-        when(turnoRepository.findAll()).thenReturn(List.of(lejos));
+        when(turnoRepository.findAllConDetalle()).thenReturn(List.of(lejos));
 
         scheduler.enviarRecordatorios();
 
@@ -132,7 +132,7 @@ class RecordatorioTurnoSchedulerTest {
         LocalDateTime ahora = LocalDateTime.now().truncatedTo(ChronoUnit.MINUTES);
         TurnoEntity reservadoRecien = turno(4L, ahora.plusHours(24));
         reservadoRecien.setFechaReserva(ahora.minusMinutes(5));
-        when(turnoRepository.findAll()).thenReturn(List.of(reservadoRecien));
+        when(turnoRepository.findAllConDetalle()).thenReturn(List.of(reservadoRecien));
 
         scheduler.enviarRecordatorios();
         verify(whatsappService, never()).enviarRecordatorio(any());

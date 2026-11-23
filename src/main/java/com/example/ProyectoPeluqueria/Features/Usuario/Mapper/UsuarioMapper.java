@@ -39,25 +39,16 @@ public class UsuarioMapper
 
     public UsuarioResponse toResponce(UsuarioEntity usuario)
     {
-        UsuarioResponse dto = modelMapper.map(usuario, UsuarioResponse.class);
-
-        if (usuario.getTurnosVinculados() != null) {
-            dto.setTurnosIds(
-                    usuario.getTurnosVinculados()
-                            .stream()
-                            .map(t -> t.getIdTurno())
-                            .collect(Collectors.toList())
-            );
-        }
-
-        if (usuario.getCancelacionEntitiesVinculados() != null) {
-            dto.setCancelacionesIds(
-                    usuario.getCancelacionEntitiesVinculados()
-                            .stream()
-                            .map(c -> c.getId())
-                            .collect(Collectors.toList())
-            );
-        }
+        // Solo los datos del cliente. Antes también se cargaban todos sus turnos y cancelaciones
+        // (una consulta por cliente y otra por turno) para una lista de ids que la página no usa,
+        // y eso hacía tardar mucho el panel.
+        UsuarioResponse dto = new UsuarioResponse();
+        dto.setIdUsuario(usuario.getIdUsuario());
+        dto.setNombre(usuario.getNombre());
+        dto.setApellido(usuario.getApellido());
+        dto.setRol(usuario.getRol());
+        dto.setEmail(usuario.getEmail());
+        dto.setDni(usuario.getDni());
         return dto;
     }
 

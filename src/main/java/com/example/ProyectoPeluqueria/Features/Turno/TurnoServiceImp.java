@@ -122,8 +122,8 @@ public class TurnoServiceImp implements TurnoService {
     public List<TurnoResponse> obtenerTodos() {
         UsuarioEntity usuario = obtenerUsuarioAutenticado();
         List<TurnoEntity> turnos = esAdmin(usuario)
-                ? turnoRepository.findAll()
-                : turnoRepository.findByUsuario_IdUsuario(usuario.getIdUsuario());
+                ? turnoRepository.findAllConDetalle()
+                : turnoRepository.findByUsuarioConDetalle(usuario.getIdUsuario());
         return turnos
                 .stream()
                 .map(turnoMapper::toDto)

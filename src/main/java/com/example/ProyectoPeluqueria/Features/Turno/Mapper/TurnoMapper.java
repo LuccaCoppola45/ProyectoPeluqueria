@@ -27,9 +27,16 @@ public class TurnoMapper {
 
     /**     * Mapea entidad a DTO.     * Extrae los IDs de las relaciones (usuario, servicio, cancelacion).     */
     public TurnoResponse toDto(TurnoEntity entity) {
-        TurnoResponse dto = modelMapper.map(entity, TurnoResponse.class);
-
+        // A mano (sin ModelMapper) para no recorrer relaciones de más
+        TurnoResponse dto = new TurnoResponse();
         dto.setIdTurno(entity.getIdTurno());
+        dto.setFecha(entity.getFecha());
+        dto.setHoraInicio(entity.getHoraInicio());
+        dto.setHoraFin(entity.getHoraFin());
+        dto.setEstado(entity.getEstado());
+        if (entity.getComercio() != null) {
+            dto.setIdComercio(entity.getComercio().getIdComercio());
+        }
         dto.setConAyudante(entity.getServicio() != null
                 && Boolean.TRUE.equals(entity.getServicio().getDeAyudante()));
 

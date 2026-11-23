@@ -7,6 +7,6 @@ export interface UsuarioResponse {
   dni?: string | null;
   rol: Rol;
   email?: string | null;
-  turnosIds: number[];
-  cancelacionesIds: number[];
+  turnosIds?: number[];
+  cancelacionesIds?: number[];
 }

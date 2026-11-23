@@ -77,7 +77,7 @@ public class RecordatorioTurnoScheduler {
     }
 
     private List<Pendiente> turnosParaRecordar(LocalDateTime ahora) {
-        return turnoRepository.findAll().stream()
+        return turnoRepository.findAllConDetalle().stream()
                 .filter(turno -> turno.getEstado() != EstadoTurno.CANCELADO
                         && turno.getEstado() != EstadoTurno.FINALIZADO)
                 // Los turnos sin cuenta no tienen teléfono
