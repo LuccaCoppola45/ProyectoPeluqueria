@@ -150,7 +150,7 @@
                 </ng-container>
                 <ng-template #sinCuenta>(sin cuenta)</ng-template>
                 · <strong>Servicio:</strong> {{ nombreDelServicio(turno) }} ·
-                <ng-container *ngIf="turno.conAyudante"><strong>Atiende:</strong> Segunda peluquera ·</ng-container>
+                <ng-container *ngIf="turno.conAyudante"><strong>Atiende:</strong> Romi ·</ng-container>
                 <span class="turno-estado" [class.turno-estado--terminado]="mostrarHistorial() || turnoVencido(turno)">
                   {{ estadoTurno(turno) }}
                 </span>

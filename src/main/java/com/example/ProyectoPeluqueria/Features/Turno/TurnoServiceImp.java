@@ -399,8 +399,8 @@ public class TurnoServiceImp implements TurnoService {
 
     // ----- Agenda -----
     // Turnos cada 30 minutos. Los servicios con horarios fijos (reflejos, base permanente) solo se sacan en
-    // esas horas, y esos horarios no se ofrecen para ningún otro servicio del titular. La segunda peluquera
-    // tiene su propio servicio de color y su propia agenda: martes a viernes hasta las 13 y sábados todo el día.
+    // esas horas, y esos horarios no se ofrecen para ningún otro servicio del titular. Romi (la segunda
+    // peluquera) tiene su propio servicio de color y su propia agenda: martes a viernes hasta las 13 y sábados todo el día.
     private static final int INTERVALO_TURNOS_MINUTOS = 30;
     private static final LocalTime FIN_AYUDANTE_ENTRE_SEMANA = LocalTime.of(13, 0);
     private static final List<DiaSemana> DIAS_AYUDANTE_MANIANA = List.of(
@@ -431,7 +431,7 @@ public class TurnoServiceImp implements TurnoService {
                                     LocalTime horaFin, Long idTurnoExcluido) {
         if (!puedeAtenderAyudanteSiCorresponde(servicio, fecha, horaFin)) {
             throw new HorarioFueraDeAtencionException(
-                    "La segunda peluquera atiende de martes a viernes hasta las 13 y los sábados todo el día");
+                    "Romi atiende de martes a viernes hasta las 13 y los sábados todo el día");
         }
         Long comercioId = servicio.getComercio().getIdComercio();
         if (!agendaLibre(servicio, horaInicio, horaFin,

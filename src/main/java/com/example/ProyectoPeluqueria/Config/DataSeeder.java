@@ -47,6 +47,11 @@ public class DataSeeder implements CommandLineRunner {
     private static final String HORARIOS_REFLEJOS_Y_BASE = "09:00,13:00";
     private static final List<String> HORARIOS_FIJOS_ANTERIORES = List.of("09:00,14:00", "11:00,16:00");
 
+    // El color de la segunda peluquera ahora lleva su nombre. Si sigue con el nombre viejo se renombra solo;
+    // si el admin le puso otro desde el panel, se respeta.
+    private static final String NOMBRE_SERVICIO_AYUDANTE = "Color con Romi";
+    private static final String NOMBRE_SERVICIO_AYUDANTE_ANTERIOR = "Color con segunda peluquera";
+
     @Value("${seed.comercio.nombre:}")
     private String comercioNombre;
     @Value("${seed.comercio.direccion:}")
@@ -86,7 +91,7 @@ public class DataSeeder implements CommandLineRunner {
                 cargarServicio(comercio, "Peinado de fiesta", 40, 60000, null);
                 cargarServicio(comercio, "Base permanente", 60, 95000, HORARIOS_REFLEJOS_Y_BASE);
                 cargarServicio(comercio, "Hidratación", 40, 25000, null);
-                crearServicioDeAyudante(comercio, "Color con segunda peluquera", 60, 35000);
+                crearServicioDeAyudante(comercio, NOMBRE_SERVICIO_AYUDANTE, 60, 35000);
                 return null;
             });
         }
@@ -169,9 +174,16 @@ public class DataSeeder implements CommandLineRunner {
 
     // Se busca por la marca y no por el nombre, así el admin lo puede renombrar sin que se cree otro.
     private void crearServicioDeAyudante(ComercioEntity comercio, String nombre, int minutos, double precio) {
-        boolean existe = servicioRepository.findByComercio_IdComercio(comercio.getIdComercio()).stream()
-                .anyMatch(sv -> Boolean.TRUE.equals(sv.getDeAyudante()));
-        if (existe) {
+        ServicioEntity existente = servicioRepository.findByComercio_IdComercio(comercio.getIdComercio()).stream()
+                .filter(sv -> Boolean.TRUE.equals(sv.getDeAyudante()))
+                .findFirst()
+                .orElse(null);
+        if (existente != null) {
+            if (NOMBRE_SERVICIO_AYUDANTE_ANTERIOR.equalsIgnoreCase(existente.getNombre())) {
+                existente.setNombre(nombre);
+                servicioRepository.save(existente);
+                log.info("Seed: servicio '{}' renombrado a '{}'", NOMBRE_SERVICIO_AYUDANTE_ANTERIOR, nombre);
+            }
             return;
         }
         ServicioEntity servicio = new ServicioEntity();
@@ -181,7 +193,7 @@ public class DataSeeder implements CommandLineRunner {
         servicio.setDeAyudante(true);
         servicio.setComercio(comercio);
         servicioRepository.save(servicio);
-        log.info("Seed: servicio de la segunda peluquera '{}' ({} min) creado", nombre, minutos);
+        log.info("Seed: servicio de Romi '{}' ({} min) creado", nombre, minutos);
     }
 
     private void crearAdmin() {

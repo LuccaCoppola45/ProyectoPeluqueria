@@ -60,7 +60,7 @@ class TurnoDisponibilidadTest {
         reflejos.setHorariosFijos("09:00,13:00");
         basePermanente = servicio(5L, "Base permanente", 60, comercio);
         basePermanente.setHorariosFijos("09:00,13:00");
-        colorAyudante = servicio(4L, "Color con segunda peluquera", 60, comercio);
+        colorAyudante = servicio(4L, "Color con Romi", 60, comercio);
         colorAyudante.setDeAyudante(true);
         Map<Long, ServicioEntity> servicios = Map.of(1L, corte, 2L, color, 3L, reflejos, 4L, colorAyudante, 5L, basePermanente);
 

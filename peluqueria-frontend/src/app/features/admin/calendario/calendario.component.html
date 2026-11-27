@@ -44,7 +44,7 @@
         [class.calendario-destacado--ahora]="item.momento === 'en-curso'">
         <p class="calendario-destacado-etiqueta">
           {{ item.momento === 'en-curso' ? 'Ahora' : 'Sigue ' + faltaPara(item.turno) }}
-          <ng-container *ngIf="item.turno.conAyudante"> · Segunda peluquera</ng-container>
+          <ng-container *ngIf="item.turno.conAyudante"> · Romi</ng-container>
         </p>
         <h2>{{ nombreCliente(item.turno) }}</h2>
         <p *ngIf="item.momento === 'en-curso'">{{ nombreServicio(item.turno) }} · hasta las {{ hora(item.turno.horaFin) }}</p>
@@ -82,7 +82,7 @@
               {{ nombreServicio(item.turno) }}
               <ng-container *ngIf="dniCliente(item.turno) as dni"> · DNI {{ dni }}</ng-container>
             </span>
-            <span class="calendario-ayudante" *ngIf="item.turno.conAyudante">Atiende: Segunda peluquera</span>
+            <span class="calendario-ayudante" *ngIf="item.turno.conAyudante">Atiende: Romi</span>
           </div>
           <span class="calendario-momento" *ngIf="etiquetaMomento(item.momento) as etiqueta">{{ etiqueta }}</span>
         </li>
