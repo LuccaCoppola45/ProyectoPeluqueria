@@ -22,8 +22,8 @@ export class DatePickerComponent implements OnInit, OnChanges {
   @Input() date = '';
   @Input() minDate = this.toDateString(new Date());
   /**
-   * Días que se pueden elegir (yyyy-MM-dd). Los demás no se muestran, así nadie pierde tiempo tocando
-   * días cerrados o llenos. Con null se muestran todos los días desde minDate (como en el panel).
+   * Días que se pueden elegir (yyyy-MM-dd). Los demás aparecen en gris y no se pueden tocar, así nadie
+   * pierde tiempo con días cerrados o llenos. Con null se muestran todos los días desde minDate (como en el panel).
    */
   @Input() availableDates: string[] | null = null;
   /** Mientras se consultan los días libres del mes que se está viendo. */
@@ -91,28 +91,15 @@ export class DatePickerComponent implements OnInit, OnChanges {
         this.visibleMonth.getMonth(),
         day
       ));
-      if (!this.isShown(date)) {
-        days.push(null);
-        continue;
-      }
       days.push({
         date,
         number: day,
-        disabled: date < this.minDate,
+        disabled: date < this.minDate || !this.isAvailable(date),
         isToday: date === today
       });
     }
 
-    return this.withoutEmptyWeeks(days);
-  }
-
-  /** Las semanas sin ningún día para elegir no se muestran: si no, quedan huecos grandes en el calendario. */
-  private withoutEmptyWeeks(days: (CalendarDay | null)[]): (CalendarDay | null)[] {
-    const weeks: (CalendarDay | null)[][] = [];
-    for (let i = 0; i < days.length; i += 7) {
-      weeks.push(days.slice(i, i + 7));
-    }
-    return weeks.filter((week) => week.some((day) => day !== null)).flat();
+    return days;
   }
 
   /** Se están filtrando días y en el mes a la vista no quedó ninguno para elegir. */
@@ -121,7 +108,7 @@ export class DatePickerComponent implements OnInit, OnChanges {
       && this.calendarDays.every((day) => day === null || day.disabled);
   }
 
-  private isShown(date: string): boolean {
+  private isAvailable(date: string): boolean {
     if (this.availableDates === null) {
       return true;
     }
