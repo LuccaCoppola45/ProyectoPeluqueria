@@ -40,11 +40,16 @@
       </div>
 
       <div class="field-group">
-        <p class="booking-label">¿Qué día querés venir? Tocá el día en el calendario.</p>
+        <p class="booking-label">¿Qué día querés venir? Tocá el día en el calendario. Solo aparecen los días que tienen turnos libres.</p>
         <app-date-picker
           [date]="fecha()"
           [minDate]="fechaMinima"
+          [availableDates]="diasDisponibles()"
+          [loading]="buscandoDias() || diasDisponibles() === null"
+          [hiddenMonths]="mesesOcultos"
+          (monthChange)="cambiarMes($event)"
           (dateChange)="elegirFecha($event)" />
+        <p class="error-msg" *ngIf="errorMsg() && !fecha()" aria-live="assertive">{{ errorMsg() }}</p>
       </div>
     </section>
 

@@ -241,6 +241,61 @@ public class TurnoServiceImp implements TurnoService {
         validarDuracion(servicio);
         HorarioDeAtencionEntity horario = horarioDelDia(servicio.getComercio(), fecha);
         List<TurnoEntity> ocupados = turnosActivosDelDia(servicio.getComercio().getIdComercio(), fecha, null);
+        return horariosLibres(servicio, fecha, horario, ocupados);
+    }
+
+    /** Hasta cuántos días se consultan de una vez (un mes del calendario entra holgado). */
+    private static final int DIAS_MAXIMOS_POR_CONSULTA = 62;
+
+    // Los días en los que este servicio tiene al menos un horario libre. El calendario del cliente muestra
+    // solo esos, así no toca días cerrados o llenos. Se piden los turnos y los bloqueos del período de una
+    // vez, para no hacer una consulta por día.
+    @Override
+    public List<LocalDate> obtenerDiasDisponibles(LocalDate desde, LocalDate hasta, Long servicioId) {
+        if (desde == null || hasta == null || hasta.isBefore(desde)) {
+            throw new IllegalArgumentException("El período de fechas no es válido");
+        }
+        if (servicioId == null || servicioId <= 0) {
+            throw new IllegalArgumentException("El ID del servicio debe ser positivo");
+        }
+        ServicioEntity servicio = servicioRepository.findById(servicioId)
+                .orElseThrow(() -> new ServicioNotFoundException("Servicio no encontrado"));
+        validarDuracion(servicio);
+        ComercioEntity comercio = servicio.getComercio();
+        LocalDate hoy = LocalDate.now();
+        LocalDate inicio = desde.isBefore(hoy) ? hoy : desde;
+        LocalDate fin = hasta.isAfter(inicio.plusDays(DIAS_MAXIMOS_POR_CONSULTA))
+                ? inicio.plusDays(DIAS_MAXIMOS_POR_CONSULTA) : hasta;
+        if (comercio == null || comercio.getHorarios() == null || fin.isBefore(inicio)) {
+            return List.of();
+        }
+        Set<LocalDate> bloqueados = bloqueoHorarioService.listar(comercio.getIdComercio(), inicio, fin).stream()
+                .map(BloqueoHorarioResponse::getFecha)
+                .collect(Collectors.toSet());
+        Map<LocalDate, List<TurnoEntity>> turnosPorDia = turnoRepository
+                .findByComercio_IdComercioAndFechaBetween(comercio.getIdComercio(), inicio, fin).stream()
+                .filter(t -> t.getEstado() != EstadoTurno.CANCELADO)
+                .collect(Collectors.groupingBy(TurnoEntity::getFecha));
+
+        List<LocalDate> dias = new ArrayList<>();
+        for (LocalDate dia = inicio; !dia.isAfter(fin); dia = dia.plusDays(1)) {
+            DiaSemana diaSemana = mapearDiaSemana(dia.getDayOfWeek());
+            HorarioDeAtencionEntity horario = comercio.getHorarios().stream()
+                    .filter(h -> h.getDiaSemana() == diaSemana)
+                    .findFirst()
+                    .orElse(null);
+            if (horario == null || bloqueados.contains(dia)) {
+                continue;
+            }
+            if (!horariosLibres(servicio, dia, horario, turnosPorDia.getOrDefault(dia, List.of())).isEmpty()) {
+                dias.add(dia);
+            }
+        }
+        return dias;
+    }
+
+    private List<LocalTime> horariosLibres(ServicioEntity servicio, LocalDate fecha,
+                                           HorarioDeAtencionEntity horario, List<TurnoEntity> ocupados) {
         List<LocalTime> horariosFijos = HorariosFijos.leer(servicio.getHorariosFijos());
         List<LocalTime> disponibles = new ArrayList<>();
         LocalTime inicio = redondearAlIntervalo(horario.getHoraApertura());

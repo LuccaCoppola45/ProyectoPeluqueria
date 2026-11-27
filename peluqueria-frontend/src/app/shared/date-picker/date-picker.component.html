@@ -41,6 +41,11 @@
     </ng-container>
   </div>
 
+  <p *ngIf="loading" class="calendar-status" aria-live="polite">Buscando los días con turnos libres...</p>
+  <p *ngIf="noDaysThisMonth" class="calendar-status" aria-live="polite">
+    En {{ monthLabel }} ya no quedan días con turnos libres. Tocá la flecha <strong>›</strong> para ver el mes siguiente.
+  </p>
+
   <p *ngIf="date" class="selected-date" aria-live="polite">
     Fecha seleccionada: <strong>{{ selectedDateLabel }}</strong>
   </p>

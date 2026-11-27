@@ -69,6 +69,10 @@ class TurnoDisponibilidadTest {
         when(servicioRepository.findByComercio_IdComercio(COMERCIO_ID)).thenReturn(List.of(corte, color, reflejos, colorAyudante, basePermanente));
         when(turnoRepository.findByComercio_IdComercioAndFecha(eq(COMERCIO_ID), any()))
                 .thenAnswer(inv -> turnos.stream().filter(t -> t.getFecha().equals(inv.getArgument(1))).toList());
+        when(turnoRepository.findByComercio_IdComercioAndFechaBetween(eq(COMERCIO_ID), any(), any()))
+                .thenAnswer(inv -> turnos.stream()
+                        .filter(t -> !t.getFecha().isBefore(inv.getArgument(1)) && !t.getFecha().isAfter(inv.getArgument(2)))
+                        .toList());
 
         turnoService = new TurnoServiceImp(turnoRepository, null, servicioRepository, null,
                 bloqueoHorarioService, null);
@@ -171,6 +175,43 @@ class TurnoDisponibilidadTest {
 
         assertThat(disponibilidad(SABADO, colorAyudante)).contains(hora("09:00"), hora("11:00"), hora("16:00"));
         assertThat(disponibilidad(SABADO, corte)).doesNotContain(hora("15:00"));
+    }
+
+    @Test
+    void losDiasDisponiblesSonSoloLosQueAbreYTienenLugar() {
+        LocalDate lunes = MARTES.minusDays(1);
+
+        assertThat(turnoService.obtenerDiasDisponibles(lunes, SABADO, corte.getIdServicio()))
+                .containsExactly(MARTES, SABADO);
+    }
+
+    @Test
+    void unDiaBloqueadoNoApareceEntreLosDiasDisponibles() {
+        bloquear(MARTES);
+
+        assertThat(turnoService.obtenerDiasDisponibles(MARTES, SABADO, corte.getIdServicio()))
+                .containsExactly(SABADO);
+    }
+
+    @Test
+    void unDiaLlenoNoApareceAunqueOtroServicioTengaLugar() {
+        agendar(MARTES, reflejos, "09:00");
+        agendar(MARTES, reflejos, "13:00");
+
+        assertThat(turnoService.obtenerDiasDisponibles(MARTES, SABADO, reflejos.getIdServicio()))
+                .containsExactly(SABADO);
+        assertThat(turnoService.obtenerDiasDisponibles(MARTES, SABADO, corte.getIdServicio()))
+                .containsExactly(MARTES, SABADO);
+    }
+
+    @Test
+    void losTurnosCanceladosNoOcupanElDia() {
+        agendar(MARTES, reflejos, "09:00");
+        agendar(MARTES, reflejos, "13:00");
+        turnos.get(1).setEstado(EstadoTurno.CANCELADO);
+
+        assertThat(turnoService.obtenerDiasDisponibles(MARTES, MARTES, reflejos.getIdServicio()))
+                .containsExactly(MARTES);
     }
 
     private void bloquear(LocalDate... fechas) {

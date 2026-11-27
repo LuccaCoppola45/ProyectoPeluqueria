@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges } from '@angular/core';
 
 interface CalendarDay {
   date: string;
@@ -8,6 +8,9 @@ interface CalendarDay {
   isToday: boolean;
 }
 
+/** Cuántos meses seguidos ocultos se saltean como mucho al cambiar de mes. */
+const MAX_MESES_SALTEADOS = 24;
+
 @Component({
   selector: 'app-date-picker',
   standalone: true,
@@ -15,13 +18,33 @@ interface CalendarDay {
   templateUrl: './date-picker.component.html',
   styleUrls: ['./date-picker.component.css']
 })
-export class DatePickerComponent implements OnChanges {
+export class DatePickerComponent implements OnInit, OnChanges {
   @Input() date = '';
   @Input() minDate = this.toDateString(new Date());
+  /**
+   * Días que se pueden elegir (yyyy-MM-dd). Los demás no se muestran, así nadie pierde tiempo tocando
+   * días cerrados o llenos. Con null se muestran todos los días desde minDate (como en el panel).
+   */
+  @Input() availableDates: string[] | null = null;
+  /** Mientras se consultan los días libres del mes que se está viendo. */
+  @Input() loading = false;
+  /** Meses que no se muestran en el calendario (yyyy-MM): al cambiar de mes se saltean. */
+  @Input() hiddenMonths: string[] = [];
+  /** Avisa el primer día (yyyy-MM-dd) del mes que quedó a la vista, para consultar sus días libres. */
+  @Output() monthChange = new EventEmitter<string>();
   @Output() dateChange = new EventEmitter<string>();
 
   readonly weekdays = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
   visibleMonth = this.startOfMonth(new Date());
+
+  ngOnInit(): void {
+    if (this.isHidden(this.visibleMonth)) {
+      this.visibleMonth = this.nextVisibleMonth(this.visibleMonth, 1) ?? this.visibleMonth;
+    }
+    // Se avisa después de este ciclo para que el padre pueda actualizar su estado sin errores de Angular
+    const month = this.toDateString(this.visibleMonth);
+    Promise.resolve().then(() => this.monthChange.emit(month));
+  }
 
   ngOnChanges(changes: SimpleChanges): void {
     if (changes['date'] && this.date) {
@@ -68,6 +91,10 @@ export class DatePickerComponent implements OnChanges {
         this.visibleMonth.getMonth(),
         day
       ));
+      if (!this.isShown(date)) {
+        days.push(null);
+        continue;
+      }
       days.push({
         date,
         number: day,
@@ -76,26 +103,63 @@ export class DatePickerComponent implements OnChanges {
       });
     }
 
-    return days;
+    return this.withoutEmptyWeeks(days);
+  }
+
+  /** Las semanas sin ningún día para elegir no se muestran: si no, quedan huecos grandes en el calendario. */
+  private withoutEmptyWeeks(days: (CalendarDay | null)[]): (CalendarDay | null)[] {
+    const weeks: (CalendarDay | null)[][] = [];
+    for (let i = 0; i < days.length; i += 7) {
+      weeks.push(days.slice(i, i + 7));
+    }
+    return weeks.filter((week) => week.some((day) => day !== null)).flat();
+  }
+
+  /** Se están filtrando días y en el mes a la vista no quedó ninguno para elegir. */
+  get noDaysThisMonth(): boolean {
+    return this.availableDates !== null && !this.loading
+      && this.calendarDays.every((day) => day === null || day.disabled);
+  }
+
+  private isShown(date: string): boolean {
+    if (this.availableDates === null) {
+      return true;
+    }
+    return !this.loading && this.availableDates.includes(date);
   }
 
   get previousMonthDisabled(): boolean {
-    const minimumMonth = this.startOfMonth(this.parseDate(this.minDate) ?? new Date());
-    return this.visibleMonth.getTime() <= minimumMonth.getTime();
+    return this.nextVisibleMonth(this.visibleMonth, -1) === null;
   }
 
   changeMonth(offset: number): void {
-    const nextMonth = new Date(
-      this.visibleMonth.getFullYear(),
-      this.visibleMonth.getMonth() + offset,
-      1
-    );
-
-    if (offset < 0 && nextMonth < this.startOfMonth(this.parseDate(this.minDate) ?? new Date())) {
+    const nextMonth = this.nextVisibleMonth(this.visibleMonth, offset);
+    if (!nextMonth) {
       return;
     }
 
     this.visibleMonth = nextMonth;
+    this.monthChange.emit(this.toDateString(nextMonth));
+  }
+
+  /** El mes siguiente (o anterior) que se puede mostrar, salteando los ocultos; null si no hay. */
+  private nextVisibleMonth(from: Date, offset: number): Date | null {
+    const minimumMonth = this.startOfMonth(this.parseDate(this.minDate) ?? new Date());
+    let month = from;
+    for (let i = 0; i < MAX_MESES_SALTEADOS; i++) {
+      month = new Date(month.getFullYear(), month.getMonth() + offset, 1);
+      if (month < minimumMonth) {
+        return null;
+      }
+      if (!this.isHidden(month)) {
+        return month;
+      }
+    }
+    return null;
+  }
+
+  private isHidden(month: Date): boolean {
+    return this.hiddenMonths.includes(this.toDateString(month).substring(0, 7));
   }
 
   selectDate(date: string): void {

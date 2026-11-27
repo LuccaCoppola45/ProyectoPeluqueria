@@ -19,6 +19,15 @@ export class TurnoService {
     return this.http.get<string[]>(`${this.url}/disponibilidad`, { params });
   }
 
+  /** Días (yyyy-MM-dd) entre desde y hasta en los que el servicio tiene al menos un horario libre. */
+  diasDisponibles(desde: string, hasta: string, servicioId: number): Observable<string[]> {
+    const params = new HttpParams()
+      .set('desde', desde)
+      .set('hasta', hasta)
+      .set('servicioId', servicioId);
+    return this.http.get<string[]>(`${this.url}/dias-disponibles`, { params });
+  }
+
   crear(request: TurnoRequest): Observable<TurnoResponse> {
     return this.http.post<TurnoResponse>(this.url, request);
   }

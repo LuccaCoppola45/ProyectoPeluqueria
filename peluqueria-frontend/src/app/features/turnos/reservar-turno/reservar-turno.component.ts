@@ -9,6 +9,12 @@ import { DatePickerComponent } from '../../../shared/date-picker/date-picker.com
 import { PasosReservaComponent } from '../../../shared/pasos-reserva/pasos-reserva.component';
 import { formatearFechaLarga, formatearRangoPrecio, formatearDuracion } from '../../../shared/formato-fecha';
 
+/**
+ * Meses en los que los clientes no pueden sacar turno desde la web (yyyy-MM): el calendario ni los muestra.
+ * Diciembre 2026: el negocio pidió que no aparezca porque la gente intentaba sacar y no entendía.
+ */
+const MESES_SIN_TURNOS_WEB = ['2026-12'];
+
 interface FranjaHoraria {
   nombre: string;
   descripcion: string;
@@ -29,6 +35,11 @@ export class ReservarTurnoComponent implements OnInit {
   /** yyyy-MM-dd. Es signal para que el indicador de pasos reaccione al instante. */
   readonly fecha = signal('');
   readonly fechaMinima = this.obtenerFechaActual();
+  readonly mesesOcultos = MESES_SIN_TURNOS_WEB;
+  /** Días con lugar del mes que se está viendo; null hasta que llega la primera respuesta. */
+  diasDisponibles = signal<string[] | null>(null);
+  buscandoDias = signal(false);
+  private mesVisible: string | null = null;
   horarios = signal<string[]>([]);
   horarioSeleccionado = signal<string | null>(null);
 
@@ -136,10 +147,49 @@ export class ReservarTurnoComponent implements OnInit {
         this.servicio.set(data);
         this.idComercio.set(data.idComercio);
         this.cargandoServicio.set(false);
+        this.buscarDiasDelMes();
       },
       error: () => {
         this.errorMsg.set('No se pudo cargar el servicio. Volvé a la lista de servicios e intentá de nuevo.');
         this.cargandoServicio.set(false);
+      }
+    });
+  }
+
+  /** El calendario cambió de mes: se buscan los días con lugar de ese mes. */
+  cambiarMes(primerDia: string): void {
+    this.mesVisible = primerDia;
+    this.buscarDiasDelMes();
+  }
+
+  private buscarDiasDelMes(): void {
+    const servicio = this.servicio();
+    const mes = this.mesVisible;
+    if (!servicio || !mes) {
+      return;
+    }
+
+    const [anio, numeroMes] = mes.split('-').map(Number);
+    const ultimoDia = new Date(anio, numeroMes, 0).getDate();
+    const hasta = `${mes.substring(0, 8)}${String(ultimoDia).padStart(2, '0')}`;
+
+    this.buscandoDias.set(true);
+    this.turnoService.diasDisponibles(mes, hasta, servicio.idServicio).subscribe({
+      next: (dias) => {
+        // Si la persona ya pasó a otro mes, esta respuesta llegó tarde y no sirve
+        if (this.mesVisible !== mes) {
+          return;
+        }
+        this.diasDisponibles.set(dias);
+        this.buscandoDias.set(false);
+      },
+      error: () => {
+        if (this.mesVisible !== mes) {
+          return;
+        }
+        this.buscandoDias.set(false);
+        this.diasDisponibles.set([]);
+        this.errorMsg.set('No se pudieron consultar los días libres. Revisá la conexión e intentá de nuevo.');
       }
     });
   }

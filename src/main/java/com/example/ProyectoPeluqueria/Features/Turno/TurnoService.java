@@ -15,5 +15,6 @@ public interface TurnoService
     TurnoResponse actualizarTurno(Long id, TurnoRequest dto);
     void eliminarUnTurno (Long id);
     List<LocalTime> obtenerDisponibilidad(LocalDate fecha, Long servicioId);
+    List<LocalDate> obtenerDiasDisponibles(LocalDate desde, LocalDate hasta, Long servicioId);
     void enviarRecordatorioPrueba(Long turnoId);
 }

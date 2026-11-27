@@ -175,3 +175,10 @@
     font-size: 1rem;
   }
 }
+
+.calendar-status {
+  margin: 16px 0 0;
+  color: var(--texto-fuerte);
+  font-size: 1.15rem;
+  line-height: 1.5;
+}

@@ -144,6 +144,7 @@ private final JwtAuthenticationFilter jwtAuthFilter;
                         .requestMatchers(HttpMethod.GET, "/api/servicios/**", "/api/comercios/**",
                                 "/api/horarios/**", "/api/resenias/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/turnos/disponibilidad").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/turnos/dias-disponibles").permitAll()
                         // Rutas protegidas API
                         .requestMatchers(HttpMethod.POST, "/api/turnos/*/recordatorio-prueba")
                                 .hasAuthority("ADMIN")

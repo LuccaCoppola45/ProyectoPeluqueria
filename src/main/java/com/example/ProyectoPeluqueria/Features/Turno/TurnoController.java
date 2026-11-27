@@ -39,6 +39,15 @@ public class TurnoController {
         return ResponseEntity.ok(turnoService.obtenerDisponibilidad(fecha, servicioId));
     }
 
+    // Días con al menos un horario libre para el servicio, entre desde y hasta (inclusive)
+    @GetMapping("/dias-disponibles")
+    public ResponseEntity<List<LocalDate>> diasDisponibles(
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate desde,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate hasta,
+            @RequestParam Long servicioId) {
+        return ResponseEntity.ok(turnoService.obtenerDiasDisponibles(desde, hasta, servicioId));
+    }
+
     @GetMapping("/{id}")
     public ResponseEntity<TurnoResponse> obtenerPorId(@PathVariable Long id) {
         return ResponseEntity.ok(turnoService.obtenerPorId(id));
